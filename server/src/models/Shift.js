@@ -162,11 +162,10 @@ shiftSchema.index({ shiftType: 1, companyId: 1 });
 shiftSchema.index({ 'clockInLocation': '2dsphere' });
 
 // Validation: endTime must be after startTime
-shiftSchema.pre('save', function (next) {
+shiftSchema.pre('save', async function () {
   if (this.endTime <= this.startTime) {
-    next(new Error('End time must be after start time'));
+    throw new Error('End time must be after start time');
   }
-  next();
 });
 
 module.exports = mongoose.model('Shift', shiftSchema);

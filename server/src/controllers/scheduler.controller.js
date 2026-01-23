@@ -6,7 +6,13 @@ const asyncHandler = require('../utils/asyncHandler');
  * @route GET /api/scheduler/sites
  */
 const getActiveSites = asyncHandler(async (req, res) => {
-  const sites = await schedulerService.getActiveSites();
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const sites = await schedulerService.getActiveSites(context);
 
   res.json({
     success: true,
@@ -21,7 +27,13 @@ const getActiveSites = asyncHandler(async (req, res) => {
 const getSiteEmployees = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const employees = await schedulerService.getSiteEmployees(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const employees = await schedulerService.getSiteEmployees(context, id);
 
   res.json({
     success: true,
@@ -43,7 +55,13 @@ const getSiteShifts = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const shifts = await schedulerService.getSiteShifts(id, startDate, endDate, {
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const shifts = await schedulerService.getSiteShifts(context, id, startDate, endDate, {
     employeeId,
     status
   });
@@ -61,7 +79,13 @@ const getSiteShifts = asyncHandler(async (req, res) => {
 const getShiftById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const shift = await schedulerService.getShiftById(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const shift = await schedulerService.getShiftById(context, id);
 
   res.json({
     success: true,
@@ -74,7 +98,13 @@ const getShiftById = asyncHandler(async (req, res) => {
  * @route POST /api/scheduler/shifts
  */
 const createShift = asyncHandler(async (req, res) => {
-  const shift = await schedulerService.createShift(req.body);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const shift = await schedulerService.createShift(context, req.body);
 
   res.status(201).json({
     success: true,
@@ -90,7 +120,13 @@ const createShift = asyncHandler(async (req, res) => {
 const updateShift = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const shift = await schedulerService.updateShift(id, req.body);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const shift = await schedulerService.updateShift(context, id, req.body);
 
   res.json({
     success: true,
@@ -106,7 +142,13 @@ const updateShift = asyncHandler(async (req, res) => {
 const deleteShift = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const result = await schedulerService.deleteShift(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const result = await schedulerService.deleteShift(context, id);
 
   res.json({
     success: true,

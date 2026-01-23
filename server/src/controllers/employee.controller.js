@@ -8,7 +8,13 @@ const asyncHandler = require('../utils/asyncHandler');
 const getAllEmployees = asyncHandler(async (req, res) => {
   const { search, isActive, department, position, page, limit, sortBy, order } = req.query;
 
-  const result = await employeeService.getAllEmployees({
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const result = await employeeService.getAllEmployees(context, {
     search,
     isActive,
     department,
@@ -32,7 +38,13 @@ const getAllEmployees = asyncHandler(async (req, res) => {
 const getEmployeeById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const employee = await employeeService.getEmployeeById(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const employee = await employeeService.getEmployeeById(context, id);
 
   res.json({
     success: true,
@@ -45,7 +57,13 @@ const getEmployeeById = asyncHandler(async (req, res) => {
  * @route POST /api/employees
  */
 const createEmployee = asyncHandler(async (req, res) => {
-  const employee = await employeeService.createEmployee(req.body);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const employee = await employeeService.createEmployee(context, req.body);
 
   res.status(201).json({
     success: true,
@@ -61,7 +79,13 @@ const createEmployee = asyncHandler(async (req, res) => {
 const updateEmployee = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const employee = await employeeService.updateEmployee(id, req.body);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const employee = await employeeService.updateEmployee(context, id, req.body);
 
   res.json({
     success: true,
@@ -77,7 +101,13 @@ const updateEmployee = asyncHandler(async (req, res) => {
 const deleteEmployee = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const result = await employeeService.deleteEmployee(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const result = await employeeService.deleteEmployee(context, id);
 
   res.json({
     success: true,
@@ -93,7 +123,13 @@ const assignToSites = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { siteIds } = req.body;
 
-  const assignments = await employeeService.assignToSites(id, siteIds);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const assignments = await employeeService.assignToSites(context, id, siteIds);
 
   res.status(201).json({
     success: true,

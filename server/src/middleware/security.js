@@ -82,9 +82,13 @@ const authRateLimiter = rateLimit({
 const companyRateLimiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.maxRequests * 10, // Higher limit for company-level
-  keyGenerator: (req) => {
-    // Use companyId from authenticated user
-    return req.user?.companyId || req.ip;
+  keyGenerator: (req, res) => {
+    // Use companyId from authenticated user, otherwise fall back to default IP handling
+    if (req.user?.companyId) {
+      return req.user.companyId;
+    }
+    // Return undefined to use default IP key generation (handles IPv6 properly)
+    return undefined;
   },
   message: {
     error: 'Company request limit exceeded.',
@@ -106,7 +110,6 @@ const requestId = (req, res, next) => {
  * Sanitizes user input to prevent NoSQL injection
  */
 const mongoInjectionProtection = mongoSanitize({
-  replaceWith: '_',
   onSanitize: ({ req, key }) => {
     logger.warn('MongoDB injection attempt detected', {
       ip: req.ip,

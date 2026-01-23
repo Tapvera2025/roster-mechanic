@@ -28,7 +28,7 @@ module.exports = function auditLogPlugin(schema) {
   });
 
   // Pre-save hook to track updates
-  schema.pre('save', function (next) {
+  schema.pre('save', async function () {
     if (this.isNew) {
       // Log creation
       logger.audit('DOCUMENT_CREATED', {
@@ -48,17 +48,15 @@ module.exports = function auditLogPlugin(schema) {
         companyId: this.companyId,
       });
     }
-    next();
   });
 
   // Pre-remove hook to track deletions
-  schema.pre('remove', function (next) {
+  schema.pre('remove', async function () {
     logger.audit('DOCUMENT_DELETED', {
       collection: this.constructor.modelName,
       documentId: this._id,
       deletedBy: this.deletedBy,
       companyId: this.companyId,
     });
-    next();
   });
 };

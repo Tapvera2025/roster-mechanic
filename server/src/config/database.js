@@ -28,8 +28,11 @@ class Database {
       // Set mongoose configuration
       mongoose.set('strictQuery', false);
 
-      // Connect to MongoDB
-      await mongoose.connect(config.database.uri, config.database.options);
+      // Connect to MongoDB with dbName specified
+      await mongoose.connect(config.database.uri, {
+        dbName: config.database.dbName,
+        ...config.database.options
+      });
 
       this.isConnected = true;
 

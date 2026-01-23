@@ -8,7 +8,13 @@ const asyncHandler = require('../utils/asyncHandler');
 const getAllSites = asyncHandler(async (req, res) => {
   const { status, state, client, search, page, limit, sortBy, order } = req.query;
 
-  const result = await sitesService.getAllSites({
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const result = await sitesService.getAllSites(context, {
     status,
     state,
     client,
@@ -32,7 +38,13 @@ const getAllSites = asyncHandler(async (req, res) => {
 const getSiteById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const site = await sitesService.getSiteById(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const site = await sitesService.getSiteById(context, id);
 
   res.json({
     success: true,
@@ -45,7 +57,13 @@ const getSiteById = asyncHandler(async (req, res) => {
  * @route POST /api/sites
  */
 const createSite = asyncHandler(async (req, res) => {
-  const site = await sitesService.createSite(req.body);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const site = await sitesService.createSite(context, req.body);
 
   res.status(201).json({
     success: true,
@@ -60,7 +78,13 @@ const createSite = asyncHandler(async (req, res) => {
 const bulkCreateSites = asyncHandler(async (req, res) => {
   const { sites } = req.body;
 
-  const result = await sitesService.bulkCreateSites(sites);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const result = await sitesService.bulkCreateSites(context, sites);
 
   res.status(201).json({
     success: true,
@@ -75,7 +99,13 @@ const bulkCreateSites = asyncHandler(async (req, res) => {
 const updateSite = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const site = await sitesService.updateSite(id, req.body);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const site = await sitesService.updateSite(context, id, req.body);
 
   res.json({
     success: true,
@@ -90,7 +120,13 @@ const updateSite = asyncHandler(async (req, res) => {
 const deleteSite = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const result = await sitesService.deleteSite(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const result = await sitesService.deleteSite(context, id);
 
   res.json({
     success: true,
@@ -105,7 +141,13 @@ const deleteSite = asyncHandler(async (req, res) => {
 const getSiteEmployees = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const employees = await sitesService.getSiteEmployees(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const employees = await sitesService.getSiteEmployees(context, id);
 
   res.json({
     success: true,
@@ -121,7 +163,13 @@ const assignEmployeesToSite = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { employeeIds } = req.body;
 
-  const assignments = await sitesService.assignEmployeesToSite(id, employeeIds);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const assignments = await sitesService.assignEmployeesToSite(context, id, employeeIds);
 
   res.status(201).json({
     success: true,
@@ -136,7 +184,13 @@ const assignEmployeesToSite = asyncHandler(async (req, res) => {
 const getAccessCodes = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const accessCodes = await sitesService.getAccessCodes(id);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const accessCodes = await sitesService.getAccessCodes(context, id);
 
   res.json({
     success: true,
@@ -151,7 +205,13 @@ const getAccessCodes = asyncHandler(async (req, res) => {
 const addAccessCode = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const accessCode = await sitesService.addAccessCode(id, req.body);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const accessCode = await sitesService.addAccessCode(context, id, req.body);
 
   res.status(201).json({
     success: true,
@@ -166,7 +226,13 @@ const addAccessCode = asyncHandler(async (req, res) => {
 const updateAccessCode = asyncHandler(async (req, res) => {
   const { id, codeId } = req.params;
 
-  const accessCode = await sitesService.updateAccessCode(id, codeId, req.body);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const accessCode = await sitesService.updateAccessCode(context, id, codeId, req.body);
 
   res.json({
     success: true,
@@ -181,7 +247,13 @@ const updateAccessCode = asyncHandler(async (req, res) => {
 const deleteAccessCode = asyncHandler(async (req, res) => {
   const { id, codeId } = req.params;
 
-  const result = await sitesService.deleteAccessCode(id, codeId);
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role
+  };
+
+  const result = await sitesService.deleteAccessCode(context, id, codeId);
 
   res.json({
     success: true,

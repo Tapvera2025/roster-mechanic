@@ -46,16 +46,29 @@ module.exports = function softDeletePlugin(schema) {
 
   // Static method to find including deleted
   schema.statics.findWithDeleted = function (conditions = {}) {
-    return this.find(conditions);
+    // Explicitly include all records regardless of deletedAt
+    // This will be excluded from the middleware filter
+    return this.find({ ...conditions, deletedAt: { $exists: true } }).setOptions({ _bypassSoftDelete: true });
   };
 
-  // Override default find to exclude deleted by default
-  const originalFind = schema.statics.find;
-  schema.statics.find = function (conditions = {}, ...args) {
-    // Don't add deletedAt filter if it's already specified
-    if (conditions.deletedAt === undefined) {
-      conditions.deletedAt = null;
+  // Use query middleware to exclude deleted by default
+  // This applies to find, findOne, findOneAndUpdate, etc.
+  async function excludeDeleted() {
+    // Skip if this is a findWithDeleted query
+    if (this.getOptions()._bypassSoftDelete) {
+      return;
     }
-    return originalFind.call(this, conditions, ...args);
-  };
+
+    // Only apply filter if deletedAt hasn't been explicitly set
+    const filter = this.getFilter();
+    if (filter.deletedAt === undefined) {
+      this.where({ deletedAt: null });
+    }
+  }
+
+  schema.pre('find', excludeDeleted);
+  schema.pre('findOne', excludeDeleted);
+  schema.pre('findOneAndUpdate', excludeDeleted);
+  schema.pre('count', excludeDeleted);
+  schema.pre('countDocuments', excludeDeleted);
 };

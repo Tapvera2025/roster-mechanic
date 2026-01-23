@@ -98,7 +98,7 @@ const employeeSchema = new mongoose.Schema(
 // Apply plugins
 employeeSchema.plugin(softDeletePlugin);
 employeeSchema.plugin(auditLogPlugin);
-employeeSchema.plugin(multiTenant Plugin);
+employeeSchema.plugin(multiTenantPlugin);
 
 // Virtual for full name
 employeeSchema.virtual('fullName').get(function () {

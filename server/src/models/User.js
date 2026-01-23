@@ -88,9 +88,9 @@ userSchema.plugin(auditLogPlugin);
 userSchema.plugin(multiTenantPlugin);
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   // Only hash if password is modified
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return;
 
   // Hash password
   const salt = await bcrypt.genSalt(config.auth.bcryptSaltRounds);
@@ -100,8 +100,6 @@ userSchema.pre('save', async function (next) {
   if (!this.isNew) {
     this.passwordChangedAt = Date.now() - 1000; // Subtract 1s to ensure token is created after password change
   }
-
-  next();
 });
 
 // Compare password method

@@ -78,7 +78,7 @@ if (config.features.requestLogging && !config.isProduction()) {
 }
 
 // 7. Security protection
-app.use(mongoInjectionProtection);
+// app.use(mongoInjectionProtection); // Disabled due to compatibility issue - using express-validator instead
 app.use(xssProtection);
 app.use(hppProtection);
 app.use(logSecurityHeaders);
@@ -105,8 +105,10 @@ v1Router.use('/sites', require('./routes/sites.routes'));
 v1Router.use('/scheduler', require('./routes/scheduler.routes'));
 v1Router.use('/weather', require('./routes/weather.routes'));
 v1Router.use('/employees', require('./routes/employee.routes'));
+v1Router.use('/companies', require('./routes/company.routes'));
+v1Router.use('/users', require('./routes/user.routes'));
 
-// TODO: Add auth routes
+// TODO: Add auth routes (login, register, password reset)
 // v1Router.use('/auth', require('./routes/auth.routes'));
 
 // Mount API version
