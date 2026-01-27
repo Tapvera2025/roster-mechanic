@@ -249,7 +249,9 @@ export default function Scheduler() {
 
       // Refresh shifts only if the created shift is for the currently selected site
       const createdShift = response.data.data;
-      if (selectedSite && createdShift.siteId === selectedSite) {
+      const createdShiftSiteId = typeof createdShift.siteId === 'object' ? createdShift.siteId.id : createdShift.siteId;
+
+      if (selectedSite && createdShiftSiteId === selectedSite) {
         const numDays = viewMode === "week" ? 7 : viewMode === "2weeks" ? 14 : viewMode === "3weeks" ? 21 : 28;
         const endDate = new Date(currentStartDate);
         endDate.setDate(endDate.getDate() + numDays - 1);
@@ -260,9 +262,9 @@ export default function Scheduler() {
           endDate.toISOString().split('T')[0]
         );
         setShifts(shiftsResponse.data.data);
-      } else if (createdShift.siteId) {
+      } else if (createdShiftSiteId) {
         // If shift was created for a different site, switch to that site
-        setSelectedSite(createdShift.siteId);
+        setSelectedSite(createdShiftSiteId);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create shift');
@@ -277,11 +279,16 @@ export default function Scheduler() {
 
     return shifts.filter(shift => {
       const shiftDate = new Date(shift.date).toISOString().split('T')[0];
+      // Get the shift's employee ID (handle both object and string formats)
+      const shiftEmployeeId = shift.employeeId ?
+        (typeof shift.employeeId === 'object' ? shift.employeeId.id : shift.employeeId) :
+        null;
+
       // For open shifts (employeeId is null), only match if both are null
       if (employeeId === null) {
-        return shiftDate === targetDateStr && shift.employeeId === null;
+        return shiftDate === targetDateStr && shiftEmployeeId === null;
       }
-      return shiftDate === targetDateStr && shift.employeeId === employeeId;
+      return shiftDate === targetDateStr && shiftEmployeeId === employeeId;
     });
   };
 
@@ -728,7 +735,7 @@ export default function Scheduler() {
                                   </div>
                                   <div className="text-gray-600 flex items-center gap-1 mt-0.5">
                                     <MapPin className="h-3 w-3" />
-                                    <span>{shift.site?.shortName || 'Unknown Site'}</span>
+                                    <span>{shift.siteId?.shortName || 'Unknown Site'}</span>
                                   </div>
                                 </div>
                                 {shift.status === 'SCHEDULED' && (
