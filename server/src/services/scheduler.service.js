@@ -27,7 +27,11 @@ class SchedulerService {
       .sort({ siteLocationName: 1 })
       .lean();
 
-    return sites;
+    // Transform _id to id for frontend compatibility
+    return sites.map(site => ({
+      ...site,
+      id: site._id.toString()
+    }));
   }
 
   /**
@@ -70,10 +74,13 @@ class SchedulerService {
       })
       .lean();
 
-    // Filter out null employees (inactive ones)
+    // Filter out null employees (inactive ones) and transform _id to id
     return assignments
       .filter((a) => a.employeeId)
-      .map((a) => a.employeeId);
+      .map((a) => ({
+        ...a.employeeId,
+        id: a.employeeId._id.toString()
+      }));
   }
 
   /**
@@ -136,7 +143,19 @@ class SchedulerService {
       .sort({ date: 1, startTime: 1 })
       .lean();
 
-    return shifts;
+    // Transform _id to id for frontend compatibility
+    return shifts.map(shift => ({
+      ...shift,
+      id: shift._id.toString(),
+      employeeId: shift.employeeId ? {
+        ...shift.employeeId,
+        id: shift.employeeId._id.toString()
+      } : null,
+      siteId: shift.siteId ? {
+        ...shift.siteId,
+        id: shift.siteId._id.toString()
+      } : shift.siteId
+    }));
   }
 
   /**
@@ -168,7 +187,19 @@ class SchedulerService {
       throw error;
     }
 
-    return shift;
+    // Transform _id to id for frontend compatibility
+    return {
+      ...shift,
+      id: shift._id.toString(),
+      employeeId: shift.employeeId ? {
+        ...shift.employeeId,
+        id: shift.employeeId._id.toString()
+      } : null,
+      siteId: shift.siteId ? {
+        ...shift.siteId,
+        id: shift.siteId._id.toString()
+      } : shift.siteId
+    };
   }
 
   /**
@@ -292,7 +323,19 @@ class SchedulerService {
       .populate('siteId', 'siteLocationName shortName')
       .lean();
 
-    return populatedShift;
+    // Transform _id to id for frontend compatibility
+    return {
+      ...populatedShift,
+      id: populatedShift._id.toString(),
+      employeeId: populatedShift.employeeId ? {
+        ...populatedShift.employeeId,
+        id: populatedShift.employeeId._id.toString()
+      } : null,
+      siteId: populatedShift.siteId ? {
+        ...populatedShift.siteId,
+        id: populatedShift.siteId._id.toString()
+      } : populatedShift.siteId
+    };
   }
 
   /**
@@ -420,7 +463,19 @@ class SchedulerService {
       .populate('siteId', 'siteLocationName shortName')
       .lean();
 
-    return populatedShift;
+    // Transform _id to id for frontend compatibility
+    return {
+      ...populatedShift,
+      id: populatedShift._id.toString(),
+      employeeId: populatedShift.employeeId ? {
+        ...populatedShift.employeeId,
+        id: populatedShift.employeeId._id.toString()
+      } : null,
+      siteId: populatedShift.siteId ? {
+        ...populatedShift.siteId,
+        id: populatedShift.siteId._id.toString()
+      } : populatedShift.siteId
+    };
   }
 
   /**

@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 
 import MainLayout from "./components/layout/MainLayout";
 import UserLayout from "./components/layout/UserLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Roster from "./pages/Roster";
 import Scheduler from "./pages/Scheduler";
@@ -27,7 +28,7 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* Protected Routes */}
-        <Route path="/" element={<MainLayout />}>
+        <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
 
           <Route path="dashboard" element={<Dashboard />} />
@@ -44,7 +45,7 @@ function App() {
         </Route>
 
         {/* User/Employee Portal Routes */}
-        <Route path="/user" element={<UserLayout />}>
+        <Route path="/user" element={<ProtectedRoute><UserLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/user/roster" replace />} />
           <Route path="roster" element={<MyRoster />} />
           <Route path="change-password" element={<ChangePassword />} />

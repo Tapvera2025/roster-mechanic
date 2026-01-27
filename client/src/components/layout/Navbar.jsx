@@ -13,7 +13,12 @@ export default function Navbar({ onToggleSidebar }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const handleLogout = () => {
+    // Clear all authentication data
     localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
     navigate("/login");
   };
 

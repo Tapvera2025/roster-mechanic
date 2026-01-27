@@ -4,40 +4,53 @@ import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Label } from "../components/ui/Label";
 import { Lock, User } from "lucide-react";
+import { userApi } from "../lib/api";
+import { toast } from "react-hot-toast";
 
 export default function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulate login delay
-    setTimeout(() => {
-      // Check credentials - Admin login
-      if (formData.username === "admin" && formData.password === "adminpass123") {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userRole", "admin");
+    try {
+      // Call the real authentication API
+      const response = await userApi.login({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Store token and user data
+      const { token, user } = response.data.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userRole", user.role.toLowerCase());
+      localStorage.setItem("userName", user.name);
+      localStorage.setItem("userEmail", user.email);
+
+      toast.success("Login successful!");
+
+      // Navigate based on role
+      if (user.role === "ADMIN" || user.role === "MANAGER") {
         navigate("/dashboard");
-      }
-      // Employee/User login
-      else if (formData.username === "user" && formData.password === "userpass123") {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userRole", "user");
-        navigate("/user/roster");
       } else {
-        // Failed login
-        setError("Invalid username or password");
-        setIsLoading(false);
+        navigate("/user/roster");
       }
-    }, 500);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Invalid email or password";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -68,21 +81,21 @@ export default function Login() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username */}
+            {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  placeholder="Enter your username"
-                  value={formData.username}
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={formData.email}
                   onChange={handleChange}
                   className="pl-10"
                   required
-                  autoComplete="username"
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -149,17 +162,8 @@ export default function Login() {
 
           {/* Demo Credentials Info */}
           <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-            <p className="text-xs font-semibold text-blue-900 mb-2">Demo Credentials:</p>
-            <div className="space-y-2">
-              <div>
-                <p className="text-xs font-medium text-blue-800">Admin Portal:</p>
-                <p className="text-xs text-blue-700">Username: admin | Password: adminpass123</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-blue-800">Employee Portal:</p>
-                <p className="text-xs text-blue-700">Username: user | Password: userpass123</p>
-              </div>
-            </div>
+            <p className="text-xs font-semibold text-blue-900 mb-2">Login with your account:</p>
+            <p className="text-xs text-blue-700">Enter your registered email and password to sign in</p>
           </div>
         </div>
       </div>

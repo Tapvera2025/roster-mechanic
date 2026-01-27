@@ -101,15 +101,13 @@ app.use('/health', require('./routes/health'));
 const v1Router = express.Router();
 
 // Mount v1 routes
+v1Router.use('/auth', require('./routes/auth.routes'));
 v1Router.use('/sites', require('./routes/sites.routes'));
 v1Router.use('/scheduler', require('./routes/scheduler.routes'));
 v1Router.use('/weather', require('./routes/weather.routes'));
 v1Router.use('/employees', require('./routes/employee.routes'));
 v1Router.use('/companies', require('./routes/company.routes'));
 v1Router.use('/users', require('./routes/user.routes'));
-
-// TODO: Add auth routes (login, register, password reset)
-// v1Router.use('/auth', require('./routes/auth.routes'));
 
 // Mount API version
 app.use('/api/v1', v1Router);
