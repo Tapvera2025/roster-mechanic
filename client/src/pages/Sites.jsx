@@ -12,6 +12,7 @@ export default function Sites() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [showAddSiteModal, setShowAddSiteModal] = useState(false);
   const [showMultipleSitesModal, setShowMultipleSitesModal] = useState(false);
+  const [selectedSite, setSelectedSite] = useState(null);
   const addMenuRef = useRef(null);
 
   // API state
@@ -54,6 +55,19 @@ export default function Sites() {
   const handleRefresh = () => {
     fetchSites();
     toast.success('Sites refreshed');
+  };
+
+  // Handle site click to open edit modal
+  const handleSiteClick = (site) => {
+    setSelectedSite(site);
+    setShowAddSiteModal(true);
+  };
+
+  // Handle close modal
+  const handleCloseModal = () => {
+    setShowAddSiteModal(false);
+    setShowMultipleSitesModal(false);
+    setSelectedSite(null);
   };
 
   // Close dropdown when clicking outside
@@ -169,16 +183,18 @@ export default function Sites() {
           sites={sites}
           loading={loading}
           showInactive={showInactive}
+          onSiteClick={handleSiteClick}
         />
       </div>
 
       {/* Add Site Modal */}
       {showAddSiteModal && (
         <AddSiteModal
-          onClose={() => setShowAddSiteModal(false)}
+          site={selectedSite}
+          onClose={handleCloseModal}
           onSuccess={() => {
             fetchSites();
-            toast.success('Site created successfully');
+            toast.success(selectedSite ? 'Site updated successfully' : 'Site created successfully');
           }}
         />
       )}
@@ -186,7 +202,7 @@ export default function Sites() {
       {/* Add Multiple Sites Modal */}
       {showMultipleSitesModal && (
         <AddMultipleSitesModal
-          onClose={() => setShowMultipleSitesModal(false)}
+          onClose={handleCloseModal}
           onSuccess={() => {
             fetchSites();
             toast.success('Sites created successfully');

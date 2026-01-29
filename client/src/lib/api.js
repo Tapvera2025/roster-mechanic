@@ -76,6 +76,16 @@ export const weatherApi = {
     api.get('/weather/forecast', { params: { latitude, longitude } })
 };
 
+// Client API endpoints
+export const clientApi = {
+  getAll: (params) => api.get('/clients', { params }),
+  getById: (id) => api.get(`/clients/${id}`),
+  create: (data) => api.post('/clients', data),
+  bulkCreate: (clients) => api.post('/clients/bulk', { clients }),
+  update: (id, data) => api.put(`/clients/${id}`, data),
+  delete: (id) => api.delete(`/clients/${id}`)
+};
+
 // Employee API endpoints
 export const employeeApi = {
   getAll: (params) => api.get('/employees', { params }),

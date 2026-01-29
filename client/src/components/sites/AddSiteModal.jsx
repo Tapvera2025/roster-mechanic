@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   X,
   MapPin,
@@ -18,11 +18,12 @@ import toast from "react-hot-toast";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
-import { siteApi } from "../../lib/api";
+import { siteApi, clientApi } from "../../lib/api";
+import staticClients from "../../data/clients";
 
-export default function AddSiteModal({ onClose, onSuccess }) {
+export default function AddSiteModal({ onClose, onSuccess, site = null }) {
   const [activeTab, setActiveTab] = useState("address");
-  const [geoFenceRadius, setGeoFenceRadius] = useState(0.3);
+  const [geoFenceRadius, setGeoFenceRadius] = useState(site?.geoFenceRadius || 0.3);
   const [accessCodeExpanded, setAccessCodeExpanded] = useState(true);
   const [showAccessCode, setShowAccessCode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -33,6 +34,7 @@ export default function AddSiteModal({ onClose, onSuccess }) {
   // API state
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [clients, setClients] = useState(staticClients);
 
   const [accessCodeData, setAccessCodeData] = useState({
     codeName: "",
@@ -44,27 +46,46 @@ export default function AddSiteModal({ onClose, onSuccess }) {
   });
 
   const [formData, setFormData] = useState({
-    siteLocationName: "",
-    shortName: "",
-    jobRefNo: "",
-    status: "Active",
-    client: "",
-    flatBillingRate: "",
-    alertRecipient: "",
-    exportId: "",
-    region: "",
-    remindEmployees: "2 hours before",
-    defaultStartTime: "",
-    defaultEndTime: "",
-    defaultShiftDuration: "",
-    address: "",
-    state: "",
-    townSuburb: "",
-    postalCode: "",
-    timezone: "(UTC+10:00) Canberra, Melbourne, Sydney",
-    latitude: "",
-    longitude: "",
+    siteLocationName: site?.siteLocationName || "",
+    shortName: site?.shortName || "",
+    jobRefNo: site?.jobRefNo || "",
+    status: site?.status === "ACTIVE" ? "Active" : site?.status === "INACTIVE" ? "Inactive" : "Active",
+    client: site?.client || "",
+    flatBillingRate: site?.flatBillingRate || "",
+    alertRecipient: site?.alertRecipient || "",
+    exportId: site?.exportId || "",
+    region: site?.region || "",
+    remindEmployees: site?.remindEmployees || "2 hours before",
+    defaultStartTime: site?.defaultStartTime || "",
+    defaultEndTime: site?.defaultEndTime || "",
+    defaultShiftDuration: site?.defaultShiftDuration || "",
+    address: site?.address || "",
+    state: site?.state || "",
+    townSuburb: site?.townSuburb || "",
+    postalCode: site?.postalCode || "",
+    timezone: site?.timezone || "Australia/Sydney",
+    latitude: site?.latitude || "",
+    longitude: site?.longitude || "",
   });
+
+  // Fetch clients on mount
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await clientApi.getAll({ limit: 100 });
+        const clientsData = response.data.data?.clients || response.data.data || response.data;
+
+        if (Array.isArray(clientsData) && clientsData.length > 0) {
+          setClients(clientsData);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch clients, using static data:', err);
+        // Keep static clients as fallback
+      }
+    };
+
+    fetchClients();
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -87,10 +108,17 @@ export default function AddSiteModal({ onClose, onSuccess }) {
         status: formData.status === "Active" ? "ACTIVE" : "INACTIVE"
       };
 
-      const response = await siteApi.create(payload);
+      let response;
+      if (site) {
+        // Update existing site
+        response = await siteApi.update(site.id, payload);
+      } else {
+        // Create new site
+        response = await siteApi.create(payload);
+      }
 
-      // If access code data exists, add it
-      if (accessCodeData.codeName && accessCodeData.accessCode) {
+      // If access code data exists, add it (only for new sites or if fields are filled)
+      if (!site && accessCodeData.codeName && accessCodeData.accessCode) {
         await siteApi.addAccessCode(response.data.data.id, {
           ...accessCodeData,
           visibleOnMobile: accessCodeData.visibleOnMobile === "yes",
@@ -106,7 +134,7 @@ export default function AddSiteModal({ onClose, onSuccess }) {
       if (apiErrors) {
         setErrors(apiErrors);
       }
-      toast.error(err.response?.data?.message || 'Failed to create site');
+      toast.error(err.response?.data?.message || `Failed to ${site ? 'update' : 'create'} site`);
     } finally {
       setSubmitting(false);
     }
@@ -156,14 +184,18 @@ export default function AddSiteModal({ onClose, onSuccess }) {
         >
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-            <h2 className="text-base sm:text-lg font-semibold">Site Details</h2>
+            <h2 className="text-base sm:text-lg font-semibold">
+              {site ? 'Edit Site' : 'Site Details'}
+            </h2>
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-            <button className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-pink-600 border border-pink-600 rounded hover:bg-pink-50 transition-colors flex items-center gap-1 sm:gap-2">
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">New Site</span>
-            </button>
+            {!site && (
+              <button className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-pink-600 border border-pink-600 rounded hover:bg-pink-50 transition-colors flex items-center gap-1 sm:gap-2">
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">New Site</span>
+              </button>
+            )}
             <Button variant="outline" size="icon" className="hidden md:flex">
               <MapPin className="w-4 h-4" />
             </Button>
@@ -254,8 +286,11 @@ export default function AddSiteModal({ onClose, onSuccess }) {
                   onChange={(e) => handleInputChange("client", e.target.value)}
                 >
                   <option value="">Select Client</option>
-                  <option value="internal">Internal Company Site</option>
-                  <option value="qld-rail">Queensland Rail</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.clientName}>
+                      {client.clientName}
+                    </option>
+                  ))}
                 </Select>
               </div>
 
@@ -502,9 +537,13 @@ export default function AddSiteModal({ onClose, onSuccess }) {
                           onChange={(e) => handleInputChange("timezone", e.target.value)}
                           className="max-w-md"
                         >
-                          <option value="(UTC+10:00) Canberra, Melbourne, Sydney">
-                            (UTC+10:00) Canberra, Melbourne, Sydney
-                          </option>
+                          <option value="Australia/Perth">(UTC+08:00) Perth</option>
+                          <option value="Australia/Darwin">(UTC+09:30) Darwin</option>
+                          <option value="Australia/Brisbane">(UTC+10:00) Brisbane</option>
+                          <option value="Australia/Adelaide">(UTC+10:30) Adelaide</option>
+                          <option value="Australia/Sydney">(UTC+10:00) Sydney</option>
+                          <option value="Australia/Melbourne">(UTC+10:00) Melbourne</option>
+                          <option value="Australia/Hobart">(UTC+10:00) Hobart</option>
                         </Select>
                       </div>
 

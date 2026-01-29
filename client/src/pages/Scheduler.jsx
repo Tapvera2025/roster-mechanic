@@ -28,7 +28,7 @@ import AddShiftModal from "../components/scheduler/AddShiftModal";
 
 export default function Scheduler() {
   const [selectedSite, setSelectedSite] = useState("");
-  const [viewMode, setViewMode] = useState("4weeks");
+  const [viewMode, setViewMode] = useState("week");
   const [viewType, setViewType] = useState("employee"); // employee, location, position
   const [optionsOpen, setOptionsOpen] = useState(false);
   const optionsRef = useRef(null);
@@ -631,7 +631,7 @@ export default function Scheduler() {
                 return (
                   <div
                     key={index}
-                    className="w-[140px] px-2 py-3 text-center border-r border-gray-200"
+                    className="w-35 px-2 py-3 text-center border-r border-gray-200"
                   >
                     {date === "TODAY" ? (
                       <div className="text-sm font-bold text-gray-900">TODAY</div>
@@ -645,6 +645,7 @@ export default function Scheduler() {
                         </div>
                       </>
                     )}
+                    
 
                     {/* Weather Information */}
                     {weather && (

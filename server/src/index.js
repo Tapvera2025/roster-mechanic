@@ -107,6 +107,7 @@ v1Router.use('/scheduler', require('./routes/scheduler.routes'));
 v1Router.use('/weather', require('./routes/weather.routes'));
 v1Router.use('/employees', require('./routes/employee.routes'));
 v1Router.use('/companies', require('./routes/company.routes'));
+v1Router.use('/clients', require('./routes/client.routes'));
 v1Router.use('/users', require('./routes/user.routes'));
 
 // Mount API version

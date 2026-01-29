@@ -6,6 +6,7 @@
 
 const User = require('./User');
 const Company = require('./Company');
+const Client = require('./Client');
 const Employee = require('./Employee');
 const Shift = require('./Shift');
 const Site = require('./Site');
@@ -15,6 +16,7 @@ const EmployeeSite = require('./EmployeeSite');
 module.exports = {
   User,
   Company,
+  Client,
   Employee,
   Shift,
   Site,

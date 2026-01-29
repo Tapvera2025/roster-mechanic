@@ -1,7 +1,7 @@
 import { ArrowUpDown } from "lucide-react";
 import SiteRow from "./SiteRow";
 
-export default function SitesTable({ sites, loading, showInactive }) {
+export default function SitesTable({ sites, loading, showInactive, onSiteClick }) {
   // If loading, show spinner
   if (loading) {
     return (
@@ -60,7 +60,7 @@ export default function SitesTable({ sites, loading, showInactive }) {
 
           <tbody className="divide-y divide-gray-200">
             {sites.map((site) => (
-              <SiteRow key={site.id} site={site} />
+              <SiteRow key={site.id} site={site} onSiteClick={onSiteClick} />
             ))}
           </tbody>
         </table>

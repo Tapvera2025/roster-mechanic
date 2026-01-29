@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
-import { siteApi } from "../../lib/api";
+import { siteApi, clientApi } from "../../lib/api";
+import staticClients from "../../data/clients";
 
 export default function AddMultipleSitesModal({ onClose, onSuccess }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -12,6 +13,7 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const modalRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
+  const [clients, setClients] = useState(staticClients);
 
   const [sites, setSites] = useState([
     { id: 1, siteName: "", shortName: "", address: "", client: "", checked: false },
@@ -21,6 +23,25 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
     { id: 5, siteName: "", shortName: "", address: "", client: "", checked: false },
     { id: 6, siteName: "", shortName: "", address: "", client: "", checked: false },
   ]);
+
+  // Fetch clients on mount
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await clientApi.getAll({ limit: 100 });
+        const clientsData = response.data.data?.clients || response.data.data || response.data;
+
+        if (Array.isArray(clientsData) && clientsData.length > 0) {
+          setClients(clientsData);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch clients, using static data:', err);
+        // Keep static clients as fallback
+      }
+    };
+
+    fetchClients();
+  }, []);
 
   const handleMouseDown = (e) => {
     if (e.target.closest(".modal-header")) {
@@ -204,9 +225,11 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
                         }
                       >
                         <option value="">Select...</option>
-                        <option value="internal">Internal Company Site</option>
-                        <option value="qld-rail">Queensland Rail</option>
-                        <option value="private">Private Client</option>
+                        {clients.map((client) => (
+                          <option key={client.id} value={client.clientName}>
+                            {client.clientName}
+                          </option>
+                        ))}
                       </Select>
                     </td>
                     <td className="py-3 px-2 text-center">

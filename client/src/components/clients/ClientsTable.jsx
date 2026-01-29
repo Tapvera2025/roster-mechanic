@@ -1,8 +1,7 @@
 import { ArrowUpDown } from "lucide-react";
-import clients from "../../data/clients";
 import ClientRow from "./ClientRow";
 
-export default function ClientsTable() {
+export default function ClientsTable({ clients = [], loading = false, onClientClick }) {
   return (
     <div className="bg-white rounded-lg sm:rounded-xl shadow-sm">
       {/* Scrollable table container */}
@@ -28,9 +27,23 @@ export default function ClientsTable() {
           </thead>
 
           <tbody className="divide-y divide-gray-200">
-            {clients.map((client) => (
-              <ClientRow key={client.id} client={client} />
-            ))}
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+                  Loading clients...
+                </td>
+              </tr>
+            ) : clients.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+                  No clients found
+                </td>
+              </tr>
+            ) : (
+              clients.map((client) => (
+                <ClientRow key={client.id} client={client} onClientClick={onClientClick} />
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -38,7 +51,7 @@ export default function ClientsTable() {
       {/* Pagination */}
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
         <div className="text-xs sm:text-sm text-gray-600">
-          Showing 1 to {clients.length} of {clients.length} entries (filtered from 3 total entries)
+          Showing 1 to {clients.length} of {clients.length} entries
         </div>
         <div className="flex items-center gap-2">
           <button className="px-3 py-1 text-xs sm:text-sm border border-gray-300 rounded hover:bg-gray-100 transition-colors">
