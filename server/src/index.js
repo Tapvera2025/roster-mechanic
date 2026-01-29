@@ -109,6 +109,7 @@ v1Router.use('/employees', require('./routes/employee.routes'));
 v1Router.use('/companies', require('./routes/company.routes'));
 v1Router.use('/clients', require('./routes/client.routes'));
 v1Router.use('/users', require('./routes/user.routes'));
+v1Router.use('/shifts', require('./routes/shift.routes'));
 
 // Mount API version
 app.use('/api/v1', v1Router);

@@ -5,6 +5,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Label } from '../ui/Label';
 import toast from 'react-hot-toast';
+import { siteApi, employeeApi } from '../../lib/api';
 
 export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = null }) {
   const [formData, setFormData] = useState({
@@ -14,8 +15,34 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
     phone: '',
     position: '',
     department: '',
+    password: '',
     isActive: true
   });
+
+  const [sites, setSites] = useState([]);
+  const [selectedSites, setSelectedSites] = useState([]);
+
+  // Fetch sites on modal open
+  useEffect(() => {
+    if (isOpen) {
+      const fetchSites = async () => {
+        try {
+          const response = await siteApi.getAll({ limit: 100 });
+          const sitesData = response.data.data?.sites || response.data.data || [];
+          // Transform sites to ensure they have an id field
+          const transformedSites = sitesData.map(site => ({
+            ...site,
+            id: site.id || site._id
+          }));
+          setSites(transformedSites);
+        } catch (err) {
+          console.error('Failed to fetch sites:', err);
+          toast.error('Failed to load sites');
+        }
+      };
+      fetchSites();
+    }
+  }, [isOpen]);
 
   // Reset form when modal opens with employee data or new
   useEffect(() => {
@@ -28,8 +55,10 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
           phone: employee.phone || '',
           position: employee.position || '',
           department: employee.department || '',
+          password: '', // Don't populate password for security
           isActive: employee.isActive !== undefined ? employee.isActive : true
         });
+        setSelectedSites([]);
       } else {
         setFormData({
           firstName: '',
@@ -38,14 +67,24 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
           phone: '',
           position: '',
           department: '',
+          password: '',
           isActive: true
         });
+        setSelectedSites([]);
       }
     }
   }, [isOpen, employee]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSiteToggle = (siteId) => {
+    setSelectedSites(prev =>
+      prev.includes(siteId)
+        ? prev.filter(id => id !== siteId)
+        : [...prev, siteId]
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -57,7 +96,23 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
       return;
     }
 
-    onSave(formData);
+    // Password validation for new employees
+    if (!employee && !formData.password) {
+      toast.error('Password is required for new employees');
+      return;
+    }
+
+    if (formData.password && formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+
+    // Pass both employee data and selected sites to parent
+    try {
+      await onSave(formData, selectedSites);
+    } catch (err) {
+      // Error already handled in parent
+    }
   };
 
   if (!isOpen) return null;
@@ -163,6 +218,42 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                 </div>
               </div>
 
+              {/* Login Credentials */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-md font-semibold text-gray-900 mb-4">Login Credentials</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Provide a password to allow this employee to log in and view their schedules
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Password {!employee && '*'}</Label>
+                    <Input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleChange('password', e.target.value)}
+                      className="mt-1"
+                      placeholder={employee ? "Leave blank to keep current password" : "Enter password"}
+                      required={!employee}
+                      minLength={8}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {employee ? "Leave blank to keep current password" : "Minimum 8 characters"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Role</Label>
+                    <Input
+                      value="USER (View Own Shifts)"
+                      disabled
+                      className="mt-1 bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Employees can view their own schedules
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Position */}
               <div>
                 <Label>What Position(s) Does Employee Work? *</Label>
@@ -251,6 +342,39 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Site Assignment Section */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-md font-semibold text-gray-900 mb-4">Site Assignment</h3>
+                <p className="text-sm text-gray-600 mb-3">Select the sites this employee will be assigned to:</p>
+                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3 space-y-2">
+                  {sites.length === 0 ? (
+                    <p className="text-sm text-gray-500">No sites available</p>
+                  ) : (
+                    sites.map((site) => (
+                      <label
+                        key={site.id}
+                        className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedSites.includes(site.id)}
+                          onChange={() => handleSiteToggle(site.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">
+                          {site.shortName} - {site.siteLocationName}
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                {selectedSites.length > 0 && (
+                  <p className="text-sm text-blue-600 mt-2">
+                    {selectedSites.length} site{selectedSites.length !== 1 ? 's' : ''} selected
+                  </p>
+                )}
               </div>
 
               {/* Emergency Contact Section */}

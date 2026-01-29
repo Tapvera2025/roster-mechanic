@@ -67,7 +67,8 @@ export const shiftApi = {
   getById: (id) => api.get(`/scheduler/shifts/${id}`),
   create: (data) => api.post('/scheduler/shifts', data),
   update: (id, data) => api.put(`/scheduler/shifts/${id}`, data),
-  delete: (id) => api.delete(`/scheduler/shifts/${id}`)
+  delete: (id) => api.delete(`/scheduler/shifts/${id}`),
+  getMyShifts: (startDate, endDate) => api.get('/shifts/my-shifts', { params: { startDate, endDate } })
 };
 
 // Weather API endpoints

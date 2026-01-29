@@ -67,8 +67,14 @@ class EmployeeService {
       Employee.countDocuments(query),
     ]);
 
+    // Transform _id to id for frontend compatibility
+    const transformedEmployees = employees.map(emp => ({
+      ...emp,
+      id: emp._id.toString()
+    }));
+
     return {
-      employees,
+      employees: transformedEmployees,
       pagination: {
         total,
         page: parseInt(page),
@@ -117,6 +123,7 @@ class EmployeeService {
 
     return {
       ...employee,
+      id: employee._id.toString(),
       assignedSites: siteAssignments,
     };
   }
@@ -207,9 +214,36 @@ class EmployeeService {
       }
     }
 
+    // Auto-create User account for employee login (if password provided)
+    let createdUserId = data.userId;
+    if (!data.userId && data.password) {
+      // Check if user with this email already exists
+      const existingUser = await User.findOne({
+        email: data.email,
+        companyId,
+      });
+
+      if (!existingUser) {
+        // Create user account for the employee
+        const newUser = await User.create({
+          email: data.email,
+          password: data.password,
+          name: `${data.firstName} ${data.lastName}`,
+          role: 'USER', // Employees get USER role by default
+          companyId,
+          createdBy: userId,
+        });
+        createdUserId = newUser._id;
+      } else {
+        // Use existing user account
+        createdUserId = existingUser._id;
+      }
+    }
+
     // Create employee with context
     const employee = await Employee.create({
       ...data,
+      userId: createdUserId, // Link to user account
       companyId,
       createdBy: userId,
     });
@@ -217,8 +251,12 @@ class EmployeeService {
     // Remove TFN from response
     const employeeObj = employee.toObject();
     delete employeeObj.tfn;
+    delete employeeObj.password; // Don't return password
 
-    return employeeObj;
+    return {
+      ...employeeObj,
+      id: employeeObj._id.toString()
+    };
   }
 
   /**
@@ -343,7 +381,10 @@ class EmployeeService {
     const employeeObj = employee.toObject();
     delete employeeObj.tfn;
 
-    return employeeObj;
+    return {
+      ...employeeObj,
+      id: employeeObj._id.toString()
+    };
   }
 
   /**

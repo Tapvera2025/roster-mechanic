@@ -72,19 +72,34 @@ export default function Employees() {
     }
   };
 
-  const handleSaveEmployee = async (employeeData) => {
+  const handleSaveEmployee = async (employeeData, selectedSiteIds = []) => {
     try {
+      let response;
       if (editingEmployee) {
-        await employeeApi.update(editingEmployee.id, employeeData);
+        response = await employeeApi.update(editingEmployee.id, employeeData);
         toast.success('Employee updated successfully');
+
+        // Assign sites if provided
+        if (selectedSiteIds.length > 0) {
+          await employeeApi.assignToSites(editingEmployee.id, selectedSiteIds);
+          toast.success('Sites assigned successfully');
+        }
       } else {
-        await employeeApi.create(employeeData);
+        response = await employeeApi.create(employeeData);
+        const createdEmployee = response.data.data;
         toast.success('Employee created successfully');
+
+        // Assign sites if provided
+        if (selectedSiteIds.length > 0) {
+          await employeeApi.assignToSites(createdEmployee.id, selectedSiteIds);
+          toast.success('Sites assigned successfully');
+        }
       }
       setIsModalOpen(false);
       fetchEmployees();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save employee');
+      throw err; // Re-throw to let modal know it failed
     }
   };
 

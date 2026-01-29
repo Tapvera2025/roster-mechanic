@@ -88,23 +88,30 @@ userSchema.plugin(auditLogPlugin);
 userSchema.plugin(multiTenantPlugin);
 
 // Hash password before saving
-userSchema.pre('save', async function () {
-  // Only hash if password is modified
-  if (!this.isModified('password')) return;
+// TEMPORARILY DISABLED FOR DEVELOPMENT - UNCOMMENT FOR PRODUCTION
+// userSchema.pre('save', async function () {
+//   // Only hash if password is modified
+//   if (!this.isModified('password')) return;
 
-  // Hash password
-  const salt = await bcrypt.genSalt(config.auth.bcryptSaltRounds);
-  this.password = await bcrypt.hash(this.password, salt);
+//   // Hash password
+//   const salt = await bcrypt.genSalt(config.auth.bcryptSaltRounds);
+//   this.password = await bcrypt.hash(this.password, salt);
 
-  // Set passwordChangedAt
-  if (!this.isNew) {
-    this.passwordChangedAt = Date.now() - 1000; // Subtract 1s to ensure token is created after password change
-  }
-});
+//   // Set passwordChangedAt
+//   if (!this.isNew) {
+//     this.passwordChangedAt = Date.now() - 1000; // Subtract 1s to ensure token is created after password change
+//   }
+// });
 
 // Compare password method
+// TEMPORARILY DISABLED FOR DEVELOPMENT - UNCOMMENT FOR PRODUCTION
+// userSchema.methods.comparePassword = async function (candidatePassword) {
+//   return await bcrypt.compare(candidatePassword, this.password);
+// };
+
+// DEVELOPMENT ONLY: Plain text password comparison (REMOVE IN PRODUCTION!)
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  return candidatePassword === this.password;
 };
 
 // Check if password was changed after JWT was issued
