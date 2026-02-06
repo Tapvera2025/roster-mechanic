@@ -16,6 +16,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const morgan = require('morgan');
+const path = require('path');
 
 // Load configuration FIRST (uses dotenv-flow)
 const config = require('./config');
@@ -89,6 +90,12 @@ if (config.isProduction() || config.isStaging()) {
 }
 
 // =========================================
+// STATIC FILE SERVING
+// =========================================
+// Serve uploaded photos (clock in/out photos)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// =========================================
 // HEALTH CHECK ROUTES (NO AUTH REQUIRED)
 // =========================================
 app.use('/health', require('./routes/health'));
@@ -110,6 +117,7 @@ v1Router.use('/companies', require('./routes/company.routes'));
 v1Router.use('/clients', require('./routes/client.routes'));
 v1Router.use('/users', require('./routes/user.routes'));
 v1Router.use('/shifts', require('./routes/shift.routes'));
+v1Router.use('/clock', require('./routes/clockInOut.routes'));
 
 // Mount API version
 app.use('/api/v1', v1Router);

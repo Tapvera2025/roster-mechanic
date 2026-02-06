@@ -18,6 +18,9 @@ import Packages from "./pages/Packages";
 import Login from "./pages/Login";
 import MyRoster from "./pages/user/MyRoster";
 import ChangePassword from "./pages/user/ChangePassword";
+import ClockInOut from "./components/attendance/ClockInOut";
+import TimeRecordsHistory from "./components/attendance/TimeRecordsHistory";
+import ManagerTimeRecords from "./components/attendance/ManagerTimeRecords";
 
 function App() {
   return (
@@ -35,6 +38,8 @@ function App() {
           <Route path="scheduler" element={<Scheduler />} />
           <Route path="roster" element={<Roster />} />
           <Route path="attendance/time" element={<TimeAttendance />} />
+          <Route path="attendance/clock" element={<ClockInOut />} />
+          <Route path="attendance/records" element={<ManagerTimeRecords />} />
           <Route path="employees" element={<Employees />} />
           <Route path="employees/compliance" element={<Reports />} />
           <Route path="employees/leave" element={<LeaveManagement />} />
@@ -48,6 +53,8 @@ function App() {
         <Route path="/user" element={<ProtectedRoute><UserLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/user/roster" replace />} />
           <Route path="roster" element={<MyRoster />} />
+          <Route path="clock" element={<ClockInOut />} />
+          <Route path="history" element={<TimeRecordsHistory />} />
           <Route path="change-password" element={<ChangePassword />} />
         </Route>
 

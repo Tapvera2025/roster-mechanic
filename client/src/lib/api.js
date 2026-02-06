@@ -106,4 +106,50 @@ export const userApi = {
   getProfile: () => api.get('/user/profile')
 };
 
+// Clock In/Out API endpoints
+export const clockApi = {
+  clockIn: (employeeId, siteId, latitude, longitude, photo, shiftId) => {
+    const formData = new FormData();
+    formData.append('employeeId', employeeId);
+    formData.append('siteId', siteId);
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
+    if (photo) formData.append('photo', photo);
+    if (shiftId) formData.append('shiftId', shiftId);
+
+    return api.post('/clock/in', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  clockOut: (employeeId, latitude, longitude, photo) => {
+    const formData = new FormData();
+    formData.append('employeeId', employeeId);
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
+    if (photo) formData.append('photo', photo);
+
+    return api.post('/clock/out', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  getCurrentStatus: (employeeId) => api.get('/clock/status', { params: { employeeId } }),
+
+  getMyHistory: (employeeId, params = {}) => api.get('/clock/history', {
+    params: { employeeId, ...params }
+  }),
+
+  getRecords: (params = {}) => api.get('/clock/records', { params }),
+
+  exportCSV: (params = {}) => api.get('/clock/export', {
+    params,
+    responseType: 'blob'
+  })
+};
+
 export default api;

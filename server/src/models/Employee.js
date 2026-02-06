@@ -56,6 +56,13 @@ const employeeSchema = new mongoose.Schema(
       sparse: true,
     },
 
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      sparse: true,
+      index: true,
+    },
+
     dateOfBirth: {
       type: Date,
     },
@@ -121,6 +128,7 @@ employeeSchema.virtual('assignedSites', {
 
 // Indexes
 employeeSchema.index({ email: 1, companyId: 1 }, { unique: true });
+employeeSchema.index({ userId: 1, companyId: 1 }, { unique: true, sparse: true });
 employeeSchema.index({ firstName: 1, lastName: 1, companyId: 1 });
 employeeSchema.index({ position: 1, companyId: 1 });
 employeeSchema.index({ isActive: 1, deletedAt: 1 });
