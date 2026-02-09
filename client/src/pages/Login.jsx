@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Label } from "../components/ui/Label";
-import { Lock, User } from "lucide-react";
+import { Lock, User, Eye, EyeOff } from "lucide-react";
 import { userApi } from "../lib/api";
 import { toast } from "react-hot-toast";
 
@@ -15,6 +15,7 @@ export default function Login() {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,14 +109,25 @@ export default function Login() {
                 <Input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   required
                   autoComplete="current-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
             </div>
 

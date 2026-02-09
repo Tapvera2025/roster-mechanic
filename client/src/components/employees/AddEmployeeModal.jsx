@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Upload, User } from 'lucide-react';
+import { X, Upload, User, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
@@ -21,6 +21,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
 
   const [sites, setSites] = useState([]);
   const [selectedSites, setSelectedSites] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Fetch sites on modal open
   useEffect(() => {
@@ -227,15 +228,28 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Password {!employee && '*'}</Label>
-                    <Input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => handleChange('password', e.target.value)}
-                      className="mt-1"
-                      placeholder={employee ? "Leave blank to keep current password" : "Enter password"}
-                      required={!employee}
-                      minLength={8}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => handleChange('password', e.target.value)}
+                        className="mt-1 pr-10"
+                        placeholder={employee ? "Leave blank to keep current password" : "Enter password"}
+                        required={!employee}
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
                       {employee ? "Leave blank to keep current password" : "Minimum 8 characters"}
                     </p>

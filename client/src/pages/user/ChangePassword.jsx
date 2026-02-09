@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, KeyRound } from "lucide-react";
+import { Lock, KeyRound, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -14,6 +14,9 @@ export default function ChangePassword() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -114,12 +117,23 @@ export default function ChangePassword() {
                   <Input
                     id="oldPassword"
                     name="oldPassword"
-                    type="password"
+                    type={showOldPassword ? "text" : "password"}
                     value={formData.oldPassword}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     placeholder="Enter current password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showOldPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
                 {errors.oldPassword && (
                   <p className="text-red-500 text-xs">{errors.oldPassword}</p>
@@ -134,12 +148,23 @@ export default function ChangePassword() {
                   <Input
                     id="newPassword"
                     name="newPassword"
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     value={formData.newPassword}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     placeholder="Enter new password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
                 {errors.newPassword && (
                   <p className="text-red-500 text-xs">{errors.newPassword}</p>
@@ -154,12 +179,23 @@ export default function ChangePassword() {
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     placeholder="Confirm new password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
                 {errors.confirmPassword && (
                   <p className="text-red-500 text-xs">{errors.confirmPassword}</p>
