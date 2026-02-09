@@ -103,7 +103,8 @@ export const userApi = {
   getMyShifts: (startDate, endDate) =>
     api.get('/user/shifts', { params: { startDate, endDate } }),
   changePassword: (data) => api.post('/user/change-password', data),
-  getProfile: () => api.get('/user/profile')
+  getProfile: () => api.get('/users/me'),
+  updateProfile: (data) => api.put('/users/me', data)
 };
 
 // Clock In/Out API endpoints

@@ -16,7 +16,9 @@ import SiteActivities from "./pages/SiteActivities";
 import TimeAttendance from "./pages/TimeAttendance";
 import Packages from "./pages/Packages";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import MyRoster from "./pages/user/MyRoster";
+import UserProfile from "./pages/user/Profile";
 import ChangePassword from "./pages/user/ChangePassword";
 import ClockInOut from "./components/attendance/ClockInOut";
 import TimeRecordsHistory from "./components/attendance/TimeRecordsHistory";
@@ -47,6 +49,7 @@ function App() {
           <Route path="operations/site-activities" element={<SiteActivities />} />
           <Route path="company/sites" element={<Sites />} />
           <Route path="company/clients" element={<Clients />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* User/Employee Portal Routes */}
@@ -55,6 +58,7 @@ function App() {
           <Route path="roster" element={<MyRoster />} />
           <Route path="clock" element={<ClockInOut />} />
           <Route path="history" element={<TimeRecordsHistory />} />
+          <Route path="profile" element={<UserProfile />} />
           <Route path="change-password" element={<ChangePassword />} />
         </Route>
 

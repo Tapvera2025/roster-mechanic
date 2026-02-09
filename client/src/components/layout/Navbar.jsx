@@ -12,6 +12,12 @@ export default function Navbar({ onToggleSidebar }) {
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  // Get user info from localStorage
+  const userName = localStorage.getItem("userName") || "User";
+  const userEmail = localStorage.getItem("userEmail") || "";
+  const userRole = localStorage.getItem("userRole") || "USER";
+  const userInitials = userName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+
   const handleLogout = () => {
     // Clear all authentication data
     localStorage.removeItem("isAuthenticated");
@@ -54,11 +60,13 @@ export default function Navbar({ onToggleSidebar }) {
                 className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-xl transition-colors"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-semibold">AT</span>
+                  <span className="text-white text-sm font-semibold">{userInitials}</span>
                 </div>
                 <div className="hidden md:block text-left">
-                  <div className="text-sm font-semibold text-gray-800">ACE T</div>
-                  <div className="text-xs text-gray-500">Admin</div>
+                  <div className="text-sm font-semibold text-gray-800">{userName}</div>
+                  <div className="text-xs text-gray-500">
+                    {userRole === "ADMIN" ? "Admin" : userRole === "MANAGER" ? "Manager" : "Employee"}
+                  </div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
@@ -75,16 +83,19 @@ export default function Navbar({ onToggleSidebar }) {
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold">AT</span>
+                            <span className="text-white font-semibold">{userInitials}</span>
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-gray-800">ACE T</div>
-                            <div className="text-xs text-gray-500">ace@roster.com</div>
+                            <div className="text-sm font-semibold text-gray-800">{userName}</div>
+                            <div className="text-xs text-gray-500">{userEmail}</div>
                           </div>
                         </div>
                       </div>
                       <button
-                        onClick={() => navigate("/settings")}
+                        onClick={() => {
+                          navigate("/profile");
+                          setUserMenuOpen(false);
+                        }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         <User className="w-4 h-4" />

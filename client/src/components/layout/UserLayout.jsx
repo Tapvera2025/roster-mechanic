@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutGrid, Lock, Menu, X, Clock, History } from "lucide-react";
+import { LayoutGrid, Lock, Menu, X, Clock, History, User } from "lucide-react";
 
 export default function UserLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -9,6 +9,7 @@ export default function UserLayout() {
     { to: "/user/roster", label: "Roster", icon: LayoutGrid },
     { to: "/user/clock", label: "Clock In/Out", icon: Clock },
     { to: "/user/history", label: "Time Records", icon: History },
+    { to: "/user/profile", label: "Profile", icon: User },
     { to: "/user/change-password", label: "Change Password", icon: Lock },
   ];
 

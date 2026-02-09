@@ -8,7 +8,7 @@
 5. [User Guide](#user-guide)
 6. [API Reference](#api-reference)
 7. [Troubleshooting](#troubleshooting)
-8. [Future Enhancements](#future-enhancements)
+8. [Future Enhancements](#future-enhancements)]
 
 ---
 
