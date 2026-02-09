@@ -65,19 +65,19 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50/30 px-4 sm:px-6">
+    <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--color-background))] px-4 sm:px-6">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 sm:p-8">
+        <div className="bg-[hsl(var(--color-card))] rounded-2xl shadow-xl border border-[hsl(var(--color-border))] p-6 sm:p-8">
           {/* Logo/Title */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-4 shadow-md">
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-primary-hover))] rounded-2xl mb-4 shadow-lg">
               <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[hsl(var(--color-foreground))] mb-2">
               Roster Mechanic
             </h1>
-            <p className="text-gray-500 text-sm sm:text-base">Sign in to your account</p>
+            <p className="text-[hsl(var(--color-foreground-secondary))] text-sm sm:text-base">Sign in to your account</p>
           </div>
 
           {/* Form */}
@@ -133,7 +133,7 @@ export default function Login() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+              <div className="bg-[hsl(var(--color-error-soft))] border border-[hsl(var(--color-error))] text-[hsl(var(--color-error))] px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
@@ -145,18 +145,18 @@ export default function Login() {
                   id="remember"
                   name="remember"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-[hsl(var(--color-border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))]"
                 />
                 <label
                   htmlFor="remember"
-                  className="ml-2 block text-gray-700"
+                  className="ml-2 block text-[hsl(var(--color-foreground-secondary))]"
                 >
                   Remember me
                 </label>
               </div>
               <button
                 type="button"
-                className="font-medium text-blue-500 hover:text-blue-600 transition-colors"
+                className="font-medium text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-hover))] transition-colors"
               >
                 Forgot password?
               </button>
@@ -173,9 +173,9 @@ export default function Login() {
           </form>
 
           {/* Demo Credentials Info */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-            <p className="text-xs font-semibold text-blue-900 mb-2">Login with your account:</p>
-            <p className="text-xs text-blue-700">Enter your registered email and password to sign in</p>
+          <div className="mt-6 p-4 bg-[hsl(var(--color-surface-elevated))] rounded-xl border border-[hsl(var(--color-border))]">
+            <p className="text-xs font-semibold text-[hsl(var(--color-foreground))] mb-2">Login with your account:</p>
+            <p className="text-xs text-[hsl(var(--color-foreground-secondary))]">Enter your registered email and password to sign in</p>
           </div>
         </div>
       </div>

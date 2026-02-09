@@ -6,50 +6,50 @@ export default function DashboardStats({ date = "Today" }) {
       label: "Tentative Shifts",
       value: "00",
       icon: Calendar,
-      gradient: "from-blue-500 to-cyan-500",
-      bgGradient: "bg-gradient-to-br from-blue-50 to-cyan-50",
+      iconBg: "bg-orange-900/30",
+      iconColor: "text-orange-400",
     },
     {
       label: "Open Shifts",
       value: "00",
       icon: Users,
-      gradient: "from-purple-500 to-pink-500",
-      bgGradient: "bg-gradient-to-br from-purple-50 to-pink-50",
+      iconBg: "bg-orange-900/30",
+      iconColor: "text-orange-400",
     },
     {
       label: "Unpublished Shifts",
       value: "00",
       icon: FileText,
-      gradient: "from-cyan-500 to-teal-500",
-      bgGradient: "bg-gradient-to-br from-cyan-50 to-teal-50",
+      iconBg: "bg-orange-900/30",
+      iconColor: "text-orange-400",
     },
     {
       label: "Licenses Expiry",
       value: "02",
       icon: AlertTriangle,
-      gradient: "from-orange-500 to-red-500",
-      bgGradient: "bg-gradient-to-br from-orange-50 to-red-50",
+      iconBg: "bg-orange-900/30",
+      iconColor: "text-orange-400",
     },
     {
       label: "No Show/Absent",
       value: "00",
       icon: UserX,
-      gradient: "from-pink-500 to-rose-500",
-      bgGradient: "bg-gradient-to-br from-pink-50 to-rose-50",
+      iconBg: "bg-red-900/30",
+      iconColor: "text-red-400",
     },
     {
       label: "Leave Requests",
       value: "00",
       icon: Plane,
-      gradient: "from-emerald-500 to-green-500",
-      bgGradient: "bg-gradient-to-br from-emerald-50 to-green-50",
+      iconBg: "bg-green-900/30",
+      iconColor: "text-green-400",
     },
     {
       label: "Availability Requests",
       value: "00",
       icon: Clock,
-      gradient: "from-indigo-500 to-blue-500",
-      bgGradient: "bg-gradient-to-br from-indigo-50 to-blue-50",
+      iconBg: "bg-orange-900/30",
+      iconColor: "text-orange-400",
     },
   ];
 
@@ -57,19 +57,19 @@ export default function DashboardStats({ date = "Today" }) {
     <div className="px-4 sm:px-6 lg:px-8">
       {/* Date Selector */}
       <div className="flex items-center justify-center py-4">
-        <button className="p-2 hover:bg-white/80 rounded-lg transition-colors">
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+        <button className="p-2 hover:bg-[hsl(var(--color-surface-elevated))] rounded-lg transition-colors">
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-[hsl(var(--color-foreground-muted))]" />
         </button>
         <div className="mx-3 sm:mx-6 min-w-[100px] sm:min-w-[140px] text-center">
-          <button className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold text-gray-700 hover:text-blue-600 flex items-center gap-1 sm:gap-2 transition-colors hover:bg-white/80 rounded-lg">
+          <button className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-primary))] flex items-center gap-1 sm:gap-2 transition-colors hover:bg-[hsl(var(--color-surface-elevated))] rounded-lg">
             {date}
             <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
         </div>
-        <button className="p-2 hover:bg-white/80 rounded-lg transition-colors">
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+        <button className="p-2 hover:bg-[hsl(var(--color-surface-elevated))] rounded-lg transition-colors">
+          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[hsl(var(--color-foreground-muted))]" />
         </button>
       </div>
 
@@ -80,17 +80,17 @@ export default function DashboardStats({ date = "Today" }) {
           return (
             <div
               key={index}
-              className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 shadow-sm hover:-translate-y-1"
+              className="bg-[hsl(var(--color-card))] rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:shadow-lg transition-all duration-300 cursor-pointer border border-[hsl(var(--color-border))] shadow-sm hover:-translate-y-1"
             >
               <div className="flex flex-col gap-2 sm:gap-3">
-                <div className={`${stat.bgGradient} p-2 sm:p-3 rounded-lg sm:rounded-xl self-start shadow-sm`}>
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+                <div className={`${stat.iconBg} p-2 sm:p-3 rounded-lg sm:rounded-xl self-start`}>
+                  <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${stat.iconColor}`} />
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-bold text-gray-800">
+                  <div className="text-xl sm:text-2xl font-bold text-[hsl(var(--color-foreground))]">
                     {stat.value}
                   </div>
-                  <div className="text-[10px] sm:text-xs font-medium text-gray-500 mt-1 sm:mt-1.5 leading-tight">
+                  <div className="text-[10px] sm:text-xs font-medium text-[hsl(var(--color-foreground-secondary))] mt-1 sm:mt-1.5 leading-tight">
                     {stat.label}
                   </div>
                 </div>

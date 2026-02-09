@@ -34,7 +34,9 @@ export default function Scheduler() {
   const optionsRef = useRef(null);
 
   // Current start date for the calendar view
-  const [currentStartDate, setCurrentStartDate] = useState(new Date(2025, 11, 22));
+  const [currentStartDate, setCurrentStartDate] = useState(
+    new Date(2025, 11, 22),
+  );
 
   // API state
   const [sites, setSites] = useState([]);
@@ -47,7 +49,7 @@ export default function Scheduler() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState({
     employeeId: null,
-    date: null
+    date: null,
   });
 
   // Hover state
@@ -60,7 +62,7 @@ export default function Scheduler() {
         const response = await schedulerApi.getSites();
         setSites(response.data.data);
       } catch (err) {
-        toast.error('Failed to load sites');
+        toast.error("Failed to load sites");
       }
     };
     fetchSites();
@@ -82,32 +84,39 @@ export default function Scheduler() {
         const employeesData = response.data.data;
 
         // Transform employee data to match the UI format
-        const transformedEmployees = employeesData.map(emp => ({
+        const transformedEmployees = employeesData.map((emp) => ({
           id: emp.id,
           name: `${emp.firstName} ${emp.lastName}`,
           initials: `${emp.firstName[0]}${emp.lastName[0]}`.toUpperCase(),
-          hours: '0.00',
-          phone: emp.phone || 'N/A',
+          hours: "0.00",
+          phone: emp.phone || "N/A",
           position: emp.position,
           firstName: emp.firstName,
-          lastName: emp.lastName
+          lastName: emp.lastName,
         }));
 
         setEmployees(transformedEmployees);
 
         // Fetch shifts for the current date range
-        const numDays = viewMode === "week" ? 7 : viewMode === "2weeks" ? 14 : viewMode === "3weeks" ? 21 : 28;
+        const numDays =
+          viewMode === "week"
+            ? 7
+            : viewMode === "2weeks"
+              ? 14
+              : viewMode === "3weeks"
+                ? 21
+                : 28;
         const endDate = new Date(currentStartDate);
         endDate.setDate(endDate.getDate() + numDays - 1);
 
         const shiftsResponse = await schedulerApi.getSiteShifts(
           selectedSite,
-          currentStartDate.toISOString().split('T')[0],
-          endDate.toISOString().split('T')[0]
+          currentStartDate.toISOString().split("T")[0],
+          endDate.toISOString().split("T")[0],
         );
         setShifts(shiftsResponse.data.data);
       } catch (err) {
-        toast.error('Failed to load data');
+        toast.error("Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -126,15 +135,18 @@ export default function Scheduler() {
     const fetchWeather = async () => {
       try {
         // Find the selected site to get coordinates
-        const site = sites.find(s => s.id === parseInt(selectedSite));
+        const site = sites.find((s) => s.id === parseInt(selectedSite));
         if (!site || !site.latitude || !site.longitude) {
           return;
         }
 
-        const response = await weatherApi.getForecast(site.latitude, site.longitude);
+        const response = await weatherApi.getForecast(
+          site.latitude,
+          site.longitude,
+        );
         setWeatherData(response.data.data.forecast || []);
       } catch (err) {
-        console.error('Failed to load weather data:', err);
+        console.error("Failed to load weather data:", err);
         // Don't show error toast for weather - it's not critical
       }
     };
@@ -157,7 +169,20 @@ export default function Scheduler() {
   // Generate date columns and range based on view mode
   const { dateColumns, dateRange } = useMemo(() => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
 
     let numDays = 0;
 
@@ -167,7 +192,8 @@ export default function Scheduler() {
       numDays = 14;
     } else if (viewMode === "3weeks") {
       numDays = 21;
-    } else { // 4weeks
+    } else {
+      // 4weeks
       numDays = 28;
     }
 
@@ -209,14 +235,28 @@ export default function Scheduler() {
 
   // Navigation functions
   const handlePreviousPeriod = () => {
-    const numDays = viewMode === "week" ? 7 : viewMode === "2weeks" ? 14 : viewMode === "3weeks" ? 21 : 28;
+    const numDays =
+      viewMode === "week"
+        ? 7
+        : viewMode === "2weeks"
+          ? 14
+          : viewMode === "3weeks"
+            ? 21
+            : 28;
     const newDate = new Date(currentStartDate);
     newDate.setDate(newDate.getDate() - numDays);
     setCurrentStartDate(newDate);
   };
 
   const handleNextPeriod = () => {
-    const numDays = viewMode === "week" ? 7 : viewMode === "2weeks" ? 14 : viewMode === "3weeks" ? 21 : 28;
+    const numDays =
+      viewMode === "week"
+        ? 7
+        : viewMode === "2weeks"
+          ? 14
+          : viewMode === "3weeks"
+            ? 21
+            : 28;
     const newDate = new Date(currentStartDate);
     newDate.setDate(newDate.getDate() + numDays);
     setCurrentStartDate(newDate);
@@ -235,7 +275,7 @@ export default function Scheduler() {
 
     setModalData({
       employeeId: employeeId,
-      date: targetDate.toISOString().split('T')[0]
+      date: targetDate.toISOString().split("T")[0],
     });
     setIsModalOpen(true);
   };
@@ -244,22 +284,32 @@ export default function Scheduler() {
   const handleSaveShift = async (shiftData) => {
     try {
       const response = await shiftApi.create(shiftData);
-      toast.success('Shift created successfully');
+      toast.success("Shift created successfully");
       setIsModalOpen(false);
 
       // Refresh shifts only if the created shift is for the currently selected site
       const createdShift = response.data.data;
-      const createdShiftSiteId = typeof createdShift.siteId === 'object' ? createdShift.siteId.id : createdShift.siteId;
+      const createdShiftSiteId =
+        typeof createdShift.siteId === "object"
+          ? createdShift.siteId.id
+          : createdShift.siteId;
 
       if (selectedSite && createdShiftSiteId === selectedSite) {
-        const numDays = viewMode === "week" ? 7 : viewMode === "2weeks" ? 14 : viewMode === "3weeks" ? 21 : 28;
+        const numDays =
+          viewMode === "week"
+            ? 7
+            : viewMode === "2weeks"
+              ? 14
+              : viewMode === "3weeks"
+                ? 21
+                : 28;
         const endDate = new Date(currentStartDate);
         endDate.setDate(endDate.getDate() + numDays - 1);
 
         const shiftsResponse = await schedulerApi.getSiteShifts(
           selectedSite,
-          currentStartDate.toISOString().split('T')[0],
-          endDate.toISOString().split('T')[0]
+          currentStartDate.toISOString().split("T")[0],
+          endDate.toISOString().split("T")[0],
         );
         setShifts(shiftsResponse.data.data);
       } else if (createdShiftSiteId) {
@@ -267,7 +317,7 @@ export default function Scheduler() {
         setSelectedSite(createdShiftSiteId);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create shift');
+      toast.error(err.response?.data?.message || "Failed to create shift");
     }
   };
 
@@ -275,14 +325,16 @@ export default function Scheduler() {
   const getShiftsForCell = (employeeId, dateIndex) => {
     const targetDate = new Date(currentStartDate);
     targetDate.setDate(targetDate.getDate() + dateIndex);
-    const targetDateStr = targetDate.toISOString().split('T')[0];
+    const targetDateStr = targetDate.toISOString().split("T")[0];
 
-    return shifts.filter(shift => {
-      const shiftDate = new Date(shift.date).toISOString().split('T')[0];
+    return shifts.filter((shift) => {
+      const shiftDate = new Date(shift.date).toISOString().split("T")[0];
       // Get the shift's employee ID (handle both object and string formats)
-      const shiftEmployeeId = shift.employeeId ?
-        (typeof shift.employeeId === 'object' ? shift.employeeId.id : shift.employeeId) :
-        null;
+      const shiftEmployeeId = shift.employeeId
+        ? typeof shift.employeeId === "object"
+          ? shift.employeeId.id
+          : shift.employeeId
+        : null;
 
       // For open shifts (employeeId is null), only match if both are null
       if (employeeId === null) {
@@ -295,7 +347,11 @@ export default function Scheduler() {
   // Format time from ISO string to HH:MM
   const formatTime = (isoString) => {
     const date = new Date(isoString);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   };
 
   // Calculate shift duration in hours
@@ -310,9 +366,17 @@ export default function Scheduler() {
     { label: "Coverage Hrs", value: "0.00", color: "bg-green-500" },
     { label: "Confirmed Hrs", value: "0.00", color: "bg-green-500" },
     { label: "Tentative Hrs", value: "0.00", color: "bg-red-500" },
-    { label: "Published Shifts", value: shifts.filter(s => s.status === 'SCHEDULED').length.toString(), color: "bg-green-500" },
+    {
+      label: "Published Shifts",
+      value: shifts.filter((s) => s.status === "SCHEDULED").length.toString(),
+      color: "bg-green-500",
+    },
     { label: "Unpublished Shifts", value: "0", color: "bg-yellow-500" },
-    { label: "Open Shifts", value: shifts.filter(s => !s.employeeId).length.toString(), color: "bg-red-500" },
+    {
+      label: "Open Shifts",
+      value: shifts.filter((s) => !s.employeeId).length.toString(),
+      color: "bg-red-500",
+    },
     { label: "Warnings", value: "0", color: "bg-orange-500" },
   ];
 
@@ -328,11 +392,13 @@ export default function Scheduler() {
   const getWeatherIcon = (weather) => {
     if (!weather) return null;
     const condition = weather.toLowerCase();
-    if (condition.includes('rain')) return <CloudRain className="h-4 w-4" />;
-    if (condition.includes('cloud')) return <Cloud className="h-4 w-4" />;
-    if (condition.includes('snow')) return <CloudSnow className="h-4 w-4" />;
-    if (condition.includes('drizzle')) return <CloudDrizzle className="h-4 w-4" />;
-    if (condition.includes('clear') || condition.includes('sun')) return <Sun className="h-4 w-4" />;
+    if (condition.includes("rain")) return <CloudRain className="h-4 w-4" />;
+    if (condition.includes("cloud")) return <Cloud className="h-4 w-4" />;
+    if (condition.includes("snow")) return <CloudSnow className="h-4 w-4" />;
+    if (condition.includes("drizzle"))
+      return <CloudDrizzle className="h-4 w-4" />;
+    if (condition.includes("clear") || condition.includes("sun"))
+      return <Sun className="h-4 w-4" />;
     return <Cloud className="h-4 w-4" />;
   };
 
@@ -343,16 +409,16 @@ export default function Scheduler() {
     // Calculate the actual date for this column
     const targetDate = new Date(currentStartDate);
     targetDate.setDate(targetDate.getDate() + dateIndex);
-    const targetDateStr = targetDate.toISOString().split('T')[0];
+    const targetDateStr = targetDate.toISOString().split("T")[0];
 
     // Find weather data for this date
-    return weatherData.find(w => w.date === targetDateStr);
+    return weatherData.find((w) => w.date === targetDateStr);
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-[hsl(var(--color-card))]">
       {/* Top Toolbar */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-4 py-3 border-b border-gray-200 bg-white gap-3">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-4 py-3 border-b border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           <Select
             value={selectedSite}
@@ -397,10 +463,12 @@ export default function Scheduler() {
 
           <button
             onClick={handleToday}
-            className="flex items-center gap-2 px-2 sm:px-3 py-2 border border-gray-300 rounded-md min-w-[150px] sm:min-w-[200px] justify-center hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-2 sm:px-3 py-2 border border-[hsl(var(--color-border))] rounded-md min-w-[150px] sm:min-w-[200px] justify-center hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
           >
-            <span className="text-xs sm:text-sm font-medium truncate">{dateRange}</span>
-            <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium text-[hsl(var(--color-foreground))] truncate">
+              {dateRange}
+            </span>
+            <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-[hsl(var(--color-foreground-secondary))]" />
           </button>
 
           <Button variant="outline" size="icon" onClick={handleNextPeriod}>
@@ -440,42 +508,48 @@ export default function Scheduler() {
 
             {/* Options Dropdown */}
             {optionsOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+              <div className="absolute right-0 top-full mt-2 w-64 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-md shadow-lg z-50">
                 <div className="py-1">
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2">
+                  <button className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] flex items-center gap-2">
                     <Grid3x3 className="h-4 w-4 text-blue-600" />
                     Bulk Create OPEN Shifts
                   </button>
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2">
+                  <button className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] flex items-center gap-2">
                     <Clock className="h-4 w-4 text-blue-600" />
                     Copy Roster to Attendance
                   </button>
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2">
+                  <button className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] flex items-center gap-2">
                     <Grid3x3 className="h-4 w-4 text-blue-600" />
                     Shift View
                   </button>
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2">
+                  <button className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] flex items-center gap-2">
                     <Grid3x3 className="h-4 w-4 text-blue-600" />
                     View Deleted Shifts
                   </button>
 
-                  <div className="border-t border-gray-200 my-1"></div>
+                  <div className="border-t border-[hsl(var(--color-border))] my-1"></div>
 
                   <div className="px-4 py-2">
                     <label className="flex items-center justify-between cursor-pointer">
-                      <span className="text-sm">Show Total Hours</span>
+                      <span className="text-sm text-[hsl(var(--color-foreground))]">
+                        Show Total Hours
+                      </span>
                       <input type="checkbox" className="toggle" />
                     </label>
                   </div>
                   <div className="px-4 py-2">
                     <label className="flex items-center justify-between cursor-pointer">
-                      <span className="text-sm">Show Scheduled Employees Only</span>
+                      <span className="text-sm text-[hsl(var(--color-foreground))]">
+                        Show Scheduled Employees Only
+                      </span>
                       <input type="checkbox" className="toggle" />
                     </label>
                   </div>
                   <div className="px-4 py-2">
                     <label className="flex items-center justify-between cursor-pointer">
-                      <span className="text-sm">Minimized View</span>
+                      <span className="text-sm text-[hsl(var(--color-foreground))]">
+                        Minimized View
+                      </span>
                       <input type="checkbox" className="toggle" />
                     </label>
                   </div>
@@ -484,12 +558,19 @@ export default function Scheduler() {
             )}
           </div>
 
-          {shifts.filter(s => s.status === 'SCHEDULED').length > 0 ? (
+          {shifts.filter((s) => s.status === "SCHEDULED").length > 0 ? (
             <Button variant="success">
-              Publish {shifts.filter(s => s.status === 'SCHEDULED').length} Shift{shifts.filter(s => s.status === 'SCHEDULED').length !== 1 ? 's' : ''}
+              Publish {shifts.filter((s) => s.status === "SCHEDULED").length}{" "}
+              Shift
+              {shifts.filter((s) => s.status === "SCHEDULED").length !== 1
+                ? "s"
+                : ""}
             </Button>
           ) : (
-            <Button variant="outline" className="bg-gray-100">
+            <Button
+              variant="outline"
+              className="bg-[hsl(var(--color-surface-elevated))]"
+            >
               No Shifts Published
             </Button>
           )}
@@ -499,10 +580,10 @@ export default function Scheduler() {
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <div className="w-[120px] sm:w-[185px] border-r border-gray-200 flex flex-col bg-gray-50">
-          <div className="p-3 border-b border-gray-200">
+        <div className="w-[120px] sm:w-[185px] border-r border-[hsl(var(--color-border))] flex flex-col bg-[hsl(var(--color-surface-elevated))]">
+          <div className="p-3 border-b border-[hsl(var(--color-border))]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[hsl(var(--color-foreground-secondary))]" />
               <Input
                 type="text"
                 placeholder="Search..."
@@ -514,8 +595,10 @@ export default function Scheduler() {
           <div className="flex-1 overflow-y-auto">
             {/* Location View - Show only "TODAY" label */}
             {viewType === "location" && (
-              <div className="p-3 border-b border-gray-200">
-                <div className="text-sm font-medium text-gray-700">TODAY</div>
+              <div className="p-3 border-b border-[hsl(var(--color-border))]">
+                <div className="text-sm font-medium text-[hsl(var(--color-foreground))]">
+                  TODAY
+                </div>
               </div>
             )}
 
@@ -523,14 +606,16 @@ export default function Scheduler() {
             {viewType === "employee" && (
               <>
                 {/* Open Shift */}
-                <div className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer">
+                <div className="p-3 border-b border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-card))] cursor-pointer">
                   <div className="flex items-start gap-2">
-                    <div className="w-10 h-10 rounded bg-white border border-gray-300 flex items-center justify-center flex-shrink-0">
-                      <Grid3x3 className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] flex items-center justify-center flex-shrink-0">
+                      <Grid3x3 className="h-5 w-5 text-[hsl(var(--color-foreground-secondary))]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-blue-600 truncate">Open Shift</p>
-                      <div className="flex items-center gap-1 text-xs text-gray-600">
+                      <p className="text-sm font-medium text-blue-600 truncate">
+                        Open Shift
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
                         <Clock className="h-3 w-3" />
                         <span>0.00 Hrs</span>
                       </div>
@@ -542,7 +627,7 @@ export default function Scheduler() {
                 {employees.map((employee) => (
                   <div
                     key={employee.id}
-                    className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
+                    className="p-3 border-b border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-card))] cursor-pointer"
                   >
                     <div className="flex items-start gap-2">
                       <Avatar className="w-10 h-10 flex-shrink-0">
@@ -554,11 +639,11 @@ export default function Scheduler() {
                         <p className="text-sm font-medium text-blue-600 truncate hover:underline">
                           {employee.name}
                         </p>
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
                           <Clock className="h-3 w-3" />
                           <span>{employee.hours} Hrs</span>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
                           <Phone className="h-3 w-3" />
                           <span>{employee.phone}</span>
                         </div>
@@ -573,14 +658,16 @@ export default function Scheduler() {
             {viewType === "position" && (
               <>
                 {/* Open Shift */}
-                <div className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer">
+                <div className="p-3 border-b border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-card))] cursor-pointer">
                   <div className="flex items-start gap-2">
-                    <div className="w-10 h-10 rounded bg-white border border-gray-300 flex items-center justify-center flex-shrink-0">
-                      <Grid3x3 className="h-5 w-5 text-gray-400" />
+                    <div className="w-10 h-10 rounded bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] flex items-center justify-center flex-shrink-0">
+                      <Grid3x3 className="h-5 w-5 text-[hsl(var(--color-foreground-secondary))]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-blue-600 truncate">Open Shift</p>
-                      <div className="flex items-center gap-1 text-xs text-gray-600">
+                      <p className="text-sm font-medium text-blue-600 truncate">
+                        Open Shift
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
                         <Clock className="h-3 w-3" />
                         <span>0.00 Hrs</span>
                       </div>
@@ -592,7 +679,7 @@ export default function Scheduler() {
                 {employees.map((employee) => (
                   <div
                     key={employee.id}
-                    className="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
+                    className="p-3 border-b border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-card))] cursor-pointer"
                   >
                     <div className="flex items-start gap-2">
                       <Avatar className="w-10 h-10 flex-shrink-0">
@@ -604,11 +691,11 @@ export default function Scheduler() {
                         <p className="text-sm font-medium text-blue-600 truncate hover:underline">
                           {employee.name}
                         </p>
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
                           <Clock className="h-3 w-3" />
                           <span>{employee.hours} Hrs</span>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
                           <Phone className="h-3 w-3" />
                           <span>{employee.phone}</span>
                         </div>
@@ -625,31 +712,32 @@ export default function Scheduler() {
         <div className="flex-1 overflow-auto">
           <div className="min-w-max">
             {/* Date Headers */}
-            <div className="flex border-b border-gray-200 sticky top-0 bg-white z-10">
+            <div className="flex border-b border-[hsl(var(--color-border))] sticky top-0 bg-[hsl(var(--color-card))] z-10">
               {dateColumns.map((date, index) => {
                 const weather = getWeatherForDate(index);
                 return (
                   <div
                     key={index}
-                    className="w-35 px-2 py-3 text-center border-r border-gray-200"
+                    className="w-35 px-2 py-3 text-center border-r border-[hsl(var(--color-border))]"
                   >
                     {date === "TODAY" ? (
-                      <div className="text-sm font-bold text-gray-900">TODAY</div>
+                      <div className="text-sm font-bold text-[hsl(var(--color-foreground))]">
+                        TODAY
+                      </div>
                     ) : (
                       <>
-                        <div className="text-xs font-medium text-gray-700">
+                        <div className="text-xs font-medium text-[hsl(var(--color-foreground))]">
                           {date.split(", ")[0]}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-[hsl(var(--color-foreground-secondary))]">
                           {date.split(", ")[1]}
                         </div>
                       </>
                     )}
-                    
 
                     {/* Weather Information */}
                     {weather && (
-                      <div className="mt-1 flex items-center justify-center gap-1 text-gray-600">
+                      <div className="mt-1 flex items-center justify-center gap-1 text-[hsl(var(--color-foreground-secondary))]">
                         {getWeatherIcon(weather.weather)}
                         <span className="text-xs font-medium">
                           {Math.round(weather.temp)}°C
@@ -680,14 +768,14 @@ export default function Scheduler() {
 
             {/* Location View - Only show Open Shift row */}
             {viewType === "location" && (
-              <div className="flex border-b border-gray-200 min-h-[90px]">
+              <div className="flex border-b border-[hsl(var(--color-border))] min-h-[90px]">
                 {dateColumns.map((_, index) => {
                   const cellKey = `location-${index}`;
                   const isHovered = hoveredCell === cellKey;
                   return (
                     <div
                       key={index}
-                      className="w-[140px] border-r border-gray-200 bg-white hover:bg-gray-50 cursor-pointer relative group"
+                      className="w-[140px] border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative group"
                       onMouseEnter={() => setHoveredCell(cellKey)}
                       onMouseLeave={() => setHoveredCell(null)}
                     >
@@ -709,7 +797,7 @@ export default function Scheduler() {
             {(viewType === "employee" || viewType === "position") && (
               <>
                 {/* Open Shift Row */}
-                <div className="flex border-b border-gray-200 min-h-[90px]">
+                <div className="flex border-b border-[hsl(var(--color-border))] min-h-[90px]">
                   {dateColumns.map((_, index) => {
                     const cellKey = `open-${index}`;
                     const isHovered = hoveredCell === cellKey;
@@ -718,7 +806,7 @@ export default function Scheduler() {
                     return (
                       <div
                         key={index}
-                        className="w-[140px] border-r border-gray-200 bg-white hover:bg-gray-50 cursor-pointer relative p-1"
+                        className="w-[140px] border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative p-1"
                         onMouseEnter={() => setHoveredCell(cellKey)}
                         onMouseLeave={() => setHoveredCell(null)}
                       >
@@ -728,18 +816,27 @@ export default function Scheduler() {
                             {cellShifts.map((shift) => (
                               <div
                                 key={shift.id}
-                                className="border border-gray-200 rounded overflow-hidden bg-white text-xs"
+                                className="border border-[hsl(var(--color-border))] rounded overflow-hidden bg-[hsl(var(--color-card))] text-xs"
                               >
                                 <div className="px-2 py-1">
-                                  <div className="font-medium text-gray-900">
-                                    {formatTime(shift.startTime)} - {formatTime(shift.endTime)} ({calculateShiftDuration(shift.startTime, shift.endTime)} Hrs)
+                                  <div className="font-medium text-[hsl(var(--color-foreground))]">
+                                    {formatTime(shift.startTime)} -{" "}
+                                    {formatTime(shift.endTime)} (
+                                    {calculateShiftDuration(
+                                      shift.startTime,
+                                      shift.endTime,
+                                    )}{" "}
+                                    Hrs)
                                   </div>
-                                  <div className="text-gray-600 flex items-center gap-1 mt-0.5">
+                                  <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
                                     <MapPin className="h-3 w-3" />
-                                    <span>{shift.siteId?.shortName || 'Unknown Site'}</span>
+                                    <span>
+                                      {shift.siteId?.shortName ||
+                                        "Unknown Site"}
+                                    </span>
                                   </div>
                                 </div>
-                                {shift.status === 'SCHEDULED' && (
+                                {shift.status === "SCHEDULED" && (
                                   <div className="bg-green-500 text-white px-2 py-0.5 font-medium">
                                     Published
                                   </div>
@@ -765,7 +862,10 @@ export default function Scheduler() {
 
                 {/* Employee Rows */}
                 {employees.map((employee) => (
-                  <div key={employee.id} className="flex border-b border-gray-200 min-h-[90px]">
+                  <div
+                    key={employee.id}
+                    className="flex border-b border-[hsl(var(--color-border))] min-h-[90px]"
+                  >
                     {dateColumns.map((_, index) => {
                       const cellKey = `${employee.id}-${index}`;
                       const isHovered = hoveredCell === cellKey;
@@ -774,7 +874,7 @@ export default function Scheduler() {
                       return (
                         <div
                           key={index}
-                          className="w-[140px] border-r border-gray-200 bg-white hover:bg-gray-50 cursor-pointer relative p-1"
+                          className="w-[140px] border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative p-1"
                           onMouseEnter={() => setHoveredCell(cellKey)}
                           onMouseLeave={() => setHoveredCell(null)}
                         >
@@ -784,18 +884,27 @@ export default function Scheduler() {
                               {cellShifts.map((shift) => (
                                 <div
                                   key={shift.id}
-                                  className="border border-gray-200 rounded overflow-hidden bg-white text-xs"
+                                  className="border border-[hsl(var(--color-border))] rounded overflow-hidden bg-[hsl(var(--color-card))] text-xs"
                                 >
                                   <div className="px-2 py-1">
-                                    <div className="font-medium text-gray-900">
-                                      {formatTime(shift.startTime)} - {formatTime(shift.endTime)} ({calculateShiftDuration(shift.startTime, shift.endTime)} Hrs)
+                                    <div className="font-medium text-[hsl(var(--color-foreground))]">
+                                      {formatTime(shift.startTime)} -{" "}
+                                      {formatTime(shift.endTime)} (
+                                      {calculateShiftDuration(
+                                        shift.startTime,
+                                        shift.endTime,
+                                      )}{" "}
+                                      Hrs)
                                     </div>
-                                    <div className="text-gray-600 flex items-center gap-1 mt-0.5">
+                                    <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
                                       <MapPin className="h-3 w-3" />
-                                      <span>{shift.site?.shortName || 'Unknown Site'}</span>
+                                      <span>
+                                        {shift.site?.shortName ||
+                                          "Unknown Site"}
+                                      </span>
                                     </div>
                                   </div>
-                                  {shift.status === 'SCHEDULED' && (
+                                  {shift.status === "SCHEDULED" && (
                                     <div className="bg-green-500 text-white px-2 py-0.5 font-medium">
                                       Published
                                     </div>
@@ -826,12 +935,12 @@ export default function Scheduler() {
       </div>
 
       {/* Bottom Status Bar */}
-      <div className="border-t border-gray-200 bg-gray-50 px-4 py-2">
+      <div className="border-t border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] px-4 py-2">
         <div className="flex items-center gap-6 text-xs">
           {stats.map((stat, index) => (
             <div key={index} className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${stat.color}`} />
-              <span className="text-gray-700">
+              <span className="text-[hsl(var(--color-foreground))]">
                 {stat.value} {stat.label}
               </span>
             </div>

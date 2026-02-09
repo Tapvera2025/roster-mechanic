@@ -34,7 +34,7 @@ export default function MainLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+    <div className="flex min-h-screen bg-[hsl(var(--color-background))]">
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
       <div className="flex-1 flex flex-col lg:ml-0">
         <Navbar onToggleSidebar={toggleSidebar} />

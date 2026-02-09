@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { FileText, AlertCircle, Shield, ChevronLeft, ChevronRight, RotateCw, Search } from "lucide-react";
+import {
+  FileText,
+  AlertCircle,
+  Shield,
+  ChevronLeft,
+  ChevronRight,
+  RotateCw,
+  Search,
+} from "lucide-react";
 import { Select } from "../components/ui/Select";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
@@ -27,17 +35,19 @@ export default function SiteActivities() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[hsl(var(--color-surface-elevated))]">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
+      <div className="bg-[hsl(var(--color-card))] border-b border-[hsl(var(--color-border))] px-4 py-4">
         <div className="flex items-center gap-2">
           <FileText className="w-5 h-5 text-purple-600" />
-          <h1 className="text-lg font-semibold text-gray-900">Site Activities</h1>
+          <h1 className="text-lg font-semibold text-[hsl(var(--color-foreground))]">
+            Site Activities
+          </h1>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-[hsl(var(--color-card))] border-b border-[hsl(var(--color-border))]">
         <div className="flex items-center gap-6 px-4">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -48,7 +58,7 @@ export default function SiteActivities() {
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? "border-purple-600 text-purple-600"
-                    : "border-transparent text-gray-600 hover:text-gray-900"
+                    : "border-transparent text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-foreground))]"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -60,7 +70,7 @@ export default function SiteActivities() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
+      <div className="bg-[hsl(var(--color-card))] border-b border-[hsl(var(--color-border))] px-4 py-4">
         <div className="flex items-center gap-4">
           {/* Site Selector */}
           <Select
@@ -75,8 +85,8 @@ export default function SiteActivities() {
 
           {/* Date Range Selector */}
           <div className="flex items-center gap-2">
-            <button className="p-1.5 hover:bg-gray-100 rounded">
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            <button className="p-1.5 hover:bg-[hsl(var(--color-surface-elevated))] rounded">
+              <ChevronLeft className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
             </button>
             <Select
               value={dateRange}
@@ -88,14 +98,14 @@ export default function SiteActivities() {
               <option value="last_3_months">Last 3 Months</option>
               <option value="custom">Custom Range</option>
             </Select>
-            <button className="p-1.5 hover:bg-gray-100 rounded">
-              <ChevronRight className="w-4 h-4 text-gray-600" />
+            <button className="p-1.5 hover:bg-[hsl(var(--color-surface-elevated))] rounded">
+              <ChevronRight className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
             </button>
           </div>
 
           {/* Search */}
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
             <Input
               type="text"
               placeholder="Search"
@@ -106,7 +116,7 @@ export default function SiteActivities() {
           </div>
 
           {/* Refresh Button */}
-          <button className="p-2 hover:bg-gray-100 rounded transition-colors">
+          <button className="p-2 hover:bg-[hsl(var(--color-surface-elevated))] rounded transition-colors">
             <RotateCw className="w-4 h-4 text-purple-600" />
           </button>
 
@@ -125,20 +135,20 @@ export default function SiteActivities() {
       </div>
 
       {/* Table */}
-      <div className="bg-white m-4 rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-[hsl(var(--color-card))] m-4 rounded-lg border border-[hsl(var(--color-border))] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))]">
               <tr>
                 {columns.map((column, index) => (
                   <th
                     key={index}
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider"
                   >
                     <div className="flex items-center gap-1">
                       {column.label}
                       {column.sortable && (
-                        <button className="hover:bg-gray-200 rounded p-0.5">
+                        <button className="hover:bg-[hsl(var(--color-border))] rounded p-0.5">
                           <svg
                             className="w-3 h-3"
                             fill="none"
@@ -165,12 +175,12 @@ export default function SiteActivities() {
                   <div className="flex flex-col items-center justify-center gap-3">
                     <FileText className="w-12 h-12 text-purple-300" />
                     <div>
-                      <p className="text-base font-medium text-gray-900 mb-1">
+                      <p className="text-base font-medium text-[hsl(var(--color-foreground))] mb-1">
                         We couldn't find any DAR records.
                       </p>
-                      <p className="text-sm text-gray-600">
-                        No Daily Attendance Records (DAR) were found for this timeframe. Try
-                        searching for a different date range
+                      <p className="text-sm text-[hsl(var(--color-foreground-secondary))]">
+                        No Daily Attendance Records (DAR) were found for this
+                        timeframe. Try searching for a different date range
                       </p>
                     </div>
                   </div>
@@ -181,7 +191,7 @@ export default function SiteActivities() {
         </div>
 
         {/* Pagination */}
-        <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-end gap-2">
+        <div className="border-t border-[hsl(var(--color-border))] px-4 py-3 flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" disabled>
             Previous
           </Button>

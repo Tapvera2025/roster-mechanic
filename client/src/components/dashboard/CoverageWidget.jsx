@@ -52,7 +52,7 @@ export default function CoverageWidget() {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold text-gray-900">{percentage}%</span>
+          <span className="text-2xl font-bold text-[hsl(var(--color-foreground))]">{percentage}%</span>
         </div>
       </div>
     );
@@ -61,8 +61,8 @@ export default function CoverageWidget() {
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Coverage Section */}
-      <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
-        <h3 className="text-lg font-bold mb-5 text-gray-800">
+      <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
+        <h3 className="text-lg font-bold mb-5 text-[hsl(var(--color-foreground))]">
           Coverage Analytics
         </h3>
 
@@ -71,23 +71,23 @@ export default function CoverageWidget() {
           <div className="flex-1">
             <table className="w-full text-sm">
               <tbody>
-                <tr className="border-b border-gray-200">
-                  <td className="py-2 text-gray-700">Coverage HRS</td>
+                <tr className="border-b border-[hsl(var(--color-border))]">
+                  <td className="py-2 text-[hsl(var(--color-foreground-secondary))]">Coverage HRS</td>
                   <td className="py-2 text-right font-medium">{coverageData.coverageHRS}</td>
                   <td className="py-2 text-right font-medium">{coverageData.coverageShifts}</td>
                 </tr>
-                <tr className="border-b border-gray-200">
-                  <td className="py-2 text-gray-700">Actual HRS</td>
+                <tr className="border-b border-[hsl(var(--color-border))]">
+                  <td className="py-2 text-[hsl(var(--color-foreground-secondary))]">Actual HRS</td>
                   <td className="py-2 text-right font-medium">{coverageData.actualHRS}</td>
                   <td className="py-2 text-right font-medium">{coverageData.actualShifts}</td>
                 </tr>
                 <tr>
-                  <td className="py-2 text-gray-700 font-semibold">Difference</td>
+                  <td className="py-2 text-[hsl(var(--color-foreground-secondary))] font-semibold">Difference</td>
                   <td className="py-2 text-right font-semibold">{coverageData.differenceHRS}</td>
                   <td className="py-2 text-right font-semibold">{coverageData.differenceShifts}</td>
                 </tr>
                 <tr>
-                  <td colSpan="3" className="py-1 text-right text-gray-500 text-xs">
+                  <td colSpan="3" className="py-1 text-right text-[hsl(var(--color-foreground-muted))] text-xs">
                     {coverageData.differencePercentage}
                   </td>
                 </tr>
@@ -98,8 +98,8 @@ export default function CoverageWidget() {
       </div>
 
       {/* Roster Section */}
-      <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
-        <h3 className="text-lg font-bold mb-5 text-gray-800">
+      <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
+        <h3 className="text-lg font-bold mb-5 text-[hsl(var(--color-foreground))]">
           Roster Analytics
         </h3>
 
@@ -108,23 +108,23 @@ export default function CoverageWidget() {
           <div className="flex-1">
             <table className="w-full text-sm">
               <tbody>
-                <tr className="border-b border-gray-200">
-                  <td className="py-2 text-gray-700">Roster HRS</td>
+                <tr className="border-b border-[hsl(var(--color-border))]">
+                  <td className="py-2 text-[hsl(var(--color-foreground-secondary))]">Roster HRS</td>
                   <td className="py-2 text-right font-medium">{rosterData.rosterHRS}</td>
                   <td className="py-2 text-right font-medium">{rosterData.rosterShifts}</td>
                 </tr>
-                <tr className="border-b border-gray-200">
-                  <td className="py-2 text-gray-700">Actual HRS</td>
+                <tr className="border-b border-[hsl(var(--color-border))]">
+                  <td className="py-2 text-[hsl(var(--color-foreground-secondary))]">Actual HRS</td>
                   <td className="py-2 text-right font-medium">{rosterData.actualHRS}</td>
                   <td className="py-2 text-right font-medium">{rosterData.actualShifts}</td>
                 </tr>
                 <tr>
-                  <td className="py-2 text-gray-700 font-semibold">Difference</td>
+                  <td className="py-2 text-[hsl(var(--color-foreground-secondary))] font-semibold">Difference</td>
                   <td className="py-2 text-right font-semibold">{rosterData.differenceHRS}</td>
                   <td className="py-2 text-right font-semibold">{rosterData.differenceShifts}</td>
                 </tr>
                 <tr>
-                  <td colSpan="3" className="py-1 text-right text-gray-500 text-xs">
+                  <td colSpan="3" className="py-1 text-right text-[hsl(var(--color-foreground-muted))] text-xs">
                     {rosterData.differencePercentage}
                   </td>
                 </tr>

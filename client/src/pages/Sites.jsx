@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { MapPin, Plus, ChevronDown, Settings, Maximize, RotateCw } from "lucide-react";
+import {
+  MapPin,
+  Plus,
+  ChevronDown,
+  Settings,
+  Maximize,
+  RotateCw,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import SitesTable from "../components/sites/SitesTable";
 import SiteFilters from "../components/sites/SiteFilters";
@@ -23,7 +30,7 @@ export default function Sites() {
     page: 1,
     limit: 25,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
 
   // Fetch sites function
@@ -32,15 +39,15 @@ export default function Sites() {
       setLoading(true);
       setError(null);
       const response = await siteApi.getAll({
-        status: showInactive ? undefined : 'ACTIVE',
+        status: showInactive ? undefined : "ACTIVE",
         page: pagination.page,
-        limit: pagination.limit
+        limit: pagination.limit,
       });
       setSites(response.data.data.sites);
       setPagination(response.data.data.pagination);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch sites');
-      toast.error('Failed to load sites');
+      setError(err.response?.data?.message || "Failed to fetch sites");
+      toast.error("Failed to load sites");
     } finally {
       setLoading(false);
     }
@@ -54,7 +61,7 @@ export default function Sites() {
   // Handle refresh button
   const handleRefresh = () => {
     fetchSites();
-    toast.success('Sites refreshed');
+    toast.success("Sites refreshed");
   };
 
   // Handle site click to open edit modal
@@ -83,7 +90,7 @@ export default function Sites() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[hsl(var(--color-surface-elevated))]">
       {/* Sites Submenu Bar */}
       <div className="bg-blue-600 text-white px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
@@ -92,10 +99,16 @@ export default function Sites() {
             <h1 className="text-base sm:text-lg font-semibold">Sites</h1>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            <button className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors" title="Settings">
+            <button
+              className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
+              title="Settings"
+            >
               <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <button className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors" title="Expand">
+            <button
+              className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
+              title="Expand"
+            >
               <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
@@ -136,13 +149,13 @@ export default function Sites() {
 
               {/* Add New Dropdown */}
               {addMenuOpen && (
-                <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <div className="absolute left-0 top-full mt-1 w-48 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-md shadow-lg z-50">
                   <button
                     onClick={() => {
                       setShowAddSiteModal(true);
                       setAddMenuOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
                   >
                     Site
                   </button>
@@ -151,7 +164,7 @@ export default function Sites() {
                       setShowMultipleSitesModal(true);
                       setAddMenuOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
                   >
                     Multiple Sites
                   </button>
@@ -162,15 +175,15 @@ export default function Sites() {
 
           {/* Secondary Actions */}
           <div className="flex flex-wrap items-center gap-2">
-            <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+            <button className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-2 text-sm">
               Actions
               <ChevronDown className="w-4 h-4" />
             </button>
-            <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+            <button className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-2 text-sm">
               Columns
               <ChevronDown className="w-4 h-4" />
             </button>
-            <select className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm cursor-pointer">
+            <select className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md text-sm cursor-pointer">
               <option>25</option>
               <option>50</option>
               <option>100</option>
@@ -194,7 +207,11 @@ export default function Sites() {
           onClose={handleCloseModal}
           onSuccess={() => {
             fetchSites();
-            toast.success(selectedSite ? 'Site updated successfully' : 'Site created successfully');
+            toast.success(
+              selectedSite
+                ? "Site updated successfully"
+                : "Site created successfully",
+            );
           }}
         />
       )}
@@ -205,7 +222,7 @@ export default function Sites() {
           onClose={handleCloseModal}
           onSuccess={() => {
             fetchSites();
-            toast.success('Sites created successfully');
+            toast.success("Sites created successfully");
           }}
         />
       )}

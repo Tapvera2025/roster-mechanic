@@ -1,4 +1,10 @@
-import { RotateCw, Maximize2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import {
+  RotateCw,
+  Maximize2,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+} from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -35,13 +41,16 @@ export default function SubcontractorWidget() {
     const offset = circumference - (percentage / 100) * circumference;
 
     return (
-      <div className="relative inline-flex" style={{ width: size, height: size }}>
+      <div
+        className="relative inline-flex"
+        style={{ width: size, height: size }}
+      >
         <svg width={size} height={size} className="transform -rotate-90">
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="#e5e7eb"
+            stroke="hsl(var(--color-border))"
             strokeWidth="6"
             fill="none"
           />
@@ -49,7 +58,7 @@ export default function SubcontractorWidget() {
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="#3b82f6"
+            stroke="hsl(var(--color-primary, 220 90% 56%))"
             strokeWidth="6"
             fill="none"
             strokeDasharray={circumference}
@@ -58,60 +67,83 @@ export default function SubcontractorWidget() {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm font-bold text-gray-900">{percentage}%</span>
+          <span className="text-sm font-bold text-[hsl(var(--color-foreground))]">
+            {percentage}%
+          </span>
         </div>
       </div>
     );
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-3xl shadow-sm">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+      <div className="border-b border-[hsl(var(--color-border))] px-4 py-3 flex items-center justify-between">
+        <h3 className="text-base font-semibold text-[hsl(var(--color-foreground))]">
+          Subcontractor Dashboard
+        </h3>
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-semibold text-gray-900">Subcontractor Dashboard</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">
-            <RotateCw className="w-4 h-4 text-gray-600" />
+          <button className="p-1.5 hover:bg-[hsl(var(--color-surface-elevated))] rounded transition-colors">
+            <RotateCw className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
           </button>
-          <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">
-            <Maximize2 className="w-4 h-4 text-gray-600" />
+          <button className="p-1.5 hover:bg-[hsl(var(--color-surface-elevated))] rounded transition-colors">
+            <Maximize2 className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
           </button>
         </div>
       </div>
 
       {/* Date Selector */}
-      <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-center">
-        <button className="p-1 hover:bg-gray-100 rounded">
+      <div className="border-b border-[hsl(var(--color-border))] px-4 py-3 flex items-center justify-center">
+        <button className="p-1 hover:bg-[hsl(var(--color-surface-elevated))] rounded">
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <button className="mx-4 text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center gap-1">
+        <button className="mx-4 text-sm font-medium text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-foreground))] flex items-center gap-1">
           Current Month
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </button>
-        <button className="p-1 hover:bg-gray-100 rounded">
+        <button className="p-1 hover:bg-[hsl(var(--color-surface-elevated))] rounded">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
       {/* Search and Filters */}
-      <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between gap-4">
+      <div className="border-b border-[hsl(var(--color-border))] px-4 py-3 flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input placeholder="Search..." className="pl-9" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--color-foreground-muted))]" />
+          <Input
+            placeholder="Search..."
+            className="pl-9 bg-[hsl(var(--color-card))] border-[hsl(var(--color-border))]"
+          />
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded">
-            <span className="text-sm font-medium text-purple-700">47</span>
-            <span className="text-sm text-purple-600">Employees</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--color-surface-elevated))] border border-[hsl(var(--color-border))] rounded">
+            <span className="text-sm font-medium text-[hsl(var(--color-foreground))]">
+              47
+            </span>
+            <span className="text-sm text-[hsl(var(--color-foreground-secondary))]">
+              Employees
+            </span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded">
-            <span className="text-sm font-medium text-green-700">1</span>
-            <span className="text-sm text-green-600">Admin/Office Users</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--color-surface-elevated))] border border-[hsl(var(--color-border))] rounded">
+            <span className="text-sm font-medium text-[hsl(var(--color-foreground))]">
+              1
+            </span>
+            <span className="text-sm text-[hsl(var(--color-foreground-secondary))]">
+              Admin/Office Users
+            </span>
           </div>
           <Select className="w-20">
             <option value="10">10</option>
@@ -124,19 +156,29 @@ export default function SubcontractorWidget() {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))]">
             <tr>
               {columns.map((column, index) => (
                 <th
                   key={index}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap"
+                  className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider whitespace-nowrap"
                 >
                   <div className="flex items-center gap-1">
                     {column}
                     {index === 0 && (
-                      <button className="hover:bg-gray-200 rounded p-0.5">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 10l5 5 5-5" />
+                      <button className="hover:bg-[hsl(var(--color-surface-elevated))] rounded p-0.5">
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 10l5 5 5-5"
+                          />
                         </svg>
                       </button>
                     )}
@@ -145,24 +187,28 @@ export default function SubcontractorWidget() {
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+
+          <tbody className="divide-y divide-[hsl(var(--color-border))]">
             {contractors.map((contractor, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
+              <tr
+                key={index}
+                className="hover:bg-[hsl(var(--color-surface-elevated))]"
+              >
+                <td className="px-4 py-4 text-sm text-[hsl(var(--color-foreground))] whitespace-nowrap">
                   {contractor.name}
                 </td>
                 <td className="px-4 py-4 text-sm text-center">
-                  <span className="inline-flex items-center justify-center px-3 py-1 bg-gray-100 text-gray-900 rounded font-medium">
+                  <span className="inline-flex items-center justify-center px-3 py-1 bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] rounded font-medium">
                     {contractor.empUsers}
                   </span>
                 </td>
                 <td className="px-4 py-4 text-sm text-center">
-                  <span className="inline-flex items-center justify-center px-3 py-1 bg-gray-50 text-gray-900 rounded">
+                  <span className="inline-flex items-center justify-center px-3 py-1 bg-[hsl(var(--color-surface-elevated))] rounded">
                     {contractor.rosteredHrs}
                   </span>
                 </td>
                 <td className="px-4 py-4 text-sm text-center">
-                  <span className="inline-flex items-center justify-center px-3 py-1 bg-gray-50 text-gray-900 rounded">
+                  <span className="inline-flex items-center justify-center px-3 py-1 bg-[hsl(var(--color-surface-elevated))] rounded">
                     {contractor.attendanceHrs}
                   </span>
                 </td>
@@ -170,13 +216,15 @@ export default function SubcontractorWidget() {
                   <CircularProgress percentage={contractor.attendancePercent} />
                 </td>
                 <td className="px-4 py-4 text-sm text-center">
-                  <CircularProgress percentage={contractor.mobileAttendancePercent} />
+                  <CircularProgress
+                    percentage={contractor.mobileAttendancePercent}
+                  />
                 </td>
-                <td className="px-4 py-4 text-sm text-center">
-                  <span className="text-gray-900 font-medium">{contractor.noShowPercent}%</span>
+                <td className="px-4 py-4 text-sm text-center font-medium">
+                  {contractor.noShowPercent}%
                 </td>
-                <td className="px-4 py-4 text-sm text-center">
-                  <span className="text-gray-900 font-medium">{contractor.latenessRate}%</span>
+                <td className="px-4 py-4 text-sm text-center font-medium">
+                  {contractor.latenessRate}%
                 </td>
               </tr>
             ))}
@@ -185,11 +233,15 @@ export default function SubcontractorWidget() {
       </div>
 
       {/* Pagination */}
-      <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-end gap-2">
+      <div className="border-t border-[hsl(var(--color-border))] px-4 py-3 flex items-center justify-end gap-2">
         <Button variant="outline" size="sm">
           Previous
         </Button>
-        <Button variant="outline" size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-blue-500 text-white hover:bg-blue-600"
+        >
           1
         </Button>
         <Button variant="outline" size="sm">

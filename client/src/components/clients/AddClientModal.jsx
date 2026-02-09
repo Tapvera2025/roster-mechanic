@@ -1,12 +1,5 @@
 import { useState, useRef } from "react";
-import {
-  X,
-  Building2,
-  Save,
-  ChevronDown,
-  Plus,
-  RotateCw,
-} from "lucide-react";
+import { X, Building2, Save, ChevronDown, Plus, RotateCw } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -44,17 +37,17 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
       // Build request payload from formData
       const payload = {
         ...formData,
-        status: formData.status === "Active" ? "ACTIVE" : "INACTIVE"
+        status: formData.status === "Active" ? "ACTIVE" : "INACTIVE",
       };
 
       if (client) {
         // Update existing client
         await clientApi.update(client.id, payload);
-        toast.success('Client updated successfully');
+        toast.success("Client updated successfully");
       } else {
         // Create new client
         await clientApi.create(payload);
-        toast.success('Client created successfully');
+        toast.success("Client created successfully");
       }
 
       onClose();
@@ -64,7 +57,10 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
       if (apiErrors) {
         setErrors(apiErrors);
       }
-      toast.error(err.response?.data?.message || `Failed to ${client ? 'update' : 'create'} client`);
+      toast.error(
+        err.response?.data?.message ||
+          `Failed to ${client ? "update" : "create"} client`,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +97,7 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-lg w-full max-w-4xl my-4 flex flex-col shadow-2xl"
+        className="bg-[hsl(var(--color-card))] rounded-lg w-full max-w-4xl my-4 flex flex-col shadow-2xl"
         style={{
           transform: `translate(${position.x}px, ${position.y}px)`,
           cursor: isDragging ? "grabbing" : "default",
@@ -109,13 +105,13 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
       >
         {/* Header */}
         <div
-          className="modal-header flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 gap-2 flex-wrap bg-gray-50 rounded-t-lg cursor-grab active:cursor-grabbing"
+          className="modal-header flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-[hsl(var(--color-border))] gap-2 flex-wrap bg-[hsl(var(--color-surface-elevated))] rounded-t-lg cursor-grab active:cursor-grabbing"
           onMouseDown={handleMouseDown}
         >
           <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-            <h2 className="text-base sm:text-lg font-semibold">
-              {client ? 'Edit Client' : 'Client Details'}
+            <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-[hsl(var(--color-foreground-secondary))]" />
+            <h2 className="text-base sm:text-lg font-semibold text-[hsl(var(--color-foreground))]">
+              {client ? "Edit Client" : "Client Details"}
             </h2>
           </div>
 
@@ -138,17 +134,19 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
               className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-              <span className="hidden sm:inline">{submitting ? 'Saving...' : 'Save'}</span>
+              <span className="hidden sm:inline">
+                {submitting ? "Saving..." : "Save"}
+              </span>
             </Button>
-            <button className="hidden lg:flex px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors items-center gap-2 text-sm">
+            <button className="hidden lg:flex px-3 py-2 border border-[hsl(var(--color-border))] rounded hover:bg-[hsl(var(--color-surface-elevated))] transition-colors items-center gap-2 text-sm text-[hsl(var(--color-foreground))]">
               Actions
               <ChevronDown className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 sm:p-2 hover:bg-gray-100 rounded transition-colors"
+              className="p-1.5 sm:p-2 hover:bg-[hsl(var(--color-border))] rounded transition-colors"
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-[hsl(var(--color-foreground-secondary))]" />
             </button>
           </div>
         </div>
@@ -158,12 +156,14 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
           {/* Client Details Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground-secondary))] mb-1">
                 Client Name *
               </label>
               <Input
                 value={formData.clientName}
-                onChange={(e) => handleInputChange("clientName", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("clientName", e.target.value)
+                }
                 placeholder="Enter client name"
               />
               {errors.clientName && (
@@ -172,7 +172,7 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground-secondary))] mb-1">
                 State
               </label>
               <Select
@@ -192,18 +192,20 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground-secondary))] mb-1">
                 Invoicing Company
               </label>
               <Input
                 value={formData.invoicingCompany}
-                onChange={(e) => handleInputChange("invoicingCompany", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("invoicingCompany", e.target.value)
+                }
                 placeholder="Enter invoicing company"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground-secondary))] mb-1">
                 Status
               </label>
               <Select
@@ -216,23 +218,27 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground-secondary))] mb-1">
                 Invoice Subject
               </label>
               <Input
                 value={formData.invoiceSubject}
-                onChange={(e) => handleInputChange("invoiceSubject", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("invoiceSubject", e.target.value)
+                }
                 placeholder="Enter invoice subject"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground-secondary))] mb-1">
                 Invoice Template
               </label>
               <Select
                 value={formData.invoiceTemplate}
-                onChange={(e) => handleInputChange("invoiceTemplate", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("invoiceTemplate", e.target.value)
+                }
               >
                 <option value="">Select Template</option>
                 <option value="Standard Template">Standard Template</option>

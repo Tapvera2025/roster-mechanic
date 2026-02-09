@@ -2,82 +2,82 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Backgrounds - Light and airy like roster.png */
-  --color-background: 220 14% 96%;
-  --color-surface: 220 14% 96%;
-  --color-surface-elevated: 0 0% 100%;
+  /* Backgrounds - Very dark theme matching the reference */
+  --color-background: 210 11% 7%;
+  --color-surface: 210 11% 10%;
+  --color-surface-elevated: 210 11% 13%;
 
-  /* Foreground - Soft dark colors */
-  --color-foreground: 215 25% 27%;
-  --color-foreground-secondary: 215 15% 45%;
-  --color-foreground-muted: 215 10% 60%;
+  /* Foreground - Light grey text on dark */
+  --color-foreground: 0 0% 98%;
+  --color-foreground-secondary: 0 0% 65%;
+  --color-foreground-muted: 0 0% 45%;
 
-  /* Card */
-  --color-card: 0 0% 100%;
-  --color-card-foreground: 215 25% 27%;
+  /* Card - Slightly elevated dark cards */
+  --color-card: 210 11% 12%;
+  --color-card-foreground: 0 0% 98%;
 
   /* Popover */
-  --color-popover: 0 0% 100%;
-  --color-popover-foreground: 215 25% 27%;
+  --color-popover: 210 11% 12%;
+  --color-popover-foreground: 0 0% 98%;
 
-  /* Primary - Bright blue from new theme */
-  --color-primary: 217 91% 60%;
+  /* Primary - Orange accent from reference */
+  --color-primary: 16 100% 58%;
   --color-primary-foreground: 0 0% 100%;
-  --color-primary-hover: 217 91% 55%;
+  --color-primary-hover: 16 100% 52%;
 
-  /* Secondary - Very light gray */
-  --color-secondary: 220 14% 94%;
-  --color-secondary-foreground: 215 25% 27%;
-  --color-secondary-hover: 220 14% 90%;
+  /* Secondary - Dark grey */
+  --color-secondary: 210 11% 16%;
+  --color-secondary-foreground: 0 0% 98%;
+  --color-secondary-hover: 210 11% 20%;
 
-  /* Accent - Soft purple */
-  --color-accent: 262 52% 65%;
-  --color-accent-foreground: 0 0% 100%;
+  /* Accent - Lighter orange */
+  --color-accent: 16 100% 60%;
+  --color-accent-foreground: 0 0% 10%;
 
-  /* Status colors - Soft and muted */
-  --color-success: 142 69% 58%;
+  /* Status colors - Green for success, Red for error/danger */
+  --color-success: 142 69% 45%;
   --color-success-foreground: 0 0% 100%;
-  --color-success-soft: 142 69% 95%;
+  --color-success-soft: 142 69% 12%;
 
-  --color-warning: 38 92% 65%;
+  --color-warning: 38 100% 55%;
   --color-warning-foreground: 0 0% 100%;
-  --color-warning-soft: 38 100% 95%;
+  --color-warning-soft: 38 100% 12%;
 
-  --color-error: 0 72% 65%;
+  --color-error: 0 84% 60%;
   --color-error-foreground: 0 0% 100%;
-  --color-error-soft: 0 86% 95%;
+  --color-error-soft: 0 84% 12%;
 
-  --color-info: 217 91% 67%;
+  --color-info: 16 100% 58%;
   --color-info-foreground: 0 0% 100%;
-  --color-info-soft: 217 91% 95%;
+  --color-info-soft: 16 100% 12%;
 
-  /* Destructive (alias for error) */
-  --color-destructive: 0 72% 65%;
+  /* Destructive (alias for error - red) */
+  --color-destructive: 0 84% 60%;
   --color-destructive-foreground: 0 0% 100%;
 
-  /* Muted elements */
-  --color-muted: 220 14% 94%;
-  --color-muted-foreground: 215 10% 60%;
+  /* Muted elements - Subtle grey */
+  --color-muted: 210 11% 16%;
+  --color-muted-foreground: 0 0% 45%;
 
-  /* Borders - Subtle */
-  --color-border: 220 13% 91%;
-  --color-border-strong: 220 13% 85%;
-  --color-input: 220 13% 91%;
+  /* Borders - Very subtle borders */
+  --color-border: 210 11% 18%;
+  --color-border-strong: 210 11% 25%;
+  --color-input: 210 11% 18%;
 
-  /* Ring - Focus states */
-  --color-ring: 217 91% 67%;
+  /* Ring - Focus states (orange) */
+  --color-ring: 16 100% 58%;
 
-  /* Border Radius - Generous and modern */
+  /* Border Radius - Modern and consistent */
   --radius-sm: 0.5rem;
-  --radius: 1rem;
-  --radius-md: 1.25rem;
-  --radius-lg: 1.5rem;
+  --radius: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
 
-  /* Shadows - Soft and subtle */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
-  --shadow-md: 0 2px 8px 0 rgb(0 0 0 / 0.06);
-  --shadow-lg: 0 4px 16px 0 rgb(0 0 0 / 0.08);
-  --shadow-xl: 0 8px 24px 0 rgb(0 0 0 / 0.10);
+  /* Shadows - Subtle shadows for depth */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 2px 8px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 4px 16px 0 rgb(0 0 0 / 0.5);
+  --shadow-xl: 0 8px 24px 0 rgb(0 0 0 / 0.6);
 }
 
 * {
@@ -85,7 +85,7 @@
 }
 
 body {
-  background-color: hsl(var(--color-surface));
+  background-color: hsl(var(--color-background));
   color: hsl(var(--color-foreground));
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-feature-settings: 'cv11', 'ss01';
@@ -143,65 +143,61 @@ body {
   padding: 1.25rem 1.5rem;
 }
 
-/* Glassmorphism Utilities */
+/* Glassmorphism Utilities - Adapted for dark theme */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-.glass-dark {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.glass-dark {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .glass-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(20, 20, 20, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Gradient Backgrounds */
+/* Gradient Backgrounds - Orange themed */
 .gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ff6b3d 0%, #ff5722 100%);
 }
 
-.gradient-blue {
-  background: linear-gradient(135deg, #667eea 0%, #4facfe 100%);
+.gradient-orange {
+  background: linear-gradient(135deg, #ff7043 0%, #ff5722 100%);
 }
 
-.gradient-purple {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+.gradient-dark {
+  background: linear-gradient(135deg, #131b23 0%, #1a222b 100%);
 }
 
-.gradient-ocean {
-  background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
-}
-
-.gradient-sunset {
-  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+.gradient-orange-dark {
+  background: linear-gradient(135deg, #ff5722 0%, #131b23 100%);
 }
 
 .gradient-mesh {
   background:
-    radial-gradient(at 40% 20%, rgba(99, 102, 241, 0.3) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, rgba(139, 92, 246, 0.3) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, rgba(6, 182, 212, 0.3) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, rgba(236, 72, 153, 0.3) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.3) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, rgba(168, 85, 247, 0.3) 0px, transparent 50%);
+    radial-gradient(at 40% 20%, rgba(255, 87, 34, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(255, 107, 61, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(255, 112, 67, 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, rgba(255, 87, 34, 0.12) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(255, 112, 67, 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, rgba(255, 87, 34, 0.1) 0px, transparent 50%);
 }
 
 /* Modern Card Styles */
@@ -210,24 +206,24 @@ body {
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 87, 34, 0.15);
 }
 
-/* Animated Gradient Border */
+/* Animated Gradient Border - Orange */
 .gradient-border {
   position: relative;
-  background: white;
-  border-radius: 1rem;
+  background: hsl(var(--color-card));
+  border-radius: 0.75rem;
 }
 
 .gradient-border::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   padding: 2px;
-  background: linear-gradient(135deg, #667eea, #764ba2, #667eea);
+  background: linear-gradient(135deg, #ff5722, #ff7043, #ff5722);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -249,10 +245,10 @@ body {
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 0 20px rgba(255, 87, 34, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 30px rgba(255, 87, 34, 0.5);
   }
 }
 

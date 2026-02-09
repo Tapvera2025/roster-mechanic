@@ -54,51 +54,52 @@ export default function EmployeeActionsMenu() {
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="px-3 py-1.5 bg-white border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1"
+        className="px-3 py-1.5 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-1"
       >
         Actions
         <ChevronDown className="w-3 h-3" />
       </button>
 
-      {isOpen && createPortal(
-        <>
-          {/* Backdrop to close menu when clicking outside */}
-          <div
-            className="fixed inset-0 z-[1000]"
-            onClick={() => setIsOpen(false)}
-          />
+      {isOpen &&
+        createPortal(
+          <>
+            {/* Backdrop to close menu when clicking outside */}
+            <div
+              className="fixed inset-0 z-[1000]"
+              onClick={() => setIsOpen(false)}
+            />
 
-          {/* Dropdown Menu */}
-          <div
-            className="fixed w-56 bg-white border border-gray-200 rounded-md shadow-xl z-[1001]"
-            style={{ top: `${position.top}px`, left: `${position.left}px` }}
-          >
-            <div className="py-1">
-              {menuItems.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={index}>
-                    <button
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-3"
-                      onClick={() => {
-                        setIsOpen(false);
-                        // Handle action here
-                      }}
-                    >
-                      <Icon className="w-4 h-4 text-gray-600" />
-                      {item.label}
-                    </button>
-                    {item.divider && (
-                      <div className="border-t border-gray-200 my-1" />
-                    )}
-                  </div>
-                );
-              })}
+            {/* Dropdown Menu */}
+            <div
+              className="fixed w-56 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-md shadow-xl z-[1001]"
+              style={{ top: `${position.top}px`, left: `${position.left}px` }}
+            >
+              <div className="py-1">
+                {menuItems.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={index}>
+                      <button
+                        className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-3"
+                        onClick={() => {
+                          setIsOpen(false);
+                          // Handle action here
+                        }}
+                      >
+                        <Icon className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
+                        {item.label}
+                      </button>
+                      {item.divider && (
+                        <div className="border-t border-[hsl(var(--color-border))] my-1" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </>,
-        document.body
-      )}
+          </>,
+          document.body,
+        )}
     </div>
   );
 }

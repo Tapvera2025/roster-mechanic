@@ -14,10 +14,10 @@ export default function Dashboard() {
       <div className="relative">
         {/* Greeting Section */}
         <div className="px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[hsl(var(--color-foreground))] mb-1">
             Hello ACE T 👋
           </h1>
-          <p className="text-gray-500 text-sm">Let's manage your roster today!</p>
+          <p className="text-[hsl(var(--color-foreground-secondary))] text-sm">Let's manage your roster today!</p>
         </div>
 
         {/* Dashboard Stats */}

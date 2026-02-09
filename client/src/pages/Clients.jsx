@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Building2, Plus, ChevronDown, Settings, Maximize, RotateCw } from "lucide-react";
+import {
+  Building2,
+  Plus,
+  ChevronDown,
+  Settings,
+  Maximize,
+  RotateCw,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import ClientsTable from "../components/clients/ClientsTable";
 import ClientFilters from "../components/clients/ClientFilters";
@@ -11,7 +18,8 @@ import staticClients from "../data/clients";
 export default function Clients() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
-  const [showMultipleClientsModal, setShowMultipleClientsModal] = useState(false);
+  const [showMultipleClientsModal, setShowMultipleClientsModal] =
+    useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const addMenuRef = useRef(null);
 
@@ -29,25 +37,26 @@ export default function Clients() {
       setError(null);
       const response = await clientApi.getAll({
         page: currentPage,
-        limit: currentLimit
+        limit: currentLimit,
       });
 
       // Try different response structures
-      const clientsData = response.data.data?.clients || response.data.data || response.data;
+      const clientsData =
+        response.data.data?.clients || response.data.data || response.data;
 
       // Only update if we got valid data
       if (Array.isArray(clientsData) && clientsData.length > 0) {
         setClients(clientsData);
       } else {
         // Keep existing data if API returns empty
-        console.warn('API returned empty data, keeping current clients');
+        console.warn("API returned empty data, keeping current clients");
       }
     } catch (err) {
-      console.error('Failed to fetch clients:', err);
-      setError(err.response?.data?.message || 'Failed to fetch clients');
+      console.error("Failed to fetch clients:", err);
+      setError(err.response?.data?.message || "Failed to fetch clients");
       // Keep static data on error - don't show error toast if we have data
       if (clients.length === 0) {
-        toast.error('Using local data - API not available');
+        toast.error("Using local data - API not available");
       }
     } finally {
       setLoading(false);
@@ -65,7 +74,7 @@ export default function Clients() {
     fetchClients();
     // Only show success if we're not using static data
     if (clients.length > 0) {
-      toast.success('Refreshing clients...');
+      toast.success("Refreshing clients...");
     }
   };
 
@@ -95,7 +104,7 @@ export default function Clients() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[hsl(var(--color-surface-elevated))]">
       {/* Clients Submenu Bar */}
       <div className="bg-blue-600 text-white px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
@@ -104,10 +113,16 @@ export default function Clients() {
             <h1 className="text-base sm:text-lg font-semibold">Clients</h1>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            <button className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors" title="Settings">
+            <button
+              className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
+              title="Settings"
+            >
               <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <button className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors" title="Expand">
+            <button
+              className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
+              title="Expand"
+            >
               <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
@@ -145,13 +160,13 @@ export default function Clients() {
 
               {/* Add New Dropdown */}
               {addMenuOpen && (
-                <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <div className="absolute left-0 top-full mt-1 w-48 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-md shadow-lg z-50">
                   <button
                     onClick={() => {
                       setShowAddClientModal(true);
                       setAddMenuOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
                   >
                     Client
                   </button>
@@ -160,7 +175,7 @@ export default function Clients() {
                       setShowMultipleClientsModal(true);
                       setAddMenuOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
                   >
                     Multiple Clients
                   </button>
@@ -171,15 +186,15 @@ export default function Clients() {
 
           {/* Secondary Actions */}
           <div className="flex flex-wrap items-center gap-2">
-            <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+            <button className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-2 text-sm">
               Actions
               <ChevronDown className="w-4 h-4" />
             </button>
-            <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+            <button className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-2 text-sm">
               Columns
               <ChevronDown className="w-4 h-4" />
             </button>
-            <select className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm cursor-pointer">
+            <select className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md text-sm cursor-pointer">
               <option>25</option>
               <option>50</option>
               <option>100</option>

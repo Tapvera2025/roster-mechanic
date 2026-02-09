@@ -1,22 +1,27 @@
-import { useState, useEffect } from 'react';
-import { X, Upload, User, Eye, EyeOff } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
-import { Label } from '../ui/Label';
-import toast from 'react-hot-toast';
-import { siteApi, employeeApi } from '../../lib/api';
+import { useState, useEffect } from "react";
+import { X, Upload, User, Eye, EyeOff } from "lucide-react";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { Select } from "../ui/Select";
+import { Label } from "../ui/Label";
+import toast from "react-hot-toast";
+import { siteApi, employeeApi } from "../../lib/api";
 
-export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = null }) {
+export default function AddEmployeeModal({
+  isOpen,
+  onClose,
+  onSave,
+  employee = null,
+}) {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    position: '',
-    department: '',
-    password: '',
-    isActive: true
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    position: "",
+    department: "",
+    password: "",
+    isActive: true,
   });
 
   const [sites, setSites] = useState([]);
@@ -29,16 +34,17 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
       const fetchSites = async () => {
         try {
           const response = await siteApi.getAll({ limit: 100 });
-          const sitesData = response.data.data?.sites || response.data.data || [];
+          const sitesData =
+            response.data.data?.sites || response.data.data || [];
           // Transform sites to ensure they have an id field
-          const transformedSites = sitesData.map(site => ({
+          const transformedSites = sitesData.map((site) => ({
             ...site,
-            id: site.id || site._id
+            id: site.id || site._id,
           }));
           setSites(transformedSites);
         } catch (err) {
-          console.error('Failed to fetch sites:', err);
-          toast.error('Failed to load sites');
+          console.error("Failed to fetch sites:", err);
+          toast.error("Failed to load sites");
         }
       };
       fetchSites();
@@ -50,26 +56,26 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
     if (isOpen) {
       if (employee) {
         setFormData({
-          firstName: employee.firstName || '',
-          lastName: employee.lastName || '',
-          email: employee.email || '',
-          phone: employee.phone || '',
-          position: employee.position || '',
-          department: employee.department || '',
-          password: '', // Don't populate password for security
-          isActive: employee.isActive !== undefined ? employee.isActive : true
+          firstName: employee.firstName || "",
+          lastName: employee.lastName || "",
+          email: employee.email || "",
+          phone: employee.phone || "",
+          position: employee.position || "",
+          department: employee.department || "",
+          password: "", // Don't populate password for security
+          isActive: employee.isActive !== undefined ? employee.isActive : true,
         });
         setSelectedSites([]);
       } else {
         setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          position: '',
-          department: '',
-          password: '',
-          isActive: true
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          position: "",
+          department: "",
+          password: "",
+          isActive: true,
         });
         setSelectedSites([]);
       }
@@ -77,14 +83,14 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
   }, [isOpen, employee]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSiteToggle = (siteId) => {
-    setSelectedSites(prev =>
+    setSelectedSites((prev) =>
       prev.includes(siteId)
-        ? prev.filter(id => id !== siteId)
-        : [...prev, siteId]
+        ? prev.filter((id) => id !== siteId)
+        : [...prev, siteId],
     );
   };
 
@@ -92,19 +98,24 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
     e.preventDefault();
 
     // Validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.position) {
-      toast.error('Please fill in all required fields');
+    if (
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.email ||
+      !formData.position
+    ) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
     // Password validation for new employees
     if (!employee && !formData.password) {
-      toast.error('Password is required for new employees');
+      toast.error("Password is required for new employees");
       return;
     }
 
     if (formData.password && formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -120,16 +131,16 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[hsl(var(--color-card))] rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))]">
+          <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))] flex items-center gap-2">
             <User className="w-5 h-5" />
-            {employee ? 'Edit Employee' : 'Employee Details'}
+            {employee ? "Edit Employee" : "Employee Details"}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-foreground))] transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -145,16 +156,18 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                 <div>
                   <Label>Employee No.</Label>
                   <Input
-                    value={employee?.id ? employee.id.slice(-4) : 'Auto'}
+                    value={employee?.id ? employee.id.slice(-4) : "Auto"}
                     disabled
-                    className="mt-1 bg-gray-50"
+                    className="mt-1 bg-[hsl(var(--color-surface-elevated))]"
                   />
                 </div>
                 <div>
                   <Label>Status *</Label>
                   <Select
-                    value={formData.isActive ? 'active' : 'inactive'}
-                    onChange={(e) => handleChange('isActive', e.target.value === 'active')}
+                    value={formData.isActive ? "active" : "inactive"}
+                    onChange={(e) =>
+                      handleChange("isActive", e.target.value === "active")
+                    }
                     className="mt-1"
                   >
                     <option value="active">Active</option>
@@ -169,7 +182,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                   <Label>First Name *</Label>
                   <Input
                     value={formData.firstName}
-                    onChange={(e) => handleChange('firstName', e.target.value)}
+                    onChange={(e) => handleChange("firstName", e.target.value)}
                     className="mt-1"
                     placeholder="First Name"
                     required
@@ -177,16 +190,13 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                 </div>
                 <div>
                   <Label>Middle Name</Label>
-                  <Input
-                    className="mt-1"
-                    placeholder="Middle Name"
-                  />
+                  <Input className="mt-1" placeholder="Middle Name" />
                 </div>
                 <div>
                   <Label>Last Name *</Label>
                   <Input
                     value={formData.lastName}
-                    onChange={(e) => handleChange('lastName', e.target.value)}
+                    onChange={(e) => handleChange("lastName", e.target.value)}
                     className="mt-1"
                     placeholder="Last Name"
                     required
@@ -201,7 +211,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                   <Input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
+                    onChange={(e) => handleChange("phone", e.target.value)}
                     className="mt-1"
                     placeholder="###-###-###"
                   />
@@ -211,7 +221,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                   <Input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
+                    onChange={(e) => handleChange("email", e.target.value)}
                     className="mt-1"
                     placeholder="email@example.com"
                     required
@@ -220,28 +230,37 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
               </div>
 
               {/* Login Credentials */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-semibold text-gray-900 mb-4">Login Credentials</h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Provide a password to allow this employee to log in and view their schedules
+              <div className="pt-4 border-t border-[hsl(var(--color-border))]">
+                <h3 className="text-md font-semibold text-[hsl(var(--color-foreground))] mb-4">
+                  Login Credentials
+                </h3>
+                <p className="text-sm text-[hsl(var(--color-foreground-secondary))] mb-3">
+                  Provide a password to allow this employee to log in and view
+                  their schedules
                 </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Password {!employee && '*'}</Label>
+                    <Label>Password {!employee && "*"}</Label>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
                         value={formData.password}
-                        onChange={(e) => handleChange('password', e.target.value)}
+                        onChange={(e) =>
+                          handleChange("password", e.target.value)
+                        }
                         className="mt-1 pr-10"
-                        placeholder={employee ? "Leave blank to keep current password" : "Enter password"}
+                        placeholder={
+                          employee
+                            ? "Leave blank to keep current password"
+                            : "Enter password"
+                        }
                         required={!employee}
                         minLength={8}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-foreground))] transition-colors"
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />
@@ -250,8 +269,10 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {employee ? "Leave blank to keep current password" : "Minimum 8 characters"}
+                    <p className="text-xs text-[hsl(var(--color-foreground-secondary))] mt-1">
+                      {employee
+                        ? "Leave blank to keep current password"
+                        : "Minimum 8 characters"}
                     </p>
                   </div>
                   <div>
@@ -259,9 +280,9 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                     <Input
                       value="USER (View Own Shifts)"
                       disabled
-                      className="mt-1 bg-gray-50"
+                      className="mt-1 bg-[hsl(var(--color-surface-elevated))]"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[hsl(var(--color-foreground-secondary))] mt-1">
                       Employees can view their own schedules
                     </p>
                   </div>
@@ -273,7 +294,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                 <Label>What Position(s) Does Employee Work? *</Label>
                 <Input
                   value={formData.position}
-                  onChange={(e) => handleChange('position', e.target.value)}
+                  onChange={(e) => handleChange("position", e.target.value)}
                   className="mt-1"
                   placeholder="e.g., Dispatcher, Driver, Manager"
                   required
@@ -281,15 +302,14 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
               </div>
 
               {/* Address Section */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-semibold text-gray-900 mb-4">Address</h3>
+              <div className="pt-4 border-t border-[hsl(var(--color-border))]">
+                <h3 className="text-md font-semibold text-[hsl(var(--color-foreground))] mb-4">
+                  Address
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <Label>Address</Label>
-                    <Input
-                      className="mt-1"
-                      placeholder="Enter a location"
-                    />
+                    <Input className="mt-1" placeholder="Enter a location" />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
@@ -315,18 +335,17 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                     </div>
                     <div>
                       <Label>Postal Code</Label>
-                      <Input
-                        className="mt-1"
-                        placeholder="Postal Code"
-                      />
+                      <Input className="mt-1" placeholder="Postal Code" />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Employment Section */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-semibold text-gray-900 mb-4">Employment</h3>
+              <div className="pt-4 border-t border-[hsl(var(--color-border))]">
+                <h3 className="text-md font-semibold text-[hsl(var(--color-foreground))] mb-4">
+                  Employment
+                </h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -339,7 +358,9 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                       <Label>Department</Label>
                       <Input
                         value={formData.department}
-                        onChange={(e) => handleChange('department', e.target.value)}
+                        onChange={(e) =>
+                          handleChange("department", e.target.value)
+                        }
                         className="mt-1"
                         placeholder="Department"
                       />
@@ -359,25 +380,31 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
               </div>
 
               {/* Site Assignment Section */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-semibold text-gray-900 mb-4">Site Assignment</h3>
-                <p className="text-sm text-gray-600 mb-3">Select the sites this employee will be assigned to:</p>
-                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3 space-y-2">
+              <div className="pt-4 border-t border-[hsl(var(--color-border))]">
+                <h3 className="text-md font-semibold text-[hsl(var(--color-foreground))] mb-4">
+                  Site Assignment
+                </h3>
+                <p className="text-sm text-[hsl(var(--color-foreground-secondary))] mb-3">
+                  Select the sites this employee will be assigned to:
+                </p>
+                <div className="max-h-48 overflow-y-auto border border-[hsl(var(--color-border))] rounded-md p-3 space-y-2">
                   {sites.length === 0 ? (
-                    <p className="text-sm text-gray-500">No sites available</p>
+                    <p className="text-sm text-[hsl(var(--color-foreground-secondary))]">
+                      No sites available
+                    </p>
                   ) : (
                     sites.map((site) => (
                       <label
                         key={site.id}
-                        className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                        className="flex items-center gap-2 p-2 hover:bg-[hsl(var(--color-surface-elevated))] rounded cursor-pointer"
                       >
                         <input
                           type="checkbox"
                           checked={selectedSites.includes(site.id)}
                           onChange={() => handleSiteToggle(site.id)}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="w-4 h-4 rounded border-[hsl(var(--color-border))] text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-[hsl(var(--color-foreground))]">
                           {site.shortName} - {site.siteLocationName}
                         </span>
                       </label>
@@ -386,14 +413,17 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                 </div>
                 {selectedSites.length > 0 && (
                   <p className="text-sm text-blue-600 mt-2">
-                    {selectedSites.length} site{selectedSites.length !== 1 ? 's' : ''} selected
+                    {selectedSites.length} site
+                    {selectedSites.length !== 1 ? "s" : ""} selected
                   </p>
                 )}
               </div>
 
               {/* Emergency Contact Section */}
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-semibold text-gray-900 mb-4">Emergency Contact</h3>
+              <div className="pt-4 border-t border-[hsl(var(--color-border))]">
+                <h3 className="text-md font-semibold text-[hsl(var(--color-foreground))] mb-4">
+                  Emergency Contact
+                </h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -428,11 +458,11 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
             </div>
 
             {/* Right Column - Photo and Settings */}
-            <div className="w-80 bg-gray-50 border-l border-gray-200 p-6 space-y-6">
+            <div className="w-80 bg-[hsl(var(--color-surface-elevated))] border-l border-[hsl(var(--color-border))] p-6 space-y-6">
               {/* Photo Upload */}
               <div className="flex flex-col items-center">
-                <div className="w-48 h-48 bg-gray-300 rounded flex items-center justify-center mb-4">
-                  <User className="w-24 h-24 text-gray-500" />
+                <div className="w-48 h-48 bg-[hsl(var(--color-border))] rounded flex items-center justify-center mb-4">
+                  <User className="w-24 h-24 text-[hsl(var(--color-foreground-secondary))]" />
                 </div>
                 <button
                   type="button"
@@ -451,7 +481,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                     <button
                       key={star}
                       type="button"
-                      className="text-2xl text-gray-300 hover:text-yellow-400"
+                      className="text-2xl text-[hsl(var(--color-border))] hover:text-yellow-400"
                     >
                       ★
                     </button>
@@ -482,7 +512,9 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label className="mb-0 text-xs">Clock In/Out Against Adhoc Shifts</Label>
+                  <Label className="mb-0 text-xs">
+                    Clock In/Out Against Adhoc Shifts
+                  </Label>
                   <button
                     type="button"
                     className="w-12 h-6 bg-blue-500 rounded-full relative"
@@ -492,7 +524,9 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label className="mb-0 text-xs">Add/Maintain Manual Timesheets</Label>
+                  <Label className="mb-0 text-xs">
+                    Add/Maintain Manual Timesheets
+                  </Label>
                   <button
                     type="button"
                     className="w-12 h-6 bg-red-500 rounded-full relative"
@@ -525,7 +559,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSave, employee = n
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-between p-4 border-t border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))]">
             <Button type="button" variant="outline" onClick={onClose}>
               Close
             </Button>

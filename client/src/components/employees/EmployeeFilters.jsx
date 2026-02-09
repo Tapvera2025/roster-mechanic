@@ -8,14 +8,14 @@ export default function EmployeeFilters({ showInactive, setShowInactive }) {
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
       {/* Search Bar */}
       <div className="w-full sm:flex-1 sm:max-w-md">
-        <div className="relative flex items-center border border-gray-300 rounded-md bg-white">
-          <Search className="w-4 h-4 text-gray-400 ml-3 flex-shrink-0" />
+        <div className="relative flex items-center border border-[hsl(var(--color-border))] rounded-md bg-[hsl(var(--color-card))]">
+          <Search className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))] ml-3 flex-shrink-0" />
 
           {/* Search Field Dropdown */}
           <div className="relative flex-shrink-0">
-            <button className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm border-r border-gray-300 hover:bg-gray-50 whitespace-nowrap">
+            <button className="flex items-center gap-1 px-2 sm:px-3 py-2 text-xs sm:text-sm border-r border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-surface-elevated))] whitespace-nowrap">
               {searchField}
-              <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+              <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 text-[hsl(var(--color-foreground-secondary))]" />
             </button>
           </div>
 
@@ -30,8 +30,12 @@ export default function EmployeeFilters({ showInactive, setShowInactive }) {
 
       {/* Display Inactive Employees Toggle */}
       <div className="flex items-center gap-2 text-xs sm:text-sm whitespace-nowrap">
-        <span className="text-gray-700 hidden lg:inline">Display Inactive Employees</span>
-        <span className="text-gray-700 lg:hidden">Inactive</span>
+        <span className="text-[hsl(var(--color-foreground))] hidden lg:inline">
+          Display Inactive Employees
+        </span>
+        <span className="text-[hsl(var(--color-foreground))] lg:hidden">
+          Inactive
+        </span>
         <button
           onClick={() => setShowInactive(!showInactive)}
           className={`relative inline-flex items-center h-5 w-10 sm:h-6 sm:w-12 rounded-full transition-colors flex-shrink-0 ${
@@ -44,7 +48,9 @@ export default function EmployeeFilters({ showInactive, setShowInactive }) {
             }`}
           />
         </button>
-        <span className={`font-medium ${showInactive ? "text-blue-600" : "text-red-500"}`}>
+        <span
+          className={`font-medium ${showInactive ? "text-blue-600" : "text-red-500"}`}
+        >
           {showInactive ? "ON" : "OFF"}
         </span>
       </div>

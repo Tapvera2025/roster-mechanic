@@ -16,12 +16,54 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
   const [clients, setClients] = useState(staticClients);
 
   const [sites, setSites] = useState([
-    { id: 1, siteName: "", shortName: "", address: "", client: "", checked: false },
-    { id: 2, siteName: "", shortName: "", address: "", client: "", checked: false },
-    { id: 3, siteName: "", shortName: "", address: "", client: "", checked: false },
-    { id: 4, siteName: "", shortName: "", address: "", client: "", checked: false },
-    { id: 5, siteName: "", shortName: "", address: "", client: "", checked: false },
-    { id: 6, siteName: "", shortName: "", address: "", client: "", checked: false },
+    {
+      id: 1,
+      siteName: "",
+      shortName: "",
+      address: "",
+      client: "",
+      checked: false,
+    },
+    {
+      id: 2,
+      siteName: "",
+      shortName: "",
+      address: "",
+      client: "",
+      checked: false,
+    },
+    {
+      id: 3,
+      siteName: "",
+      shortName: "",
+      address: "",
+      client: "",
+      checked: false,
+    },
+    {
+      id: 4,
+      siteName: "",
+      shortName: "",
+      address: "",
+      client: "",
+      checked: false,
+    },
+    {
+      id: 5,
+      siteName: "",
+      shortName: "",
+      address: "",
+      client: "",
+      checked: false,
+    },
+    {
+      id: 6,
+      siteName: "",
+      shortName: "",
+      address: "",
+      client: "",
+      checked: false,
+    },
   ]);
 
   // Fetch clients on mount
@@ -29,13 +71,14 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
     const fetchClients = async () => {
       try {
         const response = await clientApi.getAll({ limit: 100 });
-        const clientsData = response.data.data?.clients || response.data.data || response.data;
+        const clientsData =
+          response.data.data?.clients || response.data.data || response.data;
 
         if (Array.isArray(clientsData) && clientsData.length > 0) {
           setClients(clientsData);
         }
       } catch (err) {
-        console.warn('Failed to fetch clients, using static data:', err);
+        console.warn("Failed to fetch clients, using static data:", err);
         // Keep static clients as fallback
       }
     };
@@ -70,7 +113,14 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
     const newId = Math.max(...sites.map((s) => s.id)) + 1;
     setSites([
       ...sites,
-      { id: newId, siteName: "", shortName: "", address: "", client: "", checked: false },
+      {
+        id: newId,
+        siteName: "",
+        shortName: "",
+        address: "",
+        client: "",
+        checked: false,
+      },
     ]);
   };
 
@@ -81,16 +131,16 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
   const handleSiteChange = (id, field, value) => {
     setSites(
       sites.map((site) =>
-        site.id === id ? { ...site, [field]: value } : site
-      )
+        site.id === id ? { ...site, [field]: value } : site,
+      ),
     );
   };
 
   const handleCheckboxChange = (id) => {
     setSites(
       sites.map((site) =>
-        site.id === id ? { ...site, checked: !site.checked } : site
-      )
+        site.id === id ? { ...site, checked: !site.checked } : site,
+      ),
     );
   };
 
@@ -99,22 +149,24 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
       setSubmitting(true);
 
       // Filter out empty sites (sites with at least siteName and shortName filled)
-      const validSites = sites.filter(s =>
-        s.siteName.trim() && s.shortName.trim()
+      const validSites = sites.filter(
+        (s) => s.siteName.trim() && s.shortName.trim(),
       );
 
       if (validSites.length === 0) {
-        toast.error('Please fill in at least one site with Name and Short Name');
+        toast.error(
+          "Please fill in at least one site with Name and Short Name",
+        );
         return;
       }
 
       // Map to API format
-      const payload = validSites.map(site => ({
+      const payload = validSites.map((site) => ({
         siteLocationName: site.siteName,
         shortName: site.shortName,
         address: site.address,
-        client: site.client || 'No Client',
-        status: 'ACTIVE'
+        client: site.client || "No Client",
+        status: "ACTIVE",
       }));
 
       const response = await siteApi.bulkCreate(payload);
@@ -122,7 +174,7 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
       onClose();
       if (onSuccess) onSuccess();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create sites');
+      toast.error(err.response?.data?.message || "Failed to create sites");
     } finally {
       setSubmitting(false);
     }
@@ -136,7 +188,7 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-lg shadow-2xl w-full max-w-6xl"
+        className="bg-[hsl(var(--color-card))] rounded-lg shadow-2xl w-full max-w-6xl"
         style={{
           transform: `translate(${position.x}px, ${position.y}px)`,
           cursor: isDragging ? "grabbing" : "default",
@@ -144,15 +196,17 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
       >
         {/* Header - Draggable */}
         <div
-          className="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-lg cursor-grab active:cursor-grabbing"
+          className="modal-header flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] rounded-t-lg cursor-grab active:cursor-grabbing"
           onMouseDown={handleMouseDown}
         >
-          <h2 className="text-lg font-semibold text-gray-800">Add Sites</h2>
+          <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))]">
+            Add Sites
+          </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-200 rounded transition-colors"
+            className="p-1 hover:bg-[hsl(var(--color-border))] rounded transition-colors"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-[hsl(var(--color-foreground-secondary))]" />
           </button>
         </div>
 
@@ -161,18 +215,18 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
+                <tr className="border-b border-[hsl(var(--color-border))]">
                   <th className="w-10 pb-3"></th>
-                  <th className="text-left pb-3 px-2 text-sm font-medium text-gray-700">
+                  <th className="text-left pb-3 px-2 text-sm font-medium text-[hsl(var(--color-foreground-secondary))]">
                     Site Name
                   </th>
-                  <th className="text-left pb-3 px-2 text-sm font-medium text-gray-700">
+                  <th className="text-left pb-3 px-2 text-sm font-medium text-[hsl(var(--color-foreground-secondary))]">
                     Short Name
                   </th>
-                  <th className="text-left pb-3 px-2 text-sm font-medium text-gray-700">
+                  <th className="text-left pb-3 px-2 text-sm font-medium text-[hsl(var(--color-foreground-secondary))]">
                     Address
                   </th>
-                  <th className="text-left pb-3 px-2 text-sm font-medium text-gray-700">
+                  <th className="text-left pb-3 px-2 text-sm font-medium text-[hsl(var(--color-foreground-secondary))]">
                     Client
                   </th>
                   <th className="w-10 pb-3"></th>
@@ -180,13 +234,16 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
               </thead>
               <tbody>
                 {sites.map((site, index) => (
-                  <tr key={site.id} className="border-b border-gray-100">
+                  <tr
+                    key={site.id}
+                    className="border-b border-[hsl(var(--color-border))]"
+                  >
                     <td className="py-3 px-2">
                       <input
                         type="checkbox"
                         checked={site.checked}
                         onChange={() => handleCheckboxChange(site.id)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-[hsl(var(--color-border))] text-blue-600 focus:ring-blue-500"
                       />
                     </td>
                     <td className="py-3 px-2">
@@ -196,7 +253,9 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
                         onChange={(e) =>
                           handleSiteChange(site.id, "siteName", e.target.value)
                         }
-                        className={index === sites.length - 1 ? "border-blue-400" : ""}
+                        className={
+                          index === sites.length - 1 ? "border-blue-400" : ""
+                        }
                       />
                     </td>
                     <td className="py-3 px-2">
@@ -260,7 +319,7 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))]">
           <Button variant="outline" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
@@ -269,7 +328,7 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
             disabled={submitting}
             className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? 'Saving...' : 'Save'}
+            {submitting ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>
