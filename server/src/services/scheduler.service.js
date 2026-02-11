@@ -23,14 +23,16 @@ class SchedulerService {
       companyId,
       status: 'ACTIVE',
     })
-      .select('siteLocationName shortName jobRefNo address')
+      .select('siteLocationName shortName jobRefNo address location')
       .sort({ siteLocationName: 1 })
       .lean();
 
-    // Transform _id to id for frontend compatibility
+    // Transform _id to id for frontend compatibility and extract coordinates
     return sites.map(site => ({
       ...site,
-      id: site._id.toString()
+      id: site._id.toString(),
+      latitude: site.location?.coordinates?.[1] || null,
+      longitude: site.location?.coordinates?.[0] || null
     }));
   }
 

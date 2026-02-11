@@ -122,22 +122,22 @@ export default function Employees() {
   return (
     <div className="min-h-screen">
       {/* Employees Header */}
-      <div className="bg-blue-500 text-white px-4 sm:px-6 lg:px-8 py-4">
+      <div className="bg-[hsl(var(--color-primary))] text-white px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5" />
             <h1 className="text-base sm:text-lg font-semibold">Employees</h1>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-blue-600 rounded-lg transition-colors" title="Settings">
+            <button className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors" title="Settings">
               <Settings className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-blue-600 rounded-lg transition-colors" title="Expand">
+            <button className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors" title="Expand">
               <Maximize className="w-5 h-5" />
             </button>
             <button
               onClick={fetchEmployees}
-              className="p-2 hover:bg-blue-600 rounded-lg transition-colors"
+              className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors"
               title="Refresh"
             >
               <RotateCw className="w-5 h-5" />
@@ -149,7 +149,7 @@ export default function Employees() {
       {/* Main Content */}
       <div className="p-4 sm:p-6">
         {/* Filters and Actions */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
+        <div className="bg-[hsl(var(--color-card))] rounded-lg shadow-sm border border-[hsl(var(--color-border))] mb-4">
           <div className="p-4 flex flex-wrap items-center justify-between gap-4">
             {/* Search and Filters */}
             <div className="flex flex-wrap items-center gap-3">
@@ -168,11 +168,11 @@ export default function Employees() {
               />
 
               <label className="flex items-center gap-2 cursor-pointer">
-                <span className="text-sm">Display Inactive Employees</span>
+                <span className="text-sm text-[hsl(var(--color-foreground))]">Display Inactive Employees</span>
                 <div
                   onClick={() => setShowInactive(!showInactive)}
                   className={`relative inline-block w-12 h-6 rounded-full transition-colors ${
-                    showInactive ? 'bg-red-500' : 'bg-gray-300'
+                    showInactive ? 'bg-[hsl(var(--color-error))]' : 'bg-[hsl(var(--color-border))]'
                   }`}
                 >
                   <div
@@ -181,7 +181,7 @@ export default function Employees() {
                     }`}
                   />
                 </div>
-                <span className="text-sm font-medium">{showInactive ? 'ON' : 'OFF'}</span>
+                <span className={`text-sm font-medium ${showInactive ? 'text-[hsl(var(--color-error))]' : 'text-[hsl(var(--color-foreground-secondary))]'}`}>{showInactive ? 'ON' : 'OFF'}</span>
               </label>
             </div>
 
@@ -221,10 +221,10 @@ export default function Employees() {
         </div>
 
         {/* Employee Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-[hsl(var(--color-card))] rounded-lg shadow-sm border border-[hsl(var(--color-border))] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))]">
                 <tr>
                   <th className="px-4 py-3 text-left">
                     <input
@@ -234,34 +234,34 @@ export default function Employees() {
                       className="w-4 h-4"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Photo</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Emp No.</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">First Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Last Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Mobile</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Position</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Department</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Photo</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Emp No.</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">First Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Last Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Mobile</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Position</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Department</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-[hsl(var(--color-border))]">
                 {loading ? (
                   <tr>
-                    <td colSpan="11" className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan="11" className="px-4 py-8 text-center text-[hsl(var(--color-foreground-secondary))]">
                       Loading...
                     </td>
                   </tr>
                 ) : employees.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan="11" className="px-4 py-8 text-center text-[hsl(var(--color-foreground-secondary))]">
                       No employees found
                     </td>
                   </tr>
                 ) : (
                   employees.map((employee, index) => (
-                    <tr key={employee.id} className="hover:bg-gray-50">
+                    <tr key={employee.id} className="hover:bg-[hsl(var(--color-surface-elevated))]">
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
@@ -271,39 +271,39 @@ export default function Employees() {
                         />
                       </td>
                       <td className="px-4 py-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                          <Users className="w-6 h-6 text-gray-600" />
+                        <div className="w-10 h-10 rounded-full bg-[hsl(var(--color-border))] flex items-center justify-center">
+                          <Users className="w-6 h-6 text-[hsl(var(--color-foreground-secondary))]" />
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-blue-600 font-medium">
+                      <td className="px-4 py-3 text-sm text-[hsl(var(--color-primary))] font-medium">
                         {(pagination.page - 1) * pagination.limit + index + 1}
                       </td>
-                      <td className="px-4 py-3 text-sm text-blue-600 hover:underline cursor-pointer">
+                      <td className="px-4 py-3 text-sm text-[hsl(var(--color-primary))] hover:underline cursor-pointer">
                         {employee.firstName}
                       </td>
-                      <td className="px-4 py-3 text-sm text-blue-600 hover:underline cursor-pointer">
+                      <td className="px-4 py-3 text-sm text-[hsl(var(--color-primary))] hover:underline cursor-pointer">
                         {employee.lastName}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
                         {employee.phone || '-'}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 text-xs rounded ${
                           employee.isActive
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground-secondary))]'
                         }`}>
                           {employee.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
                         {employee.position}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
                         {employee.department || '-'}
                       </td>
                       <td className="px-4 py-3">
-                        <button className="text-blue-600 hover:text-blue-800">
+                        <button className="text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-dark))]">
                           <Mail className="w-4 h-4" />
                         </button>
                       </td>
@@ -311,19 +311,19 @@ export default function Employees() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleEdit(employee)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-dark))]"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(employee.id)}
-                            className="text-red-600 hover:text-red-800"
+                            className="text-[hsl(var(--color-error))] hover:text-red-800"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                          <button className="text-gray-600 hover:text-gray-800">
+                          <button className="text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-foreground))]">
                             <ChevronDown className="w-4 h-4" />
                           </button>
                         </div>
@@ -337,8 +337,8 @@ export default function Employees() {
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
-            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-700">
+            <div className="px-4 py-3 border-t border-[hsl(var(--color-border))] flex items-center justify-between bg-[hsl(var(--color-surface-elevated))]">
+              <div className="text-sm text-[hsl(var(--color-foreground))]">
                 Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
                 {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
                 {pagination.total} employees
@@ -352,7 +352,7 @@ export default function Employees() {
                 >
                   Previous
                 </Button>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-[hsl(var(--color-foreground))]">
                   Page {pagination.page} of {pagination.totalPages}
                 </span>
                 <Button

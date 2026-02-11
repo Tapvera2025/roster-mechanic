@@ -12,27 +12,27 @@ export default function LeaveFilters({ filters, setFilters }) {
   };
 
   return (
-    <div className="bg-gray-50 p-4 space-y-4">
+    <div className="bg-[hsl(var(--color-surface-elevated))] p-4 space-y-4">
       {/* Clear Filters Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+      <div className="flex items-center justify-between pb-3 border-b border-[hsl(var(--color-border))]">
         <button
           onClick={handleClearFilters}
-          className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+          className="flex items-center gap-1 text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-dark))] text-sm font-medium"
         >
           <X className="w-4 h-4" />
           Clear Filters
         </button>
-        <X className="w-4 h-4 text-blue-600" />
+        <X className="w-4 h-4 text-[hsl(var(--color-primary))]" />
       </div>
 
       {/* Select Leave Period */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-medium text-[hsl(var(--color-foreground))]">
           Select Leave Period
         </label>
         <div className="flex items-center gap-2">
-          <button className="p-1 hover:bg-gray-200 rounded">
-            <ChevronLeft className="w-4 h-4" />
+          <button className="p-1 hover:bg-[hsl(var(--color-surface-elevated))] rounded">
+            <ChevronLeft className="w-4 h-4 text-[hsl(var(--color-foreground))]" />
           </button>
           <Select
             value={filters.leavePeriod}
@@ -47,8 +47,8 @@ export default function LeaveFilters({ filters, setFilters }) {
             <option value="last_6_months">Last 6 Months</option>
             <option value="this_year">This Year</option>
           </Select>
-          <button className="p-1 hover:bg-gray-200 rounded">
-            <ChevronRight className="w-4 h-4" />
+          <button className="p-1 hover:bg-[hsl(var(--color-surface-elevated))] rounded">
+            <ChevronRight className="w-4 h-4 text-[hsl(var(--color-foreground))]" />
           </button>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function LeaveFilters({ filters, setFilters }) {
 
       {/* Search Button */}
       <Button
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+        className="w-full bg-[hsl(var(--color-primary))] hover:bg-[hsl(var(--color-primary-dark))] text-white"
         variant="default"
       >
         Search

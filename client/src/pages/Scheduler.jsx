@@ -125,34 +125,70 @@ export default function Scheduler() {
     fetchData();
   }, [selectedSite, currentStartDate, viewMode]);
 
-  // Fetch weather when site is selected
+  // Fetch weather for all sites in shifts
   useEffect(() => {
-    if (!selectedSite) {
+    if (shifts.length === 0 || sites.length === 0) {
       setWeatherData([]);
       return;
     }
 
-    const fetchWeather = async () => {
+    const fetchWeatherForAllSites = async () => {
       try {
-        // Find the selected site to get coordinates
-        const site = sites.find((s) => s.id === parseInt(selectedSite));
-        if (!site || !site.latitude || !site.longitude) {
-          return;
-        }
+        // Get unique site IDs from shifts
+        const uniqueSiteIds = [
+          ...new Set(
+            shifts
+              .map((shift) => {
+                if (shift.siteId) {
+                  return typeof shift.siteId === "object"
+                    ? shift.siteId.id
+                    : shift.siteId;
+                }
+                if (shift.site) {
+                  return typeof shift.site === "object"
+                    ? shift.site.id
+                    : shift.site;
+                }
+                return null;
+              })
+              .filter(Boolean),
+          ),
+        ];
 
-        const response = await weatherApi.getForecast(
-          site.latitude,
-          site.longitude,
-        );
-        setWeatherData(response.data.data.forecast || []);
+        // Fetch weather for each unique site
+        const weatherPromises = uniqueSiteIds.map(async (siteId) => {
+          const site = sites.find((s) => s.id === siteId);
+
+          if (!site || !site.latitude || !site.longitude) {
+            return { siteId, forecast: [] };
+          }
+
+          try {
+            const response = await weatherApi.getForecast(
+              site.latitude,
+              site.longitude,
+            );
+            return {
+              siteId,
+              siteName: site.shortName || site.siteLocationName,
+              forecast: response.data.data.forecast || [],
+            };
+          } catch (err) {
+            console.error(`Failed to load weather for site ${siteId}:`, err);
+            return { siteId, forecast: [] };
+          }
+        });
+
+        const weatherResults = await Promise.all(weatherPromises);
+        setWeatherData(weatherResults);
       } catch (err) {
         console.error("Failed to load weather data:", err);
         // Don't show error toast for weather - it's not critical
       }
     };
 
-    fetchWeather();
-  }, [selectedSite, sites]);
+    fetchWeatherForAllSites();
+  }, [shifts, sites]);
 
   // Close options dropdown when clicking outside
   useEffect(() => {
@@ -402,17 +438,24 @@ export default function Scheduler() {
     return <Cloud className="h-4 w-4" />;
   };
 
-  // Get weather for a specific date
-  const getWeatherForDate = (dateIndex) => {
-    if (!weatherData || weatherData.length === 0) return null;
+  // Get weather for a specific date and site
+  const getWeatherForDate = (dateIndex, siteId) => {
+    if (!weatherData || weatherData.length === 0 || !siteId) {
+      return null;
+    }
 
     // Calculate the actual date for this column
     const targetDate = new Date(currentStartDate);
     targetDate.setDate(targetDate.getDate() + dateIndex);
     const targetDateStr = targetDate.toISOString().split("T")[0];
 
+    // Find weather data for this site
+    const siteWeather = weatherData.find((w) => w.siteId === siteId);
+
+    if (!siteWeather || !siteWeather.forecast) return null;
+
     // Find weather data for this date
-    return weatherData.find((w) => w.date === targetDateStr);
+    return siteWeather.forecast.find((w) => w.date === targetDateStr);
   };
 
   return (
@@ -714,7 +757,9 @@ export default function Scheduler() {
             {/* Date Headers */}
             <div className="flex border-b border-[hsl(var(--color-border))] sticky top-0 bg-[hsl(var(--color-card))] z-10">
               {dateColumns.map((date, index) => {
-                const weather = getWeatherForDate(index);
+                const weather = selectedSite
+                  ? getWeatherForDate(index, parseInt(selectedSite))
+                  : null;
                 return (
                   <div
                     key={index}
@@ -813,36 +858,60 @@ export default function Scheduler() {
                         {/* Display existing shifts */}
                         {cellShifts.length > 0 && (
                           <div className="space-y-1">
-                            {cellShifts.map((shift) => (
-                              <div
-                                key={shift.id}
-                                className="border border-[hsl(var(--color-border))] rounded overflow-hidden bg-[hsl(var(--color-card))] text-xs"
-                              >
-                                <div className="px-2 py-1">
-                                  <div className="font-medium text-[hsl(var(--color-foreground))]">
-                                    {formatTime(shift.startTime)} -{" "}
-                                    {formatTime(shift.endTime)} (
-                                    {calculateShiftDuration(
-                                      shift.startTime,
-                                      shift.endTime,
-                                    )}{" "}
-                                    Hrs)
+                            {cellShifts.map((shift) => {
+                              const shiftSiteId = shift.siteId
+                                ? typeof shift.siteId === "object"
+                                  ? shift.siteId.id
+                                  : shift.siteId
+                                : shift.site
+                                  ? typeof shift.site === "object"
+                                    ? shift.site.id
+                                    : shift.site
+                                  : null;
+                              const weather = getWeatherForDate(index, shiftSiteId);
+                              return (
+                                <div
+                                  key={shift.id}
+                                  className="border border-[hsl(var(--color-border))] rounded overflow-hidden bg-[hsl(var(--color-card))] text-xs"
+                                >
+                                  <div className="px-2 py-1">
+                                    <div className="font-medium text-[hsl(var(--color-foreground))]">
+                                      {formatTime(shift.startTime)} -{" "}
+                                      {formatTime(shift.endTime)} (
+                                      {calculateShiftDuration(
+                                        shift.startTime,
+                                        shift.endTime,
+                                      )}{" "}
+                                      Hrs)
+                                    </div>
+                                    <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
+                                      <MapPin className="h-3 w-3" />
+                                      <span>
+                                        {shift.siteId?.shortName ||
+                                          shift.site?.shortName ||
+                                          "Unknown Site"}
+                                      </span>
+                                    </div>
+                                    {weather && (
+                                      <div className="flex items-center gap-1.5 mt-1 text-blue-600">
+                                        {getWeatherIcon(weather.weather)}
+                                        <span className="text-xs font-semibold">
+                                          {Math.round(weather.temp)}°
+                                        </span>
+                                        <span className="text-xs capitalize">
+                                          {weather.description}
+                                        </span>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
-                                    <MapPin className="h-3 w-3" />
-                                    <span>
-                                      {shift.siteId?.shortName ||
-                                        "Unknown Site"}
-                                    </span>
-                                  </div>
+                                  {shift.status === "SCHEDULED" && (
+                                    <div className="bg-green-500 text-white px-2 py-0.5 font-medium">
+                                      Published
+                                    </div>
+                                  )}
                                 </div>
-                                {shift.status === "SCHEDULED" && (
-                                  <div className="bg-green-500 text-white px-2 py-0.5 font-medium">
-                                    Published
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
 
@@ -881,36 +950,60 @@ export default function Scheduler() {
                           {/* Display existing shifts */}
                           {cellShifts.length > 0 && (
                             <div className="space-y-1">
-                              {cellShifts.map((shift) => (
-                                <div
-                                  key={shift.id}
-                                  className="border border-[hsl(var(--color-border))] rounded overflow-hidden bg-[hsl(var(--color-card))] text-xs"
-                                >
-                                  <div className="px-2 py-1">
-                                    <div className="font-medium text-[hsl(var(--color-foreground))]">
-                                      {formatTime(shift.startTime)} -{" "}
-                                      {formatTime(shift.endTime)} (
-                                      {calculateShiftDuration(
-                                        shift.startTime,
-                                        shift.endTime,
-                                      )}{" "}
-                                      Hrs)
+                              {cellShifts.map((shift) => {
+                                const shiftSiteId = shift.siteId
+                                  ? typeof shift.siteId === "object"
+                                    ? shift.siteId.id
+                                    : shift.siteId
+                                  : shift.site
+                                    ? typeof shift.site === "object"
+                                      ? shift.site.id
+                                      : shift.site
+                                    : null;
+                                const weather = getWeatherForDate(index, shiftSiteId);
+                                return (
+                                  <div
+                                    key={shift.id}
+                                    className="border border-[hsl(var(--color-border))] rounded overflow-hidden bg-[hsl(var(--color-card))] text-xs"
+                                  >
+                                    <div className="px-2 py-1">
+                                      <div className="font-medium text-[hsl(var(--color-foreground))]">
+                                        {formatTime(shift.startTime)} -{" "}
+                                        {formatTime(shift.endTime)} (
+                                        {calculateShiftDuration(
+                                          shift.startTime,
+                                          shift.endTime,
+                                        )}{" "}
+                                        Hrs)
+                                      </div>
+                                      <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
+                                        <MapPin className="h-3 w-3" />
+                                        <span>
+                                          {shift.siteId?.shortName ||
+                                            shift.site?.shortName ||
+                                            "Unknown Site"}
+                                        </span>
+                                      </div>
+                                      {weather && (
+                                        <div className="flex items-center gap-1.5 mt-1 text-blue-600">
+                                          {getWeatherIcon(weather.weather)}
+                                          <span className="text-xs font-semibold">
+                                            {Math.round(weather.temp)}°
+                                          </span>
+                                          <span className="text-xs capitalize">
+                                            {weather.description}
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
-                                    <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
-                                      <MapPin className="h-3 w-3" />
-                                      <span>
-                                        {shift.site?.shortName ||
-                                          "Unknown Site"}
-                                      </span>
-                                    </div>
+                                    {shift.status === "SCHEDULED" && (
+                                      <div className="bg-green-500 text-white px-2 py-0.5 font-medium">
+                                        Published
+                                      </div>
+                                    )}
                                   </div>
-                                  {shift.status === "SCHEDULED" && (
-                                    <div className="bg-green-500 text-white px-2 py-0.5 font-medium">
-                                      Published
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
 

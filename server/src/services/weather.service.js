@@ -1,4 +1,4 @@
-const https = require('https');
+const https = require("https");
 
 class WeatherService {
   /**
@@ -8,37 +8,37 @@ class WeatherService {
    * @returns {Promise<Object>} Weather forecast data
    */
   async getFiveDayForecast(latitude, longitude) {
+    const apiKey =
+      process.env.OPENWEATHER_API_KEY || "d6eddc3abec4593517ece346fbf32a33";
+
     return new Promise((resolve, reject) => {
       const options = {
-        method: 'GET',
-        hostname: process.env.RAPIDAPI_HOST,
+        method: "GET",
+        hostname: "api.openweathermap.org",
         port: null,
-        path: `/fivedaysforcast?latitude=${latitude}&longitude=${longitude}&lang=EN`,
-        headers: {
-          'x-rapidapi-key': process.env.RAPIDAPI_KEY,
-          'x-rapidapi-host': process.env.RAPIDAPI_HOST
-        }
+        path: `/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`,
+        headers: {},
       };
 
       const req = https.request(options, function (res) {
         const chunks = [];
 
-        res.on('data', function (chunk) {
+        res.on("data", function (chunk) {
           chunks.push(chunk);
         });
 
-        res.on('end', function () {
+        res.on("end", function () {
           try {
             const body = Buffer.concat(chunks);
             const data = JSON.parse(body.toString());
             resolve(data);
           } catch (error) {
-            reject(new Error('Failed to parse weather data'));
+            reject(new Error("Failed to parse weather data"));
           }
         });
       });
 
-      req.on('error', (error) => {
+      req.on("error", (error) => {
         reject(error);
       });
 
@@ -59,8 +59,8 @@ class WeatherService {
     // Group forecasts by date
     const forecastByDate = {};
 
-    weatherData.list.forEach(item => {
-      const date = new Date(item.dt * 1000).toISOString().split('T')[0];
+    weatherData.list.forEach((item) => {
+      const date = new Date(item.dt * 1000).toISOString().split("T")[0];
 
       if (!forecastByDate[date]) {
         forecastByDate[date] = {
@@ -75,15 +75,18 @@ class WeatherService {
           icon: item.weather[0].icon,
           windSpeed: item.wind.speed,
           clouds: item.clouds.all,
-          forecasts: []
+          forecasts: [],
         };
       }
 
       forecastByDate[date].forecasts.push({
-        time: new Date(item.dt * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        time: new Date(item.dt * 1000).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         temp: item.main.temp,
         weather: item.weather[0].main,
-        icon: item.weather[0].icon
+        icon: item.weather[0].icon,
       });
     });
 

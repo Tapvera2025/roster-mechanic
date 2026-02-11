@@ -1,0 +1,213 @@
+/* Responsive Utilities for Mobile-First Design */
+
+/* Mobile Scroll Shadows for Tables */
+.table-scroll-container {
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll-container::before,
+.table-scroll-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.3s;
+}
+
+.table-scroll-container::before {
+  left: 0;
+  background: linear-gradient(to right, hsl(var(--color-card)), transparent);
+}
+
+.table-scroll-container::after {
+  right: 0;
+  background: linear-gradient(to left, hsl(var(--color-card)), transparent);
+}
+
+/* Mobile Sticky Headers */
+.mobile-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: hsl(var(--color-card));
+}
+
+/* Mobile Action Bar */
+@media (max-width: 768px) {
+  .action-bar-responsive {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .action-bar-responsive > * {
+    width: 100%;
+  }
+
+  .button-group-responsive {
+    flex-wrap: wrap;
+  }
+
+  .button-group-responsive button,
+  .button-group-responsive a {
+    flex: 1 1 auto;
+    min-width: max-content;
+  }
+}
+
+/* Mobile Modal */
+@media (max-width: 640px) {
+  .modal-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .modal-content-responsive {
+    max-height: calc(100vh - 120px);
+  }
+}
+
+/* Mobile Table Cells */
+@media (max-width: 1024px) {
+  .table-responsive {
+    min-width: 100%;
+  }
+
+  .table-responsive th,
+  .table-responsive td {
+    white-space: nowrap;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .table-responsive th:first-child,
+  .table-responsive td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: hsl(var(--color-card));
+  }
+}
+
+/* Mobile Touch Targets - Minimum 44px */
+@media (max-width: 768px) {
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Responsive Text Sizes */
+@media (max-width: 640px) {
+  .text-responsive-lg {
+    font-size: 1.25rem;
+  }
+
+  .text-responsive-base {
+    font-size: 0.875rem;
+  }
+
+  .text-responsive-sm {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile Card Stacking */
+@media (max-width: 768px) {
+  .card-grid-responsive {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Hide on Mobile */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Show only on Mobile */
+.show-mobile {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .show-mobile {
+    display: block !important;
+  }
+
+  .show-mobile-flex {
+    display: flex !important;
+  }
+
+  .show-mobile-inline {
+    display: inline !important;
+  }
+}
+
+/* Responsive Padding */
+@media (max-width: 640px) {
+  .responsive-padding {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Scrollbar Styling for Better Mobile Experience */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--color-background));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--color-border));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--color-foreground-secondary));
+}
+
+/* Mobile Safe Area (for devices with notches) */
+@supports (padding: max(0px)) {
+  .safe-area-inset-top {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+
+  .safe-area-inset-left {
+    padding-left: max(env(safe-area-inset-left), 0px);
+  }
+
+  .safe-area-inset-right {
+    padding-right: max(env(safe-area-inset-right), 0px);
+  }
+}

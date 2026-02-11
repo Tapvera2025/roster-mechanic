@@ -7,30 +7,30 @@ export default function EmployeePortal() {
   const [showInactive, setShowInactive] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Employees Submenu Bar */}
-      <div className="bg-teal-600 text-white px-4 sm:px-6 py-3">
+    <div className="min-h-screen">
+      {/* Employees Header */}
+      <div className="bg-[hsl(var(--color-primary))] text-white px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5" />
             <h1 className="text-base sm:text-lg font-semibold">Employees</h1>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button className="p-1.5 sm:p-2 hover:bg-teal-700 rounded transition-colors" title="Settings">
-              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-2">
+            <button className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors" title="Settings">
+              <Settings className="w-5 h-5" />
             </button>
-            <button className="p-1.5 sm:p-2 hover:bg-teal-700 rounded transition-colors" title="Expand">
-              <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
+            <button className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors" title="Expand">
+              <Maximize className="w-5 h-5" />
             </button>
-            <button className="p-1.5 sm:p-2 hover:bg-teal-700 rounded transition-colors" title="Refresh">
-              <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
+            <button className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors" title="Refresh">
+              <RotateCw className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="p-3 sm:p-6">
+      <div className="p-4 sm:p-6">
         {/* Filter Section */}
         <div className="mb-4 sm:mb-6">
           <EmployeeFilters
@@ -43,12 +43,12 @@ export default function EmployeePortal() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 sm:mb-6">
           {/* Primary Actions */}
           <div className="flex flex-wrap items-center gap-2">
-            <button className="px-3 sm:px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors flex items-center gap-2 text-sm font-medium">
+            <button className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-primary))] text-white rounded-md hover:bg-[hsl(var(--color-primary-dark))] transition-colors flex items-center gap-2 text-sm font-medium">
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add New</span>
               <span className="sm:hidden">Add</span>
             </button>
-            <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+            <button className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-2 text-sm">
               <Link2 className="w-4 h-4" />
               <span className="hidden md:inline">Get App Link</span>
             </button>
@@ -56,15 +56,15 @@ export default function EmployeePortal() {
 
           {/* Secondary Actions */}
           <div className="flex flex-wrap items-center gap-2">
-            <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+            <button className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-2 text-sm">
               Actions
               <ChevronDown className="w-4 h-4" />
             </button>
-            <button className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm">
+            <button className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md hover:bg-[hsl(var(--color-surface-elevated))] transition-colors flex items-center gap-2 text-sm">
               Columns
               <ChevronDown className="w-4 h-4" />
             </button>
-            <select className="px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm cursor-pointer">
+            <select className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md text-sm cursor-pointer hover:bg-[hsl(var(--color-surface-elevated))] transition-colors">
               <option>25</option>
               <option>50</option>
               <option>100</option>

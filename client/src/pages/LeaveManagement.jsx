@@ -32,48 +32,58 @@ export default function LeaveManagement() {
   const leaveRequests = [];
 
   return (
-    <div className="flex h-[calc(100vh-56px)] bg-gray-50">
-      {/* Left Sidebar - Filters */}
-      <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0">
-        <LeaveFilters filters={filters} setFilters={setFilters} />
+    <div className="min-h-screen">
+      {/* Header */}
+      <div className="bg-[hsl(var(--color-primary))] text-white px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-base sm:text-lg font-semibold">Leave Management</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors" title="Refresh">
+              <RotateCcw className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Stats Section */}
-        <div className="p-4 bg-white border-b border-gray-200">
-          <LeaveStats stats={stats} />
+      <div className="flex h-[calc(100vh-120px)] bg-[hsl(var(--color-background))]">
+        {/* Left Sidebar - Filters */}
+        <div className="w-64 bg-[hsl(var(--color-card))] border-r border-[hsl(var(--color-border))] overflow-y-auto flex-shrink-0">
+          <LeaveFilters filters={filters} setFilters={setFilters} />
+        </div>
 
-          {/* Search and Actions Bar */}
-          <div className="flex items-center justify-between gap-4 mt-4">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Stats Section */}
+          <div className="p-4 bg-[hsl(var(--color-card))] border-b border-[hsl(var(--color-border))]">
+            <LeaveStats stats={stats} />
 
-            {/* Actions */}
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setShowAddModal(true)}
-                className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add New Leave
-              </Button>
+            {/* Search and Actions Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4">
+              {/* Search */}
+              <div className="relative flex-1 w-full sm:max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
+                <Input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
 
-              <button className="p-2 hover:bg-gray-100 rounded transition-colors">
-                <RotateCcw className="w-4 h-4 text-gray-600" />
-              </button>
+              {/* Actions */}
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-[hsl(var(--color-primary))] hover:bg-[hsl(var(--color-primary-dark))] text-white flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Leave
+                </Button>
 
-              <div className="flex items-center gap-2">
-                <button className="p-2 hover:bg-gray-100 rounded transition-colors flex items-center gap-1 text-sm text-gray-700">
+                <button className="p-2 hover:bg-[hsl(var(--color-surface-elevated))] rounded transition-colors flex items-center gap-1 text-sm text-[hsl(var(--color-foreground))]">
                   <Settings2 className="w-4 h-4" />
                   Columns
                 </button>
@@ -91,36 +101,34 @@ export default function LeaveManagement() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Table Section */}
-        <div className="flex-1 overflow-auto p-4">
-          <LeaveTable leaveRequests={leaveRequests} />
+          {/* Table Section */}
+          <div className="flex-1 overflow-auto p-4">
+            <LeaveTable leaveRequests={leaveRequests} />
 
-          {/* Pagination */}
-          <div className="flex items-center justify-end gap-2 mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={true}
-              className="text-gray-700"
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={true}
-              className="text-gray-700"
-            >
-              Next
-            </Button>
+            {/* Pagination */}
+            <div className="flex items-center justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={true}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={true}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Add Leave Modal */}
-      <AddLeaveModal open={showAddModal} onClose={() => setShowAddModal(false)} />
+        {/* Add Leave Modal */}
+        <AddLeaveModal open={showAddModal} onClose={() => setShowAddModal(false)} />
+      </div>
     </div>
   );
 }

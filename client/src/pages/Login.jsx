@@ -6,9 +6,11 @@ import { Label } from "../components/ui/Label";
 import { Lock, User, Eye, EyeOff } from "lucide-react";
 import { userApi } from "../lib/api";
 import { toast } from "react-hot-toast";
+import { useAuthStore } from "../store/authStore";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { setAuth } = useAuthStore();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -31,6 +33,11 @@ export default function Login() {
 
       // Store token and user data
       const { token, user } = response.data.data;
+
+      // Store in auth store (this persists to localStorage automatically via zustand persist)
+      setAuth(user, token);
+
+      // Also store in localStorage for backward compatibility
       localStorage.setItem("token", token);
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userRole", user.role.toLowerCase());

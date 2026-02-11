@@ -39,7 +39,7 @@ export default function EmployeeFilters({ showInactive, setShowInactive }) {
         <button
           onClick={() => setShowInactive(!showInactive)}
           className={`relative inline-flex items-center h-5 w-10 sm:h-6 sm:w-12 rounded-full transition-colors flex-shrink-0 ${
-            showInactive ? "bg-blue-600" : "bg-red-500"
+            showInactive ? "bg-[hsl(var(--color-primary))]" : "bg-[hsl(var(--color-error))]"
           }`}
         >
           <span
@@ -49,7 +49,7 @@ export default function EmployeeFilters({ showInactive, setShowInactive }) {
           />
         </button>
         <span
-          className={`font-medium ${showInactive ? "text-blue-600" : "text-red-500"}`}
+          className={`font-medium ${showInactive ? "text-[hsl(var(--color-primary))]" : "text-[hsl(var(--color-error))]"}`}
         >
           {showInactive ? "ON" : "OFF"}
         </span>
