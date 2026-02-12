@@ -26,6 +26,14 @@ export default function MyRoster() {
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Format a Date to YYYY-MM-DD using local time (avoids UTC timezone shift)
+  const toLocalDateStr = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   // Generate date columns based on view mode
   const { dateColumns, dateRange } = useMemo(() => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -80,8 +88,8 @@ export default function MyRoster() {
         endDate.setDate(endDate.getDate() + numDays - 1);
 
         const response = await userApi.getMyShifts(
-          currentStartDate.toISOString().split('T')[0],
-          endDate.toISOString().split('T')[0]
+          toLocalDateStr(currentStartDate),
+          toLocalDateStr(endDate)
         );
         setShifts(response.data.data || []);
       } catch (err) {
@@ -121,9 +129,11 @@ export default function MyRoster() {
 
   // Get shifts for a specific date
   const getShiftsForDate = (date) => {
-    const targetDateStr = date.toISOString().split('T')[0];
+    const targetDateStr = toLocalDateStr(date);
     return shifts.filter(shift => {
-      const shiftDate = new Date(shift.date).toISOString().split('T')[0];
+      // shift.date is UTC midnight from server - compare using UTC date parts
+      const sd = new Date(shift.date);
+      const shiftDate = `${sd.getUTCFullYear()}-${String(sd.getUTCMonth() + 1).padStart(2, '0')}-${String(sd.getUTCDate()).padStart(2, '0')}`;
       return shiftDate === targetDateStr;
     });
   };
@@ -290,10 +300,10 @@ export default function MyRoster() {
                                 <div className="text-[hsl(var(--color-foreground-secondary))]">
                                   ({calculateDuration(shift.startTime, shift.endTime)} Hrs)
                                 </div>
-                                {shift.site && (
+                                {shift.siteId && (
                                   <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
                                     <MapPin className="h-3 w-3" style={{ color: "hsl(var(--color-primary))", opacity: 0.6 }} />
-                                    <span className="truncate">{shift.site.shortName}</span>
+                                    <span className="truncate">{shift.siteId.shortName}</span>
                                   </div>
                                 )}
                               </div>

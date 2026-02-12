@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation, Calendar } from 'lucide-react';
+import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation } from 'lucide-react';
 import { clockApi, shiftApi } from '../../lib/api';
 
 export default function ClockInOut() {
@@ -30,13 +30,25 @@ export default function ClockInOut() {
   // Elapsed time for clock in
   const [elapsedTime, setElapsedTime] = useState('');
 
-  // Get employeeId from localStorage
-  const employeeId = localStorage.getItem('userId');
+  // Employee record (fetched on mount)
+  const [employeeId, setEmployeeId] = useState(null);
 
   // Fetch current status and today's shifts on mount
   useEffect(() => {
-    fetchCurrentStatus();
-    fetchTodayShifts();
+    const init = async () => {
+      try {
+        const res = await shiftApi.getMyEmployee();
+        const id = res.data.data._id?.toString() || res.data.data.id;
+        setEmployeeId(id);
+        fetchCurrentStatus(id);
+        fetchTodayShifts();
+      } catch (err) {
+        setError('Could not load your employee profile. Please contact your manager.');
+        setStatusLoading(false);
+        setShiftsLoading(false);
+      }
+    };
+    init();
   }, []);
 
   // Update elapsed time every second if clocked in
@@ -59,10 +71,12 @@ export default function ClockInOut() {
   }, [clockStatus]);
 
   // Fetch current clock status
-  const fetchCurrentStatus = async () => {
+  const fetchCurrentStatus = async (id) => {
+    const resolvedId = id || employeeId;
+    if (!resolvedId) return;
     try {
       setStatusLoading(true);
-      const response = await clockApi.getCurrentStatus(employeeId);
+      const response = await clockApi.getCurrentStatus(resolvedId);
       setClockStatus(response.data.data);
     } catch (err) {
       console.error('Failed to fetch status:', err);
@@ -76,12 +90,10 @@ export default function ClockInOut() {
     try {
       setShiftsLoading(true);
 
-      // Get today's date range (start and end of day)
-      const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
 
-      const response = await shiftApi.getMyShifts(startOfDay, endOfDay);
+      const response = await shiftApi.getMyShifts(today, today);
       const shifts = response.data.data || [];
 
       // Filter only SCHEDULED shifts (not completed, cancelled, etc.)
@@ -194,11 +206,11 @@ export default function ClockInOut() {
 
       const response = await clockApi.clockIn(
         employeeId,
-        selectedShift.siteId._id || selectedShift.siteId,
+        selectedShift.siteId?.id || selectedShift.siteId,
         location.latitude,
         location.longitude,
         photo,
-        selectedShift._id
+        selectedShift.id
       );
 
       setSuccess('Clocked in successfully!');
@@ -351,9 +363,9 @@ export default function ClockInOut() {
                 <div className="space-y-2">
                   {todayShifts.map((shift) => (
                     <label
-                      key={shift._id}
+                      key={shift.id}
                       className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                        selectedShift?._id === shift._id
+                        selectedShift?.id === shift.id
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -361,8 +373,8 @@ export default function ClockInOut() {
                       <input
                         type="radio"
                         name="shift"
-                        value={shift._id}
-                        checked={selectedShift?._id === shift._id}
+                        value={shift.id}
+                        checked={selectedShift?.id === shift.id}
                         onChange={() => setSelectedShift(shift)}
                         className="mt-1 mr-3"
                       />

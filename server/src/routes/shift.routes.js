@@ -9,6 +9,31 @@ const asyncHandler = require('../utils/asyncHandler');
 router.use(auth);
 
 /**
+ * Get the employee record linked to the logged-in user
+ * @route GET /api/shifts/my-employee
+ */
+router.get('/my-employee', asyncHandler(async (req, res) => {
+  const { userId, companyId } = req.user;
+
+  const employee = await Employee.findOne({
+    userId: userId,
+    companyId: companyId,
+    isActive: true
+  }).lean();
+
+  if (!employee) {
+    const error = new Error('No employee record found for this user');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  res.json({
+    success: true,
+    data: { ...employee, id: employee._id.toString() }
+  });
+}));
+
+/**
  * Get my shifts (for logged-in employees)
  * @route GET /api/shifts/my-shifts
  */

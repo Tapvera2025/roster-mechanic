@@ -34,10 +34,11 @@ export default function Scheduler() {
   const optionsRef = useRef(null);
 
   // Current start date for the calendar view
-  const [currentStartDate, setCurrentStartDate] = useState(
-    new Date(2025, 11, 22),
-  );
-
+  const [currentStartDate, setCurrentStartDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
   // API state
   const [sites, setSites] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -54,6 +55,14 @@ export default function Scheduler() {
 
   // Hover state
   const [hoveredCell, setHoveredCell] = useState(null);
+
+  // Format a Date object to YYYY-MM-DD using local time (avoids UTC timezone shift)
+  const toLocalDateStr = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
 
   // Fetch sites on mount
   useEffect(() => {
@@ -111,8 +120,8 @@ export default function Scheduler() {
 
         const shiftsResponse = await schedulerApi.getSiteShifts(
           selectedSite,
-          currentStartDate.toISOString().split("T")[0],
-          endDate.toISOString().split("T")[0],
+          toLocalDateStr(currentStartDate),
+          toLocalDateStr(endDate),
         );
         setShifts(shiftsResponse.data.data);
       } catch (err) {
@@ -311,7 +320,7 @@ export default function Scheduler() {
 
     setModalData({
       employeeId: employeeId,
-      date: targetDate.toISOString().split("T")[0],
+      date: toLocalDateStr(targetDate),
     });
     setIsModalOpen(true);
   };
@@ -344,8 +353,8 @@ export default function Scheduler() {
 
         const shiftsResponse = await schedulerApi.getSiteShifts(
           selectedSite,
-          currentStartDate.toISOString().split("T")[0],
-          endDate.toISOString().split("T")[0],
+          toLocalDateStr(currentStartDate),
+          toLocalDateStr(endDate),
         );
         setShifts(shiftsResponse.data.data);
       } else if (createdShiftSiteId) {
@@ -361,10 +370,12 @@ export default function Scheduler() {
   const getShiftsForCell = (employeeId, dateIndex) => {
     const targetDate = new Date(currentStartDate);
     targetDate.setDate(targetDate.getDate() + dateIndex);
-    const targetDateStr = targetDate.toISOString().split("T")[0];
+    const targetDateStr = toLocalDateStr(targetDate);
 
     return shifts.filter((shift) => {
-      const shiftDate = new Date(shift.date).toISOString().split("T")[0];
+      // shift.date comes from the server as UTC midnight - parse and use UTC date parts
+      const sd = new Date(shift.date);
+      const shiftDate = `${sd.getUTCFullYear()}-${String(sd.getUTCMonth() + 1).padStart(2, '0')}-${String(sd.getUTCDate()).padStart(2, '0')}`;
       // Get the shift's employee ID (handle both object and string formats)
       const shiftEmployeeId = shift.employeeId
         ? typeof shift.employeeId === "object"

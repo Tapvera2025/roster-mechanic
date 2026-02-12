@@ -68,7 +68,8 @@ export const shiftApi = {
   create: (data) => api.post('/scheduler/shifts', data),
   update: (id, data) => api.put(`/scheduler/shifts/${id}`, data),
   delete: (id) => api.delete(`/scheduler/shifts/${id}`),
-  getMyShifts: (startDate, endDate) => api.get('/shifts/my-shifts', { params: { startDate, endDate } })
+  getMyShifts: (startDate, endDate) => api.get('/shifts/my-shifts', { params: { startDate, endDate } }),
+  getMyEmployee: () => api.get('/shifts/my-employee')
 };
 
 // Weather API endpoints
@@ -101,7 +102,7 @@ export const employeeApi = {
 export const userApi = {
   login: (credentials) => api.post('/auth/login', credentials),
   getMyShifts: (startDate, endDate) =>
-    api.get('/user/shifts', { params: { startDate, endDate } }),
+    api.get('/shifts/my-shifts', { params: { startDate, endDate } }),
   changePassword: (data) => api.post('/user/change-password', data),
   getProfile: () => api.get('/users/me'),
   updateProfile: (data) => api.put('/users/me', data)
