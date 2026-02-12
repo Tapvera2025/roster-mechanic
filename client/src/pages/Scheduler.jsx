@@ -461,12 +461,12 @@ export default function Scheduler() {
   return (
     <div className="flex flex-col h-screen bg-[hsl(var(--color-card))]">
       {/* Top Toolbar */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-4 py-3 border-b border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] gap-2 min-w-0 overflow-x-auto">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Select
             value={selectedSite}
             onChange={(e) => setSelectedSite(e.target.value)}
-            className="w-48"
+            className="w-40"
           >
             <option value="">Select Site...</option>
             {sites.map((site) => (
@@ -499,19 +499,19 @@ export default function Scheduler() {
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button variant="outline" size="icon" onClick={handlePreviousPeriod}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
           <button
             onClick={handleToday}
-            className="flex items-center gap-2 px-2 sm:px-3 py-2 border border-[hsl(var(--color-border))] rounded-md min-w-[150px] sm:min-w-[200px] justify-center hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
+            className="flex items-center gap-2 px-3 py-2 border border-[hsl(var(--color-border))] rounded-md min-w-[160px] justify-center hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
           >
-            <span className="text-xs sm:text-sm font-medium text-[hsl(var(--color-foreground))] truncate">
+            <span className="text-sm font-medium text-[hsl(var(--color-foreground))] truncate">
               {dateRange}
             </span>
-            <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-[hsl(var(--color-foreground-secondary))]" />
+            <ChevronDown className="h-4 w-4 flex-shrink-0 text-[hsl(var(--color-foreground-secondary))]" />
           </button>
 
           <Button variant="outline" size="icon" onClick={handleNextPeriod}>
@@ -519,11 +519,11 @@ export default function Scheduler() {
           </Button>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Select
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
-            className="w-32"
+            className="w-28"
           >
             <option value="week">Week</option>
             <option value="2weeks">2 Weeks</option>
@@ -620,211 +620,193 @@ export default function Scheduler() {
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <div className="w-[120px] sm:w-[185px] border-r border-[hsl(var(--color-border))] flex flex-col bg-[hsl(var(--color-surface-elevated))]">
-          <div className="p-3 border-b border-[hsl(var(--color-border))]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[hsl(var(--color-foreground-secondary))]" />
-              <Input
-                type="text"
-                placeholder="Search..."
-                className="pl-9 h-9 text-sm"
-              />
+      {/* Main Content Area - single scroll container, rows span full width */}
+      <div className="flex-1 overflow-auto">
+        <div className="min-w-max">
+
+          {/* Header Row: Search box + Date columns */}
+          <div className="flex border-b border-[hsl(var(--color-border))] sticky top-0 z-20">
+            {/* Sidebar header cell */}
+            <div className="w-[120px] sm:w-[185px] flex-shrink-0 p-3 border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] flex items-center sticky left-0 z-30 border-b-0">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[hsl(var(--color-primary))]" style={{opacity: 0.7}} />
+                <Input
+                  type="text"
+                  placeholder="Search..."
+                  className="pl-9 h-9 text-sm bg-[hsl(var(--color-background))] border-[hsl(var(--color-border-strong))] text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-foreground-muted))]"
+                />
+              </div>
             </div>
+            {/* Date header cells */}
+            {dateColumns.map((date, index) => {
+              const weather = selectedSite
+                ? getWeatherForDate(index, parseInt(selectedSite))
+                : null;
+              return (
+                <div
+                  key={index}
+                  className="w-[140px] flex-shrink-0 px-2 py-3 text-center border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))]"
+                >
+                  {date === "TODAY" ? (
+                    <div className="text-sm font-bold text-[hsl(var(--color-foreground))]">
+                      TODAY
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-xs font-medium text-[hsl(var(--color-foreground))]">
+                        {date.split(", ")[0]}
+                      </div>
+                      <div className="text-xs text-[hsl(var(--color-foreground-secondary))]">
+                        {date.split(", ")[1]}
+                      </div>
+                    </>
+                  )}
+                  {weather && (
+                    <div className="mt-1 flex items-center justify-center gap-1 text-[hsl(var(--color-foreground-secondary))]">
+                      {getWeatherIcon(weather.weather)}
+                      <span className="text-xs font-medium">
+                        {Math.round(weather.temp)}°C
+                      </span>
+                    </div>
+                  )}
+                  {date.includes("25, Dec") && (
+                    <div className="mt-1 px-2 py-0.5 bg-blue-900 text-white text-xs rounded">
+                      Christmas Day
+                    </div>
+                  )}
+                  {date.includes("26, Dec") && (
+                    <div className="mt-1 px-2 py-0.5 bg-blue-900 text-white text-xs rounded">
+                      Boxing Day
+                    </div>
+                  )}
+                  {date.includes("1, Jan") && (
+                    <div className="mt-1 px-2 py-0.5 bg-gray-800 text-white text-xs rounded">
+                      New Year
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          <div className="flex-1 overflow-y-auto">
-            {/* Location View - Show only "TODAY" label */}
-            {viewType === "location" && (
-              <div className="p-3 border-b border-[hsl(var(--color-border))]">
-                <div className="text-sm font-medium text-[hsl(var(--color-foreground))]">
-                  TODAY
+          {/* Location View - single row */}
+          {viewType === "location" && (
+            <div className="flex border-b border-[hsl(var(--color-border))] min-h-[90px]">
+              {/* Sidebar cell */}
+              <div className="w-[120px] sm:w-[185px] flex-shrink-0 p-3 border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] flex items-center sticky left-0 z-10 border-l-2 border-l-transparent">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[hsl(var(--color-primary))]" style={{opacity: 0.8}} />
+                  <span className="text-xs font-semibold tracking-widest uppercase text-[hsl(var(--color-foreground-muted))]">
+                    Today
+                  </span>
                 </div>
               </div>
-            )}
-
-            {/* Employee View - Show Open Shift and Employee List */}
-            {viewType === "employee" && (
-              <>
-                {/* Open Shift */}
-                <div className="p-3 border-b border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-card))] cursor-pointer">
-                  <div className="flex items-start gap-2">
-                    <div className="w-10 h-10 rounded bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] flex items-center justify-center flex-shrink-0">
-                      <Grid3x3 className="h-5 w-5 text-[hsl(var(--color-foreground-secondary))]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-blue-600 truncate">
-                        Open Shift
-                      </p>
-                      <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
-                        <Clock className="h-3 w-3" />
-                        <span>0.00 Hrs</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Employee List */}
-                {employees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="p-3 border-b border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-card))] cursor-pointer"
-                  >
-                    <div className="flex items-start gap-2">
-                      <Avatar className="w-10 h-10 flex-shrink-0">
-                        <AvatarFallback className="text-xs">
-                          {employee.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-blue-600 truncate hover:underline">
-                          {employee.name}
-                        </p>
-                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
-                          <Clock className="h-3 w-3" />
-                          <span>{employee.hours} Hrs</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
-                          <Phone className="h-3 w-3" />
-                          <span>{employee.phone}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* Position View - Show Open Shift and Employee List */}
-            {viewType === "position" && (
-              <>
-                {/* Open Shift */}
-                <div className="p-3 border-b border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-card))] cursor-pointer">
-                  <div className="flex items-start gap-2">
-                    <div className="w-10 h-10 rounded bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] flex items-center justify-center flex-shrink-0">
-                      <Grid3x3 className="h-5 w-5 text-[hsl(var(--color-foreground-secondary))]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-blue-600 truncate">
-                        Open Shift
-                      </p>
-                      <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
-                        <Clock className="h-3 w-3" />
-                        <span>0.00 Hrs</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Employee List */}
-                {employees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="p-3 border-b border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-card))] cursor-pointer"
-                  >
-                    <div className="flex items-start gap-2">
-                      <Avatar className="w-10 h-10 flex-shrink-0">
-                        <AvatarFallback className="text-xs">
-                          {employee.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-blue-600 truncate hover:underline">
-                          {employee.name}
-                        </p>
-                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
-                          <Clock className="h-3 w-3" />
-                          <span>{employee.hours} Hrs</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
-                          <Phone className="h-3 w-3" />
-                          <span>{employee.phone}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="flex-1 overflow-auto">
-          <div className="min-w-max">
-            {/* Date Headers */}
-            <div className="flex border-b border-[hsl(var(--color-border))] sticky top-0 bg-[hsl(var(--color-card))] z-10">
-              {dateColumns.map((date, index) => {
-                const weather = selectedSite
-                  ? getWeatherForDate(index, parseInt(selectedSite))
-                  : null;
+              {/* Calendar cells */}
+              {dateColumns.map((_, index) => {
+                const cellKey = `location-${index}`;
+                const isHovered = hoveredCell === cellKey;
                 return (
                   <div
                     key={index}
-                    className="w-35 px-2 py-3 text-center border-r border-[hsl(var(--color-border))]"
+                    className="w-[140px] flex-shrink-0 border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative"
+                    onMouseEnter={() => setHoveredCell(cellKey)}
+                    onMouseLeave={() => setHoveredCell(null)}
                   >
-                    {date === "TODAY" ? (
-                      <div className="text-sm font-bold text-[hsl(var(--color-foreground))]">
-                        TODAY
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-xs font-medium text-[hsl(var(--color-foreground))]">
-                          {date.split(", ")[0]}
-                        </div>
-                        <div className="text-xs text-[hsl(var(--color-foreground-secondary))]">
-                          {date.split(", ")[1]}
-                        </div>
-                      </>
-                    )}
-
-                    {/* Weather Information */}
-                    {weather && (
-                      <div className="mt-1 flex items-center justify-center gap-1 text-[hsl(var(--color-foreground-secondary))]">
-                        {getWeatherIcon(weather.weather)}
-                        <span className="text-xs font-medium">
-                          {Math.round(weather.temp)}°C
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Special day labels */}
-                    {date.includes("25, Dec") && (
-                      <div className="mt-1 px-2 py-0.5 bg-blue-900 text-white text-xs rounded">
-                        Christmas Day
-                      </div>
-                    )}
-                    {date.includes("26, Dec") && (
-                      <div className="mt-1 px-2 py-0.5 bg-blue-900 text-white text-xs rounded">
-                        Boxing Day
-                      </div>
-                    )}
-                    {date.includes("1, Jan") && (
-                      <div className="mt-1 px-2 py-0.5 bg-gray-800 text-white text-xs rounded">
-                        New Year
-                      </div>
+                    {isHovered && (
+                      <button
+                        onClick={() => handleAddShift(null, index)}
+                        className="absolute inset-0 flex items-center justify-center bg-blue-50 bg-opacity-90 text-blue-600 text-sm font-medium hover:bg-blue-100 transition-colors"
+                      >
+                        + Add shift
+                      </button>
                     )}
                   </div>
                 );
               })}
             </div>
+          )}
 
-            {/* Location View - Only show Open Shift row */}
-            {viewType === "location" && (
+          {/* Employee / Position View */}
+          {(viewType === "employee" || viewType === "position") && (
+            <>
+              {/* Open Shift Row */}
               <div className="flex border-b border-[hsl(var(--color-border))] min-h-[90px]">
+                {/* Sidebar cell */}
+                <div className="w-[120px] sm:w-[185px] flex-shrink-0 p-3 border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] hover:bg-[hsl(var(--color-card))] cursor-pointer flex items-center sticky left-0 z-10 border-l-2 border-l-transparent hover:border-l-[hsl(var(--color-primary))] transition-colors group">
+                  <div className="flex items-start gap-2 w-full">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-primary-hover))] flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <Grid3x3 className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-blue-600 truncate">
+                        Open Shift
+                      </p>
+                      <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
+                        <Clock className="h-3 w-3" style={{color: 'hsl(var(--color-primary))', opacity: 0.6}} />
+                        <span>0.00 Hrs</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Calendar cells */}
                 {dateColumns.map((_, index) => {
-                  const cellKey = `location-${index}`;
+                  const cellKey = `open-${index}`;
                   const isHovered = hoveredCell === cellKey;
+                  const cellShifts = getShiftsForCell(null, index);
                   return (
                     <div
                       key={index}
-                      className="w-[140px] border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative group"
+                      className="w-[140px] flex-shrink-0 border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative p-1"
                       onMouseEnter={() => setHoveredCell(cellKey)}
                       onMouseLeave={() => setHoveredCell(null)}
                     >
-                      {isHovered && (
+                      {cellShifts.length > 0 && (
+                        <div className="space-y-1">
+                          {cellShifts.map((shift) => {
+                            const shiftSiteId = shift.siteId
+                              ? typeof shift.siteId === "object"
+                                ? shift.siteId.id
+                                : shift.siteId
+                              : shift.site
+                                ? typeof shift.site === "object"
+                                  ? shift.site.id
+                                  : shift.site
+                                : null;
+                            const weather = getWeatherForDate(index, shiftSiteId);
+                            return (
+                              <div
+                                key={shift.id}
+                                className="border border-[hsl(var(--color-border))] rounded overflow-hidden bg-[hsl(var(--color-card))] text-xs"
+                              >
+                                <div className="px-2 py-1">
+                                  <div className="font-medium text-[hsl(var(--color-foreground))]">
+                                    {formatTime(shift.startTime)} -{" "}
+                                    {formatTime(shift.endTime)} (
+                                    {calculateShiftDuration(shift.startTime, shift.endTime)} Hrs)
+                                  </div>
+                                  <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
+                                    <MapPin className="h-3 w-3" />
+                                    <span>
+                                      {shift.siteId?.shortName || shift.site?.shortName || "Unknown Site"}
+                                    </span>
+                                  </div>
+                                  {weather && (
+                                    <div className="flex items-center gap-1.5 mt-1 text-blue-600">
+                                      {getWeatherIcon(weather.weather)}
+                                      <span className="text-xs font-semibold">{Math.round(weather.temp)}°</span>
+                                      <span className="text-xs capitalize">{weather.description}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                {shift.status === "SCHEDULED" && (
+                                  <div className="bg-green-500 text-white px-2 py-0.5 font-medium">Published</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {isHovered && cellShifts.length === 0 && (
                         <button
                           onClick={() => handleAddShift(null, index)}
                           className="absolute inset-0 flex items-center justify-center bg-blue-50 bg-opacity-90 text-blue-600 text-sm font-medium hover:bg-blue-100 transition-colors"
@@ -836,26 +818,48 @@ export default function Scheduler() {
                   );
                 })}
               </div>
-            )}
 
-            {/* Employee/Position View - Show Open Shift + Employee Rows */}
-            {(viewType === "employee" || viewType === "position") && (
-              <>
-                {/* Open Shift Row */}
-                <div className="flex border-b border-[hsl(var(--color-border))] min-h-[90px]">
+              {/* Employee Rows */}
+              {employees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className="flex border-b border-[hsl(var(--color-border))] min-h-[90px]"
+                >
+                  {/* Sidebar cell */}
+                  <div className="w-[120px] sm:w-[185px] flex-shrink-0 p-3 border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] hover:bg-[hsl(var(--color-card))] cursor-pointer flex items-center sticky left-0 z-10 border-l-2 border-l-transparent hover:border-l-[hsl(var(--color-primary))] transition-colors group">
+                    <div className="flex items-start gap-2 w-full">
+                      <Avatar className="w-10 h-10 flex-shrink-0">
+                        <AvatarFallback className="text-xs font-bold text-white bg-gradient-to-br from-[hsl(var(--color-primary))] to-[hsl(var(--color-primary-hover))]">
+                          {employee.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-blue-600 truncate group-hover:underline">
+                          {employee.name}
+                        </p>
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
+                          <Clock className="h-3 w-3" style={{color: 'hsl(var(--color-primary))', opacity: 0.6}} />
+                          <span>{employee.hours} Hrs</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--color-foreground-secondary))]">
+                          <Phone className="h-3 w-3" style={{color: 'hsl(var(--color-primary))', opacity: 0.6}} />
+                          <span>{employee.phone}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Calendar cells */}
                   {dateColumns.map((_, index) => {
-                    const cellKey = `open-${index}`;
+                    const cellKey = `${employee.id}-${index}`;
                     const isHovered = hoveredCell === cellKey;
-                    const cellShifts = getShiftsForCell(null, index);
-
+                    const cellShifts = getShiftsForCell(employee.id, index);
                     return (
                       <div
                         key={index}
-                        className="w-[140px] border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative p-1"
+                        className="w-[140px] flex-shrink-0 border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative p-1"
                         onMouseEnter={() => setHoveredCell(cellKey)}
                         onMouseLeave={() => setHoveredCell(null)}
                       >
-                        {/* Display existing shifts */}
                         {cellShifts.length > 0 && (
                           <div className="space-y-1">
                             {cellShifts.map((shift) => {
@@ -878,47 +882,33 @@ export default function Scheduler() {
                                     <div className="font-medium text-[hsl(var(--color-foreground))]">
                                       {formatTime(shift.startTime)} -{" "}
                                       {formatTime(shift.endTime)} (
-                                      {calculateShiftDuration(
-                                        shift.startTime,
-                                        shift.endTime,
-                                      )}{" "}
-                                      Hrs)
+                                      {calculateShiftDuration(shift.startTime, shift.endTime)} Hrs)
                                     </div>
                                     <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
                                       <MapPin className="h-3 w-3" />
                                       <span>
-                                        {shift.siteId?.shortName ||
-                                          shift.site?.shortName ||
-                                          "Unknown Site"}
+                                        {shift.siteId?.shortName || shift.site?.shortName || "Unknown Site"}
                                       </span>
                                     </div>
                                     {weather && (
                                       <div className="flex items-center gap-1.5 mt-1 text-blue-600">
                                         {getWeatherIcon(weather.weather)}
-                                        <span className="text-xs font-semibold">
-                                          {Math.round(weather.temp)}°
-                                        </span>
-                                        <span className="text-xs capitalize">
-                                          {weather.description}
-                                        </span>
+                                        <span className="text-xs font-semibold">{Math.round(weather.temp)}°</span>
+                                        <span className="text-xs capitalize">{weather.description}</span>
                                       </div>
                                     )}
                                   </div>
                                   {shift.status === "SCHEDULED" && (
-                                    <div className="bg-green-500 text-white px-2 py-0.5 font-medium">
-                                      Published
-                                    </div>
+                                    <div className="bg-green-500 text-white px-2 py-0.5 font-medium">Published</div>
                                   )}
                                 </div>
                               );
                             })}
                           </div>
                         )}
-
-                        {/* Show add shift button on hover if no shifts or space available */}
                         {isHovered && cellShifts.length === 0 && (
                           <button
-                            onClick={() => handleAddShift(null, index)}
+                            onClick={() => handleAddShift(employee.id, index)}
                             className="absolute inset-0 flex items-center justify-center bg-blue-50 bg-opacity-90 text-blue-600 text-sm font-medium hover:bg-blue-100 transition-colors"
                           >
                             + Add shift
@@ -928,102 +918,10 @@ export default function Scheduler() {
                     );
                   })}
                 </div>
+              ))}
+            </>
+          )}
 
-                {/* Employee Rows */}
-                {employees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="flex border-b border-[hsl(var(--color-border))] min-h-[90px]"
-                  >
-                    {dateColumns.map((_, index) => {
-                      const cellKey = `${employee.id}-${index}`;
-                      const isHovered = hoveredCell === cellKey;
-                      const cellShifts = getShiftsForCell(employee.id, index);
-
-                      return (
-                        <div
-                          key={index}
-                          className="w-[140px] border-r border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))] hover:bg-[hsl(var(--color-surface-elevated))] cursor-pointer relative p-1"
-                          onMouseEnter={() => setHoveredCell(cellKey)}
-                          onMouseLeave={() => setHoveredCell(null)}
-                        >
-                          {/* Display existing shifts */}
-                          {cellShifts.length > 0 && (
-                            <div className="space-y-1">
-                              {cellShifts.map((shift) => {
-                                const shiftSiteId = shift.siteId
-                                  ? typeof shift.siteId === "object"
-                                    ? shift.siteId.id
-                                    : shift.siteId
-                                  : shift.site
-                                    ? typeof shift.site === "object"
-                                      ? shift.site.id
-                                      : shift.site
-                                    : null;
-                                const weather = getWeatherForDate(index, shiftSiteId);
-                                return (
-                                  <div
-                                    key={shift.id}
-                                    className="border border-[hsl(var(--color-border))] rounded overflow-hidden bg-[hsl(var(--color-card))] text-xs"
-                                  >
-                                    <div className="px-2 py-1">
-                                      <div className="font-medium text-[hsl(var(--color-foreground))]">
-                                        {formatTime(shift.startTime)} -{" "}
-                                        {formatTime(shift.endTime)} (
-                                        {calculateShiftDuration(
-                                          shift.startTime,
-                                          shift.endTime,
-                                        )}{" "}
-                                        Hrs)
-                                      </div>
-                                      <div className="text-[hsl(var(--color-foreground-secondary))] flex items-center gap-1 mt-0.5">
-                                        <MapPin className="h-3 w-3" />
-                                        <span>
-                                          {shift.siteId?.shortName ||
-                                            shift.site?.shortName ||
-                                            "Unknown Site"}
-                                        </span>
-                                      </div>
-                                      {weather && (
-                                        <div className="flex items-center gap-1.5 mt-1 text-blue-600">
-                                          {getWeatherIcon(weather.weather)}
-                                          <span className="text-xs font-semibold">
-                                            {Math.round(weather.temp)}°
-                                          </span>
-                                          <span className="text-xs capitalize">
-                                            {weather.description}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                    {shift.status === "SCHEDULED" && (
-                                      <div className="bg-green-500 text-white px-2 py-0.5 font-medium">
-                                        Published
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {/* Show add shift button on hover if no shifts or space available */}
-                          {isHovered && cellShifts.length === 0 && (
-                            <button
-                              onClick={() => handleAddShift(employee.id, index)}
-                              className="absolute inset-0 flex items-center justify-center bg-blue-50 bg-opacity-90 text-blue-600 text-sm font-medium hover:bg-blue-100 transition-colors"
-                            >
-                              + Add shift
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
         </div>
       </div>
 
