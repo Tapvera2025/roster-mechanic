@@ -3,37 +3,28 @@ import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navi
 import { clockApi, shiftApi } from '../../lib/api';
 
 export default function ClockInOut() {
-  // State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Location state
   const [location, setLocation] = useState(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
 
-  // Clock status
   const [clockStatus, setClockStatus] = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
-  // Shifts for today
   const [todayShifts, setTodayShifts] = useState([]);
   const [shiftsLoading, setShiftsLoading] = useState(true);
   const [selectedShift, setSelectedShift] = useState(null);
 
-  // Photo
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Elapsed time for clock in
   const [elapsedTime, setElapsedTime] = useState('');
-
-  // Employee record (fetched on mount)
   const [employeeId, setEmployeeId] = useState(null);
 
-  // Fetch current status and today's shifts on mount
   useEffect(() => {
     const init = async () => {
       try {
@@ -51,26 +42,21 @@ export default function ClockInOut() {
     init();
   }, []);
 
-  // Update elapsed time every second if clocked in
   useEffect(() => {
     if (clockStatus?.clockInTime) {
       const interval = setInterval(() => {
         const clockInTime = new Date(clockStatus.clockInTime);
         const now = new Date();
         const diff = now - clockInTime;
-
         const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
         setElapsedTime(`${hours}h ${minutes}m ${seconds}s`);
       }, 1000);
-
       return () => clearInterval(interval);
     }
   }, [clockStatus]);
 
-  // Fetch current clock status
   const fetchCurrentStatus = async (id) => {
     const resolvedId = id || employeeId;
     if (!resolvedId) return;
@@ -85,26 +71,15 @@ export default function ClockInOut() {
     }
   };
 
-  // Fetch today's shifts for the employee
   const fetchTodayShifts = async () => {
     try {
       setShiftsLoading(true);
-
-      // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
-
       const response = await shiftApi.getMyShifts(today, today);
       const shifts = response.data.data || [];
-
-      // Filter only SCHEDULED shifts (not completed, cancelled, etc.)
       const scheduledShifts = shifts.filter(shift => shift.status === 'SCHEDULED');
-
       setTodayShifts(scheduledShifts);
-
-      // Auto-select if only one shift
-      if (scheduledShifts.length === 1) {
-        setSelectedShift(scheduledShifts[0]);
-      }
+      if (scheduledShifts.length === 1) setSelectedShift(scheduledShifts[0]);
     } catch (err) {
       console.error('Failed to fetch shifts:', err);
       setError('Failed to load your shifts for today');
@@ -113,17 +88,14 @@ export default function ClockInOut() {
     }
   };
 
-  // Get current location
   const getCurrentLocation = () => {
     setLocationLoading(true);
     setLocationError(null);
-
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by your browser');
       setLocationLoading(false);
       return;
     }
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLocation({
@@ -137,157 +109,72 @@ export default function ClockInOut() {
       (error) => {
         let errorMessage = 'Unable to get your location';
         switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Location permission denied. Please enable location access.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information unavailable';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Location request timed out';
-            break;
+          case error.PERMISSION_DENIED: errorMessage = 'Location permission denied. Please enable location access.'; break;
+          case error.POSITION_UNAVAILABLE: errorMessage = 'Location information unavailable'; break;
+          case error.TIMEOUT: errorMessage = 'Location request timed out'; break;
         }
         setLocationError(errorMessage);
         setLocationLoading(false);
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
-  // Handle photo capture
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError('Please select an image file');
-        return;
-      }
-
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Photo size must be less than 5MB');
-        return;
-      }
-
+      if (!file.type.startsWith('image/')) { setError('Please select an image file'); return; }
+      if (file.size > 5 * 1024 * 1024) { setError('Photo size must be less than 5MB'); return; }
       setPhoto(file);
-
-      // Create preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-      };
+      reader.onloadend = () => setPhotoPreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
 
-  // Handle clock in
   const handleClockIn = async () => {
-    setError(null);
-    setSuccess(null);
-
-    // Validation
-    if (!selectedShift) {
-      setError('Please select a shift to clock in');
-      return;
-    }
-
-    if (!location) {
-      setError('Please get your current location first');
-      return;
-    }
-
+    setError(null); setSuccess(null);
+    if (!selectedShift) { setError('Please select a shift to clock in'); return; }
+    if (!location) { setError('Please get your current location first'); return; }
     try {
       setLoading(true);
-
       const response = await clockApi.clockIn(
-        employeeId,
-        selectedShift.siteId?.id || selectedShift.siteId,
-        location.latitude,
-        location.longitude,
-        photo,
-        selectedShift.id
+        employeeId, selectedShift.siteId?.id || selectedShift.siteId,
+        location.latitude, location.longitude, photo, selectedShift.id
       );
-
       setSuccess('Clocked in successfully!');
       setClockStatus(response.data.data);
-
-      // Reset form
-      setPhoto(null);
-      setPhotoPreview(null);
-
-      // Refresh status and shifts
-      setTimeout(() => {
-        fetchCurrentStatus();
-        fetchTodayShifts();
-      }, 1000);
+      setPhoto(null); setPhotoPreview(null);
+      setTimeout(() => { fetchCurrentStatus(); fetchTodayShifts(); }, 1000);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to clock in';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.message || err.message || 'Failed to clock in');
+    } finally { setLoading(false); }
   };
 
-  // Handle clock out
   const handleClockOut = async () => {
-    setError(null);
-    setSuccess(null);
-
-    if (!location) {
-      setError('Please get your current location first');
-      return;
-    }
-
+    setError(null); setSuccess(null);
+    if (!location) { setError('Please get your current location first'); return; }
     try {
       setLoading(true);
-
-      const response = await clockApi.clockOut(
-        employeeId,
-        location.latitude,
-        location.longitude,
-        photo
-      );
-
+      const response = await clockApi.clockOut(employeeId, location.latitude, location.longitude, photo);
       setSuccess(`Clocked out successfully! Total time: ${response.data.data.totalHours} hours`);
       setClockStatus(null);
-
-      // Reset form
-      setPhoto(null);
-      setPhotoPreview(null);
-
-      // Refresh status and shifts
-      setTimeout(() => {
-        fetchCurrentStatus();
-        fetchTodayShifts();
-      }, 1000);
+      setPhoto(null); setPhotoPreview(null);
+      setTimeout(() => { fetchCurrentStatus(); fetchTodayShifts(); }, 1000);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to clock out';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.message || err.message || 'Failed to clock out');
+    } finally { setLoading(false); }
   };
 
-  // Format shift time for display
   const formatShiftTime = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(dateString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Loading state
   if (statusLoading || shiftsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="flex items-center justify-center min-h-screen bg-[hsl(var(--color-background))]">
+        <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--color-primary))]" />
       </div>
     );
   }
@@ -296,39 +183,40 @@ export default function ClockInOut() {
   const hasShiftsToday = todayShifts.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[hsl(var(--color-background))] py-4 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
+
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Clock In/Out</h1>
-          <p className="text-gray-600">Track your work hours with location verification</p>
+        <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg p-6 mb-6">
+          <h1 className="text-2xl font-bold text-[hsl(var(--color-foreground))] mb-1">Clock In/Out</h1>
+          <p className="text-[hsl(var(--color-foreground-secondary))]">Track your work hours with location verification</p>
         </div>
 
-        {/* Current Status */}
+        {/* Currently Clocked In */}
         {isClockedIn && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+          <div className="border border-green-500/30 bg-green-500/10 rounded-lg p-6 mb-6">
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-6 h-6 text-green-600 mt-0.5" />
+              <CheckCircle className="w-6 h-6 text-green-500 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <h2 className="text-lg font-semibold text-green-900 mb-2">Currently Clocked In</h2>
-                <div className="space-y-1 text-sm text-green-800">
-                  <p><span className="font-medium">Site:</span> {clockStatus.siteId?.siteLocationName || 'N/A'}</p>
-                  <p><span className="font-medium">Clock In Time:</span> {new Date(clockStatus.clockInTime).toLocaleString()}</p>
-                  <p><span className="font-medium">Elapsed Time:</span> {elapsedTime}</p>
+                <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))] mb-2">Currently Clocked In</h2>
+                <div className="space-y-1 text-sm text-[hsl(var(--color-foreground-secondary))]">
+                  <p><span className="font-medium text-[hsl(var(--color-foreground))]">Site:</span> {clockStatus.siteId?.siteLocationName || 'N/A'}</p>
+                  <p><span className="font-medium text-[hsl(var(--color-foreground))]">Clock In Time:</span> {new Date(clockStatus.clockInTime).toLocaleString()}</p>
+                  <p><span className="font-medium text-[hsl(var(--color-foreground))]">Elapsed Time:</span> {elapsedTime}</p>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* No Shifts Message */}
+        {/* No Shifts */}
         {!isClockedIn && !hasShiftsToday && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+          <div className="border border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] rounded-lg p-6 mb-6">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-6 h-6 text-yellow-600 mt-0.5" />
+              <AlertCircle className="w-6 h-6 text-[hsl(var(--color-primary))] mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <h2 className="text-lg font-semibold text-yellow-900 mb-2">No Shifts Scheduled Today</h2>
-                <p className="text-sm text-yellow-800">
+                <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))] mb-2">No Shifts Scheduled Today</h2>
+                <p className="text-sm text-[hsl(var(--color-foreground-secondary))]">
                   You don't have any scheduled shifts for today. Please contact your manager if you believe this is an error.
                 </p>
               </div>
@@ -336,28 +224,30 @@ export default function ClockInOut() {
           </div>
         )}
 
-        {/* Alerts */}
+        {/* Error alert */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-            <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="border border-red-500/30 bg-red-500/10 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-[hsl(var(--color-foreground))]">{error}</p>
           </div>
         )}
 
+        {/* Success alert */}
         {success && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-            <p className="text-sm text-green-800">{success}</p>
+          <div className="border border-green-500/30 bg-green-500/10 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-[hsl(var(--color-foreground))]">{success}</p>
           </div>
         )}
 
-        {/* Main Form - Only show if has shifts or is clocked in */}
+        {/* Main Form */}
         {(hasShiftsToday || isClockedIn) && (
-          <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
-            {/* Shift Selector - Only for clock in with multiple shifts */}
+          <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg p-6 space-y-6">
+
+            {/* Shift Selector - multiple shifts */}
             {!isClockedIn && todayShifts.length > 1 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[hsl(var(--color-foreground))] mb-2">
                   Select Your Shift <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-2">
@@ -366,8 +256,8 @@ export default function ClockInOut() {
                       key={shift.id}
                       className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
                         selectedShift?.id === shift.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary))]/10'
+                          : 'border-[hsl(var(--color-border))] hover:border-[hsl(var(--color-border-strong))]'
                       }`}
                     >
                       <input
@@ -379,16 +269,16 @@ export default function ClockInOut() {
                         className="mt-1 mr-3"
                       />
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 font-medium text-gray-900">
-                          <MapPin className="w-4 h-4 text-gray-500" />
+                        <div className="flex items-center gap-2 font-medium text-[hsl(var(--color-foreground))]">
+                          <MapPin className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
                           {shift.siteId?.siteLocationName || 'Unknown Site'}
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-2 text-sm text-[hsl(var(--color-foreground-secondary))] mt-1">
                           <Clock className="w-4 h-4" />
                           {formatShiftTime(shift.startTime)} - {formatShiftTime(shift.endTime)}
                         </div>
                         {shift.shiftType && (
-                          <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                          <span className="inline-block mt-2 px-2 py-1 bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground-secondary))] text-xs rounded border border-[hsl(var(--color-border))]">
                             {shift.shiftType}
                           </span>
                         )}
@@ -399,20 +289,18 @@ export default function ClockInOut() {
               </div>
             )}
 
-            {/* Show shift info if only one shift */}
+            {/* Single shift info */}
             {!isClockedIn && todayShifts.length === 1 && selectedShift && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-medium text-blue-900 mb-2">Your Shift Today</h3>
-                <div className="space-y-1 text-sm text-blue-800">
+              <div className="border border-[hsl(var(--color-primary))]/30 bg-[hsl(var(--color-primary))]/10 rounded-lg p-4">
+                <h3 className="font-medium text-[hsl(var(--color-foreground))] mb-2">Your Shift Today</h3>
+                <div className="space-y-1 text-sm text-[hsl(var(--color-foreground-secondary))]">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="w-4 h-4 text-[hsl(var(--color-primary))]" />
                     <span>{selectedShift.siteId?.siteLocationName || 'Unknown Site'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      {formatShiftTime(selectedShift.startTime)} - {formatShiftTime(selectedShift.endTime)}
-                    </span>
+                    <Clock className="w-4 h-4 text-[hsl(var(--color-primary))]" />
+                    <span>{formatShiftTime(selectedShift.startTime)} - {formatShiftTime(selectedShift.endTime)}</span>
                   </div>
                 </div>
               </div>
@@ -420,7 +308,7 @@ export default function ClockInOut() {
 
             {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground))] mb-2">
                 Location <span className="text-red-500">*</span>
               </label>
 
@@ -428,37 +316,31 @@ export default function ClockInOut() {
                 <button
                   onClick={getCurrentLocation}
                   disabled={locationLoading}
-                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3 bg-[hsl(var(--color-primary))] text-white rounded-lg font-medium hover:bg-[hsl(var(--color-primary-hover))] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {locationLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Getting Location...
-                    </>
+                    <><Loader2 className="w-5 h-5 animate-spin" />Getting Location...</>
                   ) : (
-                    <>
-                      <Navigation className="w-5 h-5" />
-                      Get Current Location
-                    </>
+                    <><Navigation className="w-5 h-5" />Get Current Location</>
                   )}
                 </button>
               )}
 
               {location && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="bg-[hsl(var(--color-surface-elevated))] border border-[hsl(var(--color-border))] rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+                    <MapPin className="w-5 h-5 text-green-500 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 mb-1">Location Acquired</p>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-sm font-medium text-[hsl(var(--color-foreground))] mb-1">Location Acquired</p>
+                      <p className="text-xs text-[hsl(var(--color-foreground-secondary))]">
                         Lat: {location.latitude.toFixed(6)}, Lon: {location.longitude.toFixed(6)}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-[hsl(var(--color-foreground-muted))] mt-1">
                         Accuracy: ±{Math.round(location.accuracy)}m
                       </p>
                       <button
                         onClick={getCurrentLocation}
-                        className="text-sm text-blue-600 hover:text-blue-700 mt-2"
+                        className="text-sm text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-hover))] mt-2"
                       >
                         Refresh Location
                       </button>
@@ -468,7 +350,7 @@ export default function ClockInOut() {
               )}
 
               {locationError && (
-                <div className="mt-2 text-sm text-red-600 flex items-center gap-2">
+                <div className="mt-2 text-sm text-red-500 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" />
                   {locationError}
                 </div>
@@ -477,8 +359,8 @@ export default function ClockInOut() {
 
             {/* Photo Capture */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Photo Verification <span className="text-gray-500">(Optional)</span>
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground))] mb-2">
+                Photo Verification <span className="text-[hsl(var(--color-foreground-muted))]">(Optional)</span>
               </label>
 
               <input
@@ -494,7 +376,7 @@ export default function ClockInOut() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={loading}
-                  className="w-full sm:w-auto px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3 bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] border border-[hsl(var(--color-border))] rounded-lg font-medium hover:bg-[hsl(var(--color-card))] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <Camera className="w-5 h-5" />
                   Take Photo
@@ -504,16 +386,9 @@ export default function ClockInOut() {
               {photoPreview && (
                 <div className="space-y-3">
                   <div className="relative inline-block">
-                    <img
-                      src={photoPreview}
-                      alt="Preview"
-                      className="w-full max-w-xs rounded-lg border border-gray-200"
-                    />
+                    <img src={photoPreview} alt="Preview" className="w-full max-w-xs rounded-lg border border-[hsl(var(--color-border))]" />
                     <button
-                      onClick={() => {
-                        setPhoto(null);
-                        setPhotoPreview(null);
-                      }}
+                      onClick={() => { setPhoto(null); setPhotoPreview(null); }}
                       className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                     >
                       <XCircle className="w-4 h-4" />
@@ -521,7 +396,7 @@ export default function ClockInOut() {
                   </div>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    className="text-sm text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-hover))]"
                   >
                     Retake Photo
                   </button>
@@ -538,15 +413,9 @@ export default function ClockInOut() {
                   className="w-full py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
                   {loading ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      Clocking In...
-                    </>
+                    <><Loader2 className="w-6 h-6 animate-spin" />Clocking In...</>
                   ) : (
-                    <>
-                      <Clock className="w-6 h-6" />
-                      Clock In
-                    </>
+                    <><Clock className="w-6 h-6" />Clock In</>
                   )}
                 </button>
               ) : (
@@ -556,15 +425,9 @@ export default function ClockInOut() {
                   className="w-full py-4 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
                   {loading ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      Clocking Out...
-                    </>
+                    <><Loader2 className="w-6 h-6 animate-spin" />Clocking Out...</>
                   ) : (
-                    <>
-                      <Clock className="w-6 h-6" />
-                      Clock Out
-                    </>
+                    <><Clock className="w-6 h-6" />Clock Out</>
                   )}
                 </button>
               )}
@@ -573,12 +436,12 @@ export default function ClockInOut() {
         )}
 
         {/* Help Text */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="mt-6 bg-[hsl(var(--color-surface-elevated))] border border-[hsl(var(--color-border))] rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-            <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Important:</p>
-              <ul className="list-disc list-inside space-y-1 text-blue-700">
+            <AlertCircle className="w-5 h-5 text-[hsl(var(--color-primary))] mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-[hsl(var(--color-foreground-secondary))]">
+              <p className="font-medium text-[hsl(var(--color-foreground))] mb-1">Important:</p>
+              <ul className="list-disc list-inside space-y-1">
                 <li>You can only clock in for scheduled shifts</li>
                 <li>You must be within the site's geofenced area</li>
                 <li>Enable location permissions when prompted</li>
@@ -587,6 +450,7 @@ export default function ClockInOut() {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

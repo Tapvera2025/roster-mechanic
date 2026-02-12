@@ -103,7 +103,7 @@ export const userApi = {
   login: (credentials) => api.post('/auth/login', credentials),
   getMyShifts: (startDate, endDate) =>
     api.get('/shifts/my-shifts', { params: { startDate, endDate } }),
-  changePassword: (data) => api.post('/user/change-password', data),
+  changePassword: (data) => api.put('/users/me/password', data),
   getProfile: () => api.get('/users/me'),
   updateProfile: (data) => api.put('/users/me', data)
 };
@@ -152,6 +152,12 @@ export const clockApi = {
     params,
     responseType: 'blob'
   })
+};
+
+// Dashboard API endpoints
+export const dashboardApi = {
+  getStats: () => api.get('/dashboard/stats'),
+  getAttendance: () => api.get('/dashboard/attendance'),
 };
 
 export default api;

@@ -69,7 +69,7 @@ router.get('/my-shifts', asyncHandler(async (req, res) => {
       $lte: new Date(endDate)
     }
   })
-    .populate('siteId', 'siteLocationName shortName address')
+    .populate('siteId', 'siteLocationName shortName address location')
     .sort({ date: 1, startTime: 1 })
     .lean();
 
@@ -79,7 +79,9 @@ router.get('/my-shifts', asyncHandler(async (req, res) => {
     id: shift._id.toString(),
     siteId: shift.siteId ? {
       ...shift.siteId,
-      id: shift.siteId._id.toString()
+      id: shift.siteId._id.toString(),
+      latitude: shift.siteId.location?.coordinates?.[1] ?? null,
+      longitude: shift.siteId.location?.coordinates?.[0] ?? null,
     } : null
   }));
 

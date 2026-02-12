@@ -50,6 +50,7 @@ function App() {
           <Route path="company/sites" element={<Sites />} />
           <Route path="company/clients" element={<Clients />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="change-password" element={<ChangePassword />} />
         </Route>
 
         {/* User/Employee Portal Routes */}

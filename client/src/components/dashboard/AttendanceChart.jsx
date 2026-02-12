@@ -1,37 +1,100 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "../ui/Card";
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 import { ChevronLeft, ChevronRight, RotateCw, Settings2 } from "lucide-react";
+import { dashboardApi } from "../../lib/api";
 
 export default function AttendanceChart() {
   const [viewMode, setViewMode] = useState("shift");
   const [date, setDate] = useState("Today");
   const [chartType, setChartType] = useState("bar");
   const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [page, setPage] = useState(1);
+
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (viewMode !== "live") return;
+    const fetchAttendance = async () => {
+      try {
+        setLoading(true);
+        const res = await dashboardApi.getAttendance();
+        console.log('Dashboard attendance response:', res.data);
+        setAttendanceRecords(res.data.data || []);
+      } catch (err) {
+        console.error('Failed to fetch attendance:', err);
+        setAttendanceRecords([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAttendance();
+  }, [viewMode]);
+
+  const formatTime = (iso) => {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleTimeString("en-AU", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
+  const formatDate = (iso) => {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleDateString("en-AU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const getStatusBadge = (status) => {
+    const styles = {
+      CLOCKED_IN: "bg-green-100 text-green-800",
+      CLOCKED_OUT: "bg-blue-100 text-blue-800",
+      MISSED: "bg-red-100 text-red-800",
+    };
+    return styles[status] || "bg-gray-100 text-gray-800";
+  };
+
+  // Pagination
+  const totalRecords = attendanceRecords.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / itemsPerPage));
+  const startIdx = (page - 1) * itemsPerPage;
+  const pagedRecords = attendanceRecords.slice(startIdx, startIdx + itemsPerPage);
+
+  // Derived chart stats from live records
+  const workingCount = attendanceRecords.filter((r) => r.status === "CLOCKED_IN").length;
+  const missingClockOut = attendanceRecords.filter((r) => r.status === "CLOCKED_IN" && !r.clockOut).length;
+  const clockedOut = attendanceRecords.filter((r) => r.status === "CLOCKED_OUT").length;
 
   const attendanceData = [
-    { label: "Working", value: 0, color: "bg-blue-500" },
+    { label: "Working", value: workingCount, color: "bg-blue-500" },
     { label: "No Show", value: 0, color: "bg-red-500" },
     { label: "No Activity", value: 0, color: "bg-gray-400" },
     { label: "Late Arrival", value: 0, color: "bg-orange-400" },
     { label: "Early Leave", value: 0, color: "bg-yellow-400" },
     { label: "Left Job Site", value: 0, color: "bg-purple-400" },
     { label: "Clocked Outside Job Site", value: 0, color: "bg-pink-400" },
-    { label: "Missing Clock-Out", value: 0, color: "bg-indigo-400" },
+    { label: "Missing Clock-Out", value: missingClockOut, color: "bg-indigo-400" },
   ];
 
+  const maxVal = Math.max(...attendanceData.map((d) => d.value), 1);
+
   const summaryStats = [
-    { label: "Working", value: 0 },
+    { label: "Working", value: workingCount },
     { label: "No Show", value: 0 },
     { label: "No Activity", value: 0 },
     { label: "Late Arrival", value: 0 },
     { label: "Early Leave", value: 0 },
     { label: "Left Job Site", value: 0 },
     { label: "Clocked Outside Job Site", value: 0 },
-    { label: "Missing Clock-Out", value: 0 },
-    { label: "Total Scheduled Shifts", value: 0 },
-    { label: "Total Worked Shifts", value: 0 },
+    { label: "Missing Clock-Out", value: missingClockOut },
+    { label: "Total Scheduled Shifts", value: totalRecords },
+    { label: "Total Worked Shifts", value: clockedOut },
   ];
 
   const liveAttendanceColumns = [
@@ -45,10 +108,21 @@ export default function AttendanceChart() {
     "Out",
     "Break",
     "Total HRS",
-    "Notes",
-    "HRS Diff",
     "Clocking Status",
   ];
+
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      const res = await dashboardApi.getAttendance();
+      setAttendanceRecords(res.data.data || []);
+      setPage(1);
+    } catch {
+      setAttendanceRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Live Attendance Table View
   const renderLiveAttendance = () => (
@@ -71,16 +145,15 @@ export default function AttendanceChart() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="p-1.5 hover:bg-[hsl(var(--color-surface-elevated))] rounded transition-colors">
-            <RotateCw className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
-          </button>
-          <button className="p-1.5 hover:bg-[hsl(var(--color-surface-elevated))] rounded transition-colors flex items-center gap-1 text-sm text-[hsl(var(--color-foreground-secondary))]">
-            <Settings2 className="w-4 h-4" />
-            Columns
+          <button
+            onClick={handleRefresh}
+            className="p-1.5 hover:bg-[hsl(var(--color-surface-elevated))] rounded transition-colors"
+          >
+            <RotateCw className={`w-4 h-4 text-[hsl(var(--color-foreground-secondary))] ${loading ? "animate-spin" : ""}`} />
           </button>
           <Select
             value={itemsPerPage}
-            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(1); }}
             className="w-20"
           >
             <option value={10}>10</option>
@@ -97,13 +170,6 @@ export default function AttendanceChart() {
           <thead className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))]">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider border-r border-[hsl(var(--color-border))]" colSpan="4">
-                <div className="flex items-center gap-1">
-                  <button className="hover:bg-[hsl(var(--color-surface-elevated))] rounded p-0.5">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 10l5 5 5-5" />
-                    </svg>
-                  </button>
-                </div>
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider border-r border-[hsl(var(--color-border))]" colSpan="2">
                 Shift Assignments
@@ -111,7 +177,7 @@ export default function AttendanceChart() {
               <th className="px-4 py-3 text-center text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider border-r border-[hsl(var(--color-border))]" colSpan="4">
                 Clocked Record
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider" colSpan="3"></th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider"></th>
             </tr>
             <tr className="bg-[hsl(var(--color-surface-elevated))]">
               {liveAttendanceColumns.map((column, index) => (
@@ -119,24 +185,68 @@ export default function AttendanceChart() {
                   key={index}
                   className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider whitespace-nowrap"
                 >
-                  <div className="flex items-center gap-1">
-                    {column}
-                    <button className="hover:bg-[hsl(var(--color-surface-elevated))] rounded p-0.5">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 10l5 5 5-5" />
-                      </svg>
-                    </button>
-                  </div>
+                  {column}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td colSpan={liveAttendanceColumns.length} className="px-4 py-12 text-center text-sm text-[hsl(var(--color-foreground-muted))]">
-                No data available in table
-              </td>
-            </tr>
+          <tbody className="divide-y divide-[hsl(var(--color-border))]">
+            {loading ? (
+              <tr>
+                <td colSpan={liveAttendanceColumns.length} className="px-4 py-12 text-center text-sm text-[hsl(var(--color-foreground-muted))]">
+                  <div className="flex items-center justify-center gap-2">
+                    <RotateCw className="w-4 h-4 animate-spin" />
+                    Loading attendance data…
+                  </div>
+                </td>
+              </tr>
+            ) : pagedRecords.length === 0 ? (
+              <tr>
+                <td colSpan={liveAttendanceColumns.length} className="px-4 py-12 text-center text-sm text-[hsl(var(--color-foreground-muted))]">
+                  No clock-in records for today
+                </td>
+              </tr>
+            ) : (
+              pagedRecords.map((record) => (
+                <tr key={record.id} className="hover:bg-[hsl(var(--color-surface-elevated))] transition-colors">
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {formatDate(record.date)}
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-[hsl(var(--color-foreground))] whitespace-nowrap">
+                    {record.employee}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {record.mobile}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {record.site}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {record.shiftTime}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {record.shiftHrs ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {formatTime(record.clockIn)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {formatTime(record.clockOut)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {record.breakMins ? `${record.breakMins}m` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {record.totalHrs ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(record.status)}`}>
+                      {record.status?.replace("_", " ")}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -144,13 +254,15 @@ export default function AttendanceChart() {
       {/* Footer */}
       <div className="border-t border-[hsl(var(--color-border))] px-4 py-3 flex items-center justify-between">
         <div className="text-sm text-[hsl(var(--color-foreground-secondary))] italic">
-          Showing 0 to 0 of 0 entries
+          {totalRecords === 0
+            ? "Showing 0 to 0 of 0 entries"
+            : `Showing ${startIdx + 1} to ${Math.min(startIdx + itemsPerPage, totalRecords)} of ${totalRecords} entries`}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
             Next
           </Button>
         </div>
@@ -186,7 +298,7 @@ export default function AttendanceChart() {
               <div className="w-full bg-[hsl(var(--color-surface-elevated))] rounded-t relative" style={{ height: "200px" }}>
                 <div
                   className={`${item.color} rounded-t absolute bottom-0 w-full transition-all`}
-                  style={{ height: `${item.value}%` }}
+                  style={{ height: `${(item.value / maxVal) * 100}%` }}
                 />
               </div>
               <div className="text-xs text-[hsl(var(--color-foreground-secondary))] mt-2 text-center w-full px-1 truncate" title={item.label}>

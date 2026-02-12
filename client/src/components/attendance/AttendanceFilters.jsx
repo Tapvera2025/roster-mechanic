@@ -1,8 +1,25 @@
+import { useEffect, useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
+import { schedulerApi } from "../../lib/api";
 
 export default function AttendanceFilters({ filters, setFilters, onSearch }) {
+  const [sites, setSites] = useState([]);
+
+  useEffect(() => {
+    fetchSites();
+  }, []);
+
+  const fetchSites = async () => {
+    try {
+      const response = await schedulerApi.getSites();
+      setSites(response.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch sites:', err);
+    }
+  };
+
   const handleClearFilters = () => {
     setFilters({
       date: "today",
@@ -91,8 +108,11 @@ export default function AttendanceFilters({ filters, setFilters, onSearch }) {
           }
         >
           <option value="all">All Sites</option>
-          <option value="site1">Site 1</option>
-          <option value="site2">Site 2</option>
+          {sites.map((site) => (
+            <option key={site._id} value={site._id}>
+              {site.siteLocationName}
+            </option>
+          ))}
         </Select>
       </div>
 

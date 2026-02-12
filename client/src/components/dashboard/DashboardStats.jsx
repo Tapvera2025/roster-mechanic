@@ -1,52 +1,83 @@
-import { Calendar, Users, FileText, AlertTriangle, UserX, Plane, Clock, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, Users, FileText, AlertTriangle, UserX, Plane, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { dashboardApi } from "../../lib/api";
 
 export default function DashboardStats({ date = "Today" }) {
+  const [statsData, setStatsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await dashboardApi.getStats();
+        console.log('Dashboard stats response:', res.data);
+        setStatsData(res.data.data);
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats:', err);
+        setError(err.message || 'Failed to load stats');
+        setStatsData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const fmt = (val) => {
+    if (loading) return "—";
+    if (val == null) return "00";
+    return String(val).padStart(2, "0");
+  };
+
   const stats = [
     {
       label: "Tentative Shifts",
-      value: "00",
+      value: fmt(statsData?.tentativeShifts),
       icon: Calendar,
       iconBg: "bg-orange-900/30",
       iconColor: "text-orange-400",
     },
     {
       label: "Open Shifts",
-      value: "00",
+      value: fmt(statsData?.openShifts),
       icon: Users,
       iconBg: "bg-orange-900/30",
       iconColor: "text-orange-400",
     },
     {
       label: "Unpublished Shifts",
-      value: "00",
+      value: fmt(statsData?.unpublishedShifts),
       icon: FileText,
       iconBg: "bg-orange-900/30",
       iconColor: "text-orange-400",
     },
     {
       label: "Licenses Expiry",
-      value: "02",
+      value: fmt(statsData?.licensesExpiry),
       icon: AlertTriangle,
       iconBg: "bg-orange-900/30",
       iconColor: "text-orange-400",
     },
     {
       label: "No Show/Absent",
-      value: "00",
+      value: fmt(statsData?.noShowAbsent),
       icon: UserX,
       iconBg: "bg-red-900/30",
       iconColor: "text-red-400",
     },
     {
       label: "Leave Requests",
-      value: "00",
+      value: fmt(statsData?.leaveRequests),
       icon: Plane,
       iconBg: "bg-green-900/30",
       iconColor: "text-green-400",
     },
     {
       label: "Availability Requests",
-      value: "00",
+      value: fmt(statsData?.availabilityRequests),
       icon: Clock,
       iconBg: "bg-orange-900/30",
       iconColor: "text-orange-400",

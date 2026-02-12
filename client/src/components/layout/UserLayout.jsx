@@ -80,9 +80,9 @@ export default function UserLayout() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))] px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+        <header className="lg:hidden flex-shrink-0 bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))] px-4 py-3 flex items-center justify-between sticky top-0 z-30">
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-foreground))]"
@@ -95,11 +95,11 @@ export default function UserLayout() {
             </div>
             <span className="font-semibold text-[hsl(var(--color-foreground))]">Employee Portal</span>
           </div>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <div className="w-10" />
         </header>
 
         {/* Page Content */}
-        <main className="flex-1">
+        <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <Outlet />
         </main>
       </div>

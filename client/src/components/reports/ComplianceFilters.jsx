@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import complianceData from "../../data/complianceData";
 
 export default function ComplianceFilters({ filters, setFilters }) {
@@ -100,19 +100,24 @@ export default function ComplianceFilters({ filters, setFilters }) {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-3 sm:p-4 lg:p-5">
       {/* Clear Filters Link */}
-      <div className="mb-4">
+      <div className="mb-4 sm:mb-5 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-[hsl(var(--color-foreground))] hidden lg:block">Filters</h3>
         <button
           onClick={handleClearFilters}
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          className="text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-hover))] text-xs font-medium flex items-center gap-1 transition-colors"
         >
-          Clear Filters
+          <X className="w-3 h-3" />
+          Clear All
         </button>
       </div>
 
       {/* Status Filter */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
+        <label className="block text-xs font-medium text-[hsl(var(--color-foreground-secondary))] mb-1.5 sm:mb-2">
+          Status
+        </label>
         <select
           value={filters.status === "all" ? "All Status" : filters.status}
           onChange={(e) =>
@@ -121,7 +126,7 @@ export default function ComplianceFilters({ filters, setFilters }) {
               status: e.target.value === "All Status" ? "all" : e.target.value,
             })
           }
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white"
+          className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm border border-[hsl(var(--color-border))] rounded-lg bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent transition-all"
         >
           {uniqueStatuses.map((status) => (
             <option key={status} value={status}>
@@ -132,7 +137,10 @@ export default function ComplianceFilters({ filters, setFilters }) {
       </div>
 
       {/* License Type Filter */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
+        <label className="block text-xs font-medium text-[hsl(var(--color-foreground-secondary))] mb-1.5 sm:mb-2">
+          License/Certification Type
+        </label>
         <select
           value={
             filters.licenseType === "all"
@@ -148,7 +156,7 @@ export default function ComplianceFilters({ filters, setFilters }) {
                   : e.target.value,
             })
           }
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white"
+          className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm border border-[hsl(var(--color-border))] rounded-lg bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent transition-all"
         >
           {uniqueLicenseTypes.map((type) => (
             <option key={type} value={type}>
@@ -159,7 +167,10 @@ export default function ComplianceFilters({ filters, setFilters }) {
       </div>
 
       {/* State Filter */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
+        <label className="block text-xs font-medium text-[hsl(var(--color-foreground-secondary))] mb-1.5 sm:mb-2">
+          State
+        </label>
         <select
           value={filters.state === "all" ? "All States" : filters.state}
           onChange={(e) =>
@@ -168,7 +179,7 @@ export default function ComplianceFilters({ filters, setFilters }) {
               state: e.target.value === "All States" ? "all" : e.target.value,
             })
           }
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white"
+          className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm border border-[hsl(var(--color-border))] rounded-lg bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent transition-all"
         >
           {uniqueStates.map((state) => (
             <option key={state} value={state}>
@@ -179,7 +190,10 @@ export default function ComplianceFilters({ filters, setFilters }) {
       </div>
 
       {/* Dept/Work Group Filter */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
+        <label className="block text-xs font-medium text-[hsl(var(--color-foreground-secondary))] mb-1.5 sm:mb-2">
+          Department/Work Group
+        </label>
         <select
           value={
             filters.deptWorkGroup === "all"
@@ -195,7 +209,7 @@ export default function ComplianceFilters({ filters, setFilters }) {
                   : e.target.value,
             })
           }
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white"
+          className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm border border-[hsl(var(--color-border))] rounded-lg bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent transition-all"
         >
           {uniqueDeptWorkGroups.map((dept) => (
             <option key={dept} value={dept}>
@@ -206,7 +220,10 @@ export default function ComplianceFilters({ filters, setFilters }) {
       </div>
 
       {/* Expires Within Filter */}
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
+        <label className="block text-xs font-medium text-[hsl(var(--color-foreground-secondary))] mb-1.5 sm:mb-2">
+          Expiration Period
+        </label>
         <select
           value={
             filters.expiresWithin === "all"
@@ -220,7 +237,7 @@ export default function ComplianceFilters({ filters, setFilters }) {
                 e.target.value === "Expires Within..." ? "all" : e.target.value,
             })
           }
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white"
+          className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm border border-[hsl(var(--color-border))] rounded-lg bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent transition-all"
         >
           {expiresOptions.map((option) => (
             <option key={option} value={option}>
@@ -231,40 +248,42 @@ export default function ComplianceFilters({ filters, setFilters }) {
       </div>
 
       {/* Employee Selection */}
-      <div className="border-t border-gray-200 pt-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700">Employees</h3>
-          <div className="flex gap-2 text-xs">
+      <div className="border-t border-[hsl(var(--color-border))] pt-3 sm:pt-4 mt-4 sm:mt-6">
+        <div className="flex items-center justify-between mb-2 sm:mb-3">
+          <h3 className="text-xs sm:text-sm font-semibold text-[hsl(var(--color-foreground))]">
+            Employees {filters.selectedEmployees.length > 0 && `(${filters.selectedEmployees.length})`}
+          </h3>
+          <div className="flex gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
             <button
               onClick={handleSelectAllEmployees}
-              className="text-blue-600 hover:text-blue-700"
+              className="text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-hover))] transition-colors font-medium"
             >
-              Select All
+              All
             </button>
-            <span className="text-gray-400">|</span>
+            <span className="text-[hsl(var(--color-foreground-muted))]">|</span>
             <button
               onClick={handleUnselectAllEmployees}
-              className="text-blue-600 hover:text-blue-700"
+              className="text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-hover))] transition-colors font-medium"
             >
-              Unselect All
+              None
             </button>
           </div>
         </div>
 
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+        <div className="space-y-1 sm:space-y-1.5 max-h-64 sm:max-h-80 overflow-y-auto">
           {uniqueEmployees.map((emp) => (
             <label
               key={emp.empNo}
-              className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded"
+              className="flex items-center gap-2 sm:gap-2.5 cursor-pointer hover:bg-[hsl(var(--color-surface-elevated))] px-1.5 sm:px-2 py-1.5 sm:py-2 rounded-lg transition-colors group"
             >
               <input
                 type="checkbox"
                 checked={filters.selectedEmployees.includes(emp.empNo)}
                 onChange={() => handleEmployeeToggle(emp.empNo)}
-                className="rounded border-gray-300"
+                className="rounded border-[hsl(var(--color-border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))] focus:ring-offset-0 bg-[hsl(var(--color-surface-elevated))] w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0"
               />
-              <span className="text-sm text-gray-700">
-                {emp.empNo} - {emp.name}
+              <span className="text-xs sm:text-sm text-[hsl(var(--color-foreground-secondary))] group-hover:text-[hsl(var(--color-foreground))] transition-colors min-w-0">
+                <span className="font-medium text-[hsl(var(--color-foreground))]">{emp.empNo}</span> - {emp.name}
               </span>
             </label>
           ))}

@@ -118,6 +118,7 @@ v1Router.use('/clients', require('./routes/client.routes'));
 v1Router.use('/users', require('./routes/user.routes'));
 v1Router.use('/shifts', require('./routes/shift.routes'));
 v1Router.use('/clock', require('./routes/clockInOut.routes'));
+v1Router.use('/dashboard', require('./routes/dashboard.routes'));
 
 // Mount API version
 app.use('/api/v1', v1Router);

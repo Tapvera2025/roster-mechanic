@@ -18,6 +18,11 @@ router.use(auth);
 // Self-service routes (any authenticated user)
 router.get('/me', userController.getCurrentUser);
 router.put('/me', userController.updateProfile);
+router.put('/me/password', changePasswordValidation, validate, (req, res, next) => {
+  // Inject the logged-in user's own id as the route param
+  req.params.id = req.user.userId;
+  next();
+}, userController.changePassword);
 
 // User management (ADMIN/MANAGER)
 router.get('/', authorize('ADMIN', 'MANAGER'), userController.getAllUsers);

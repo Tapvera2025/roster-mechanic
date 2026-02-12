@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Calendar, MapPin, Image as ImageIcon, Clock, ChevronLeft, ChevronRight, Filter, Loader2 } from 'lucide-react';
-import { clockApi, schedulerApi } from '../../lib/api';
+import { Calendar, MapPin, Image as ImageIcon, Clock, ChevronLeft, ChevronRight, Filter, Loader2, AlertCircle } from 'lucide-react';
+import { clockApi, schedulerApi, shiftApi } from '../../lib/api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
 
 export default function TimeRecordsHistory() {
@@ -9,20 +9,36 @@ export default function TimeRecordsHistory() {
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 });
   const [error, setError] = useState(null);
 
-  // Filters
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedSite, setSelectedSite] = useState('');
   const [sites, setSites] = useState([]);
 
-  // Photo viewer
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
-  const employeeId = localStorage.getItem('userId');
+  // Fetched on mount from the employee record linked to logged-in user
+  const [employeeId, setEmployeeId] = useState(null);
 
+  // On mount: fetch employee record, then load sites + records
   useEffect(() => {
-    fetchSites();
-    fetchRecords();
+    const init = async () => {
+      try {
+        const res = await shiftApi.getMyEmployee();
+        const id = res.data.data._id?.toString() || res.data.data.id;
+        setEmployeeId(id);
+        fetchSites();
+        fetchRecords(id);
+      } catch (err) {
+        setError('Could not load your employee profile. Please contact your manager.');
+        setLoading(false);
+      }
+    };
+    init();
+  }, []);
+
+  // Re-fetch when filters or page change (only after employeeId is known)
+  useEffect(() => {
+    if (employeeId) fetchRecords(employeeId);
   }, [pagination.page, startDate, endDate, selectedSite]);
 
   const fetchSites = async () => {
@@ -34,22 +50,17 @@ export default function TimeRecordsHistory() {
     }
   };
 
-  const fetchRecords = async () => {
+  const fetchRecords = async (empId) => {
+    const resolvedId = empId || employeeId;
+    if (!resolvedId) return;
     try {
       setLoading(true);
       setError(null);
-
-      const params = {
-        page: pagination.page,
-        limit: pagination.limit,
-      };
-
+      const params = { page: pagination.page, limit: pagination.limit };
       if (startDate) params.startDate = new Date(startDate).toISOString();
       if (endDate) params.endDate = new Date(endDate).toISOString();
       if (selectedSite) params.siteId = selectedSite;
-
-      const response = await clockApi.getMyHistory(employeeId, params);
-
+      const response = await clockApi.getMyHistory(resolvedId, params);
       setRecords(response.data.data || []);
       setPagination(response.data.pagination || pagination);
     } catch (err) {
@@ -69,21 +80,12 @@ export default function TimeRecordsHistory() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   const formatTime = (dateString) => {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(dateString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   const formatDuration = (hours) => {
@@ -94,83 +96,61 @@ export default function TimeRecordsHistory() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[hsl(var(--color-background))] py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">My Time Records</h1>
-          <p className="text-gray-600 mt-1">View your clock in/out history</p>
+          <h1 className="text-3xl font-bold text-[hsl(var(--color-foreground))]">My Time Records</h1>
+          <p className="text-[hsl(var(--color-foreground-secondary))] mt-1">View your clock in/out history</p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+            <Filter className="w-5 h-5 text-[hsl(var(--color-foreground-secondary))]" />
+            <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))]">Filters</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Start Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date
-              </label>
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground))] mb-2">Start Date</label>
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  setPagination({ ...pagination, page: 1 });
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => { setStartDate(e.target.value); setPagination({ ...pagination, page: 1 }); }}
+                className="w-full px-3 py-2 bg-[hsl(var(--color-surface-elevated))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent"
               />
             </div>
-
-            {/* End Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date
-              </label>
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground))] mb-2">End Date</label>
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  setPagination({ ...pagination, page: 1 });
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => { setEndDate(e.target.value); setPagination({ ...pagination, page: 1 }); }}
+                className="w-full px-3 py-2 bg-[hsl(var(--color-surface-elevated))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent"
               />
             </div>
-
-            {/* Site Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Site
-              </label>
+              <label className="block text-sm font-medium text-[hsl(var(--color-foreground))] mb-2">Site</label>
               <select
                 value={selectedSite}
-                onChange={(e) => {
-                  setSelectedSite(e.target.value);
-                  setPagination({ ...pagination, page: 1 });
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => { setSelectedSite(e.target.value); setPagination({ ...pagination, page: 1 }); }}
+                className="w-full px-3 py-2 bg-[hsl(var(--color-surface-elevated))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent"
               >
                 <option value="">All Sites</option>
                 {sites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.siteLocationName}
-                  </option>
+                  <option key={site.id} value={site.id}>{site.siteLocationName}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Clear Filters Button */}
           {(startDate || endDate || selectedSite) && (
             <div className="mt-4">
               <button
                 onClick={handleClearFilters}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-hover))] font-medium"
               >
                 Clear All Filters
               </button>
@@ -178,23 +158,24 @@ export default function TimeRecordsHistory() {
           )}
         </div>
 
-        {/* Error State */}
+        {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="border border-red-500/30 bg-red-500/10 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-[hsl(var(--color-foreground))]">{error}</p>
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Loading */}
         {loading && (
           <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--color-primary))]" />
           </div>
         )}
 
         {/* Table */}
         {!loading && records.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -210,71 +191,52 @@ export default function TimeRecordsHistory() {
               <TableBody>
                 {records.map((record) => (
                   <TableRow key={record._id}>
-                    {/* Date */}
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="font-medium">
-                          {formatDate(record.clockInTime)}
-                        </span>
+                        <Calendar className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
+                        <span className="font-medium text-[hsl(var(--color-foreground))]">{formatDate(record.clockInTime)}</span>
                       </div>
                     </TableCell>
-
-                    {/* Site */}
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <span>{record.siteId?.siteLocationName || 'N/A'}</span>
+                        <MapPin className="w-4 h-4 text-[hsl(var(--color-foreground-secondary))]" />
+                        <span className="text-[hsl(var(--color-foreground))]">{record.siteId?.siteLocationName || 'N/A'}</span>
                       </div>
                     </TableCell>
-
-                    {/* Clock In */}
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-green-500" />
-                        <span>{formatTime(record.clockInTime)}</span>
+                        <span className="text-[hsl(var(--color-foreground))]">{formatTime(record.clockInTime)}</span>
                       </div>
                     </TableCell>
-
-                    {/* Clock Out */}
                     <TableCell>
                       {record.clockOutTime ? (
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-red-500" />
-                          <span>{formatTime(record.clockOutTime)}</span>
+                          <span className="text-[hsl(var(--color-foreground))]">{formatTime(record.clockOutTime)}</span>
                         </div>
                       ) : (
-                        <span className="text-gray-400">-</span>
+                        <span className="text-[hsl(var(--color-foreground-secondary))]">-</span>
                       )}
                     </TableCell>
-
-                    {/* Total Hours */}
                     <TableCell>
-                      <span className="font-semibold text-blue-600">
-                        {formatDuration(record.totalHours)}
-                      </span>
+                      <span className="font-semibold text-[hsl(var(--color-primary))]">{formatDuration(record.totalHours)}</span>
                     </TableCell>
-
-                    {/* Status */}
                     <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          record.status === 'CLOCKED_IN'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        record.status === 'CLOCKED_IN'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground-secondary))]'
+                      }`}>
                         {record.status === 'CLOCKED_IN' ? 'Active' : 'Completed'}
                       </span>
                     </TableCell>
-
-                    {/* Photos */}
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {record.clockInPhotoUrl && (
                           <button
                             onClick={() => setSelectedPhoto(record.clockInPhotoUrl)}
-                            className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded"
+                            className="p-1 text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-hover))] hover:bg-[hsl(var(--color-surface-elevated))] rounded"
                             title="View Clock In Photo"
                           >
                             <ImageIcon className="w-4 h-4" />
@@ -283,14 +245,14 @@ export default function TimeRecordsHistory() {
                         {record.clockOutPhotoUrl && (
                           <button
                             onClick={() => setSelectedPhoto(record.clockOutPhotoUrl)}
-                            className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                            className="p-1 text-red-500 hover:text-red-400 hover:bg-[hsl(var(--color-surface-elevated))] rounded"
                             title="View Clock Out Photo"
                           >
                             <ImageIcon className="w-4 h-4" />
                           </button>
                         )}
                         {!record.clockInPhotoUrl && !record.clockOutPhotoUrl && (
-                          <span className="text-gray-400 text-sm">No photos</span>
+                          <span className="text-[hsl(var(--color-foreground-secondary))] text-sm">No photos</span>
                         )}
                       </div>
                     </TableCell>
@@ -300,28 +262,25 @@ export default function TimeRecordsHistory() {
             </Table>
 
             {/* Pagination */}
-            <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+            <div className="border-t border-[hsl(var(--color-border))] px-6 py-4 flex items-center justify-between">
+              <div className="text-sm text-[hsl(var(--color-foreground-secondary))]">
                 Showing {records.length} of {pagination.total} records
               </div>
-
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                   disabled={pagination.page === 1}
-                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-2 border border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] rounded-lg hover:bg-[hsl(var(--color-card))] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-[hsl(var(--color-foreground-secondary))]">
                   Page {pagination.page} of {pagination.pages}
                 </span>
-
                 <button
                   onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                   disabled={pagination.page >= pagination.pages}
-                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-2 border border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground))] rounded-lg hover:bg-[hsl(var(--color-card))] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -332,13 +291,11 @@ export default function TimeRecordsHistory() {
 
         {/* Empty State */}
         {!loading && records.length === 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <Clock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Time Records Found</h3>
-            <p className="text-gray-600">
-              {startDate || endDate || selectedSite
-                ? 'Try adjusting your filters'
-                : 'You haven\'t clocked in yet'}
+          <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg p-12 text-center">
+            <Clock className="w-16 h-16 text-[hsl(var(--color-foreground-secondary))] mx-auto mb-4 opacity-30" />
+            <h3 className="text-lg font-semibold text-[hsl(var(--color-foreground))] mb-2">No Time Records Found</h3>
+            <p className="text-[hsl(var(--color-foreground-secondary))]">
+              {startDate || endDate || selectedSite ? 'Try adjusting your filters' : "You haven't clocked in yet"}
             </p>
           </div>
         )}
@@ -346,7 +303,7 @@ export default function TimeRecordsHistory() {
         {/* Photo Viewer Modal */}
         {selectedPhoto && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4"
             onClick={() => setSelectedPhoto(null)}
           >
             <div className="relative max-w-4xl max-h-full">
@@ -358,7 +315,7 @@ export default function TimeRecordsHistory() {
               />
               <button
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute top-4 right-4 px-4 py-2 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                className="absolute top-4 right-4 px-4 py-2 bg-[hsl(var(--color-card))] text-[hsl(var(--color-foreground))] rounded-lg font-medium hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
               >
                 Close
               </button>

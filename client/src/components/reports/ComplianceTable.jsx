@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import complianceData from "../../data/complianceData";
 
 export default function ComplianceTable({ filters }) {
@@ -82,31 +82,48 @@ export default function ComplianceTable({ filters }) {
   const getStatusColor = (status) => {
     switch (status) {
       case "Current":
-        return "text-green-600 bg-green-50";
+        return "text-green-400 bg-green-900/30";
       case "Expired":
-        return "text-red-600 bg-red-50";
+        return "text-red-400 bg-red-900/30";
       case "Expiring Soon":
-        return "text-orange-600 bg-orange-50";
+        return "text-orange-400 bg-orange-900/30";
       default:
-        return "text-gray-600 bg-gray-50";
+        return "text-[hsl(var(--color-foreground-muted))] bg-[hsl(var(--color-surface-elevated))]";
     }
   };
 
   const getDaysColor = (days) => {
-    if (days < 0) return "text-red-600";
-    if (days <= 30) return "text-orange-600";
-    if (days <= 90) return "text-yellow-600";
-    return "text-green-600";
+    if (days < 0) return "text-red-400";
+    if (days <= 30) return "text-orange-400";
+    if (days <= 90) return "text-yellow-400";
+    return "text-green-400";
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm">
+    <div className="bg-[hsl(var(--color-card))] rounded-lg sm:rounded-xl border border-[hsl(var(--color-border))] shadow-md overflow-hidden">
+      {/* Summary Bar */}
+      <div className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))] px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[hsl(var(--color-foreground-secondary))]" />
+            <span className="text-xs sm:text-sm font-medium text-[hsl(var(--color-foreground))]">
+              {filteredData.length} {filteredData.length === 1 ? 'Record' : 'Records'}
+            </span>
+          </div>
+          {selectedRows.length > 0 && (
+            <span className="text-xs sm:text-sm text-[hsl(var(--color-primary))]">
+              {selectedRows.length} selected
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[1400px]">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr className="text-gray-700 text-xs font-semibold">
-              <th className="px-3 py-3 text-center w-12">
+        <table className="w-full text-xs sm:text-sm min-w-[800px] lg:min-w-[1200px]">
+          <thead className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))]">
+            <tr className="text-[hsl(var(--color-foreground-secondary))] text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-center w-8 sm:w-10 lg:w-12">
                 <input
                   type="checkbox"
                   checked={
@@ -114,73 +131,86 @@ export default function ComplianceTable({ filters }) {
                     currentData.length > 0
                   }
                   onChange={handleSelectAll}
-                  className="rounded border-gray-300"
+                  className="rounded border-[hsl(var(--color-border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))] focus:ring-offset-0 bg-[hsl(var(--color-surface-elevated))] w-3.5 h-3.5 sm:w-4 sm:h-4"
                 />
               </th>
-              <th className="px-3 py-3 text-left">Emp No.</th>
-              <th className="px-3 py-3 text-left">Employee Name</th>
-              <th className="px-3 py-3 text-left">Mobile</th>
-              <th className="px-3 py-3 text-left">State</th>
-              <th className="px-3 py-3 text-left">Dept/Work Group</th>
-              <th className="px-3 py-3 text-left">License/Cert.</th>
-              <th className="px-3 py-3 text-left">License/Cert. No.</th>
-              <th className="px-3 py-3 text-left">Expiry Date</th>
-              <th className="px-3 py-3 text-left">Days to Expire</th>
-              <th className="px-3 py-3 text-left">Status</th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Emp No.</th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Employee Name</th>
+              <th className="hidden md:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Mobile</th>
+              <th className="hidden lg:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">State</th>
+              <th className="hidden xl:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Dept/Work Group</th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">License/Cert.</th>
+              <th className="hidden sm:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Cert. No.</th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Expiry Date</th>
+              <th className="hidden md:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Days Left</th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Status</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-[hsl(var(--color-border))]">
             {currentData.length === 0 ? (
               <tr>
-                <td colSpan="11" className="px-3 py-8 text-center text-gray-500">
-                  No records found matching your filters
+                <td colSpan="11" className="px-3 sm:px-4 py-8 sm:py-12 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-[hsl(var(--color-foreground-muted))] opacity-50" />
+                    <p className="text-xs sm:text-sm text-[hsl(var(--color-foreground-secondary))]">
+                      No records found matching your filters
+                    </p>
+                  </div>
                 </td>
               </tr>
             ) : (
               currentData.map((item) => (
                 <tr
                   key={item.id}
-                  className="hover:bg-gray-50 transition-colors"
+                  className="hover:bg-[hsl(var(--color-surface-elevated))] transition-colors"
                 >
-                  <td className="px-3 py-3 text-center">
+                  <td className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-center">
                     <input
                       type="checkbox"
                       checked={selectedRows.includes(item.id)}
                       onChange={() => handleRowSelect(item.id)}
-                      className="rounded border-gray-300"
+                      className="rounded border-[hsl(var(--color-border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))] focus:ring-offset-0 bg-[hsl(var(--color-surface-elevated))] w-3.5 h-3.5 sm:w-4 sm:h-4"
                     />
                   </td>
-                  <td className="px-3 py-3 text-gray-900">{item.empNo}</td>
-                  <td className="px-3 py-3 text-gray-900 font-medium">
+                  <td className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-[hsl(var(--color-foreground))] font-mono text-[10px] sm:text-xs whitespace-nowrap">
+                    {item.empNo}
+                  </td>
+                  <td className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-[hsl(var(--color-foreground))] font-medium whitespace-nowrap">
                     {item.employeeName}
                   </td>
-                  <td className="px-3 py-3 text-gray-600">{item.mobile}</td>
-                  <td className="px-3 py-3 text-gray-600">
+                  <td className="hidden md:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+                    {item.mobile}
+                  </td>
+                  <td className="hidden lg:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
                     {item.state || "-"}
                   </td>
-                  <td className="px-3 py-3 text-gray-600">
+                  <td className="hidden xl:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
                     {item.deptWorkGroup || "-"}
                   </td>
-                  <td className="px-3 py-3 text-gray-900">
-                    {item.licenseCert}
+                  <td className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-[hsl(var(--color-foreground))]">
+                    <div className="max-w-[120px] sm:max-w-[150px] truncate">
+                      {item.licenseCert}
+                    </div>
                   </td>
-                  <td className="px-3 py-3 text-gray-600">
-                    {item.licenseCertNo}
+                  <td className="hidden sm:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-[hsl(var(--color-foreground-secondary))] font-mono text-[10px] sm:text-xs">
+                    <div className="max-w-[100px] sm:max-w-[120px] truncate">
+                      {item.licenseCertNo || "-"}
+                    </div>
                   </td>
-                  <td className="px-3 py-3 text-gray-900">
+                  <td className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 text-[hsl(var(--color-foreground))] whitespace-nowrap">
                     {item.expiryDate}
                   </td>
                   <td
-                    className={`px-3 py-3 font-semibold ${getDaysColor(
+                    className={`hidden md:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5 font-semibold whitespace-nowrap ${getDaysColor(
                       item.daysToExpire
                     )}`}
                   >
                     {item.daysToExpire}
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-3.5">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium whitespace-nowrap ${getStatusColor(
                         item.status
                       )}`}
                     >
@@ -195,36 +225,38 @@ export default function ComplianceTable({ filters }) {
       </div>
 
       {/* Pagination */}
-      <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-between bg-gray-50">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-700">Rows per page:</span>
+      <div className="border-t border-[hsl(var(--color-border))] px-3 sm:px-4 lg:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 bg-[hsl(var(--color-surface-elevated))]">
+        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+          <span className="text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+            Rows:
+          </span>
           <select
             value={itemsPerPage}
             onChange={(e) => {
               setItemsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="px-2 py-1 border border-gray-300 rounded-md text-sm bg-white"
+            className="px-2 sm:px-3 py-1 sm:py-1.5 border border-[hsl(var(--color-border))] rounded-lg text-xs sm:text-sm bg-[hsl(var(--color-surface))] text-[hsl(var(--color-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))] focus:border-transparent"
           >
             <option value="10">10</option>
             <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
           </select>
-          <span className="text-sm text-gray-700 ml-4">
+          <span className="text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
             {startIndex + 1}-{Math.min(endIndex, filteredData.length)} of{" "}
             {filteredData.length}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={() => setCurrentPage(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            className="px-2 sm:px-3 py-1 sm:py-1.5 border border-[hsl(var(--color-border))] rounded-lg text-xs sm:text-sm hover:bg-[hsl(var(--color-surface))] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-1.5 transition-colors text-[hsl(var(--color-foreground))]"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
+            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Previous</span>
           </button>
 
           <div className="flex items-center gap-1">
@@ -244,10 +276,10 @@ export default function ComplianceTable({ filters }) {
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`px-3 py-1 border rounded-md text-sm ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 border rounded-lg text-xs sm:text-sm transition-all ${
                     currentPage === pageNum
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "border-gray-300 hover:bg-gray-100"
+                      ? "bg-[hsl(var(--color-primary))] text-white border-[hsl(var(--color-primary))]"
+                      : "border-[hsl(var(--color-border))] hover:bg-[hsl(var(--color-surface))] text-[hsl(var(--color-foreground))]"
                   }`}
                 >
                   {pageNum}
@@ -259,10 +291,10 @@ export default function ComplianceTable({ filters }) {
           <button
             onClick={() => setCurrentPage(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            className="px-2 sm:px-3 py-1 sm:py-1.5 border border-[hsl(var(--color-border))] rounded-lg text-xs sm:text-sm hover:bg-[hsl(var(--color-surface))] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-1.5 transition-colors text-[hsl(var(--color-foreground))]"
           >
-            Next
-            <ChevronRight className="w-4 h-4" />
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         </div>
       </div>
