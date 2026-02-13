@@ -94,6 +94,34 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Modern Scrollbars (global) ──────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--color-border-strong)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--color-border-strong));
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--color-foreground-muted));
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Typography Utilities */
 .text-foreground-secondary {
   color: hsl(var(--color-foreground-secondary));

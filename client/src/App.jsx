@@ -23,6 +23,7 @@ import ChangePassword from "./pages/user/ChangePassword";
 import ClockInOut from "./components/attendance/ClockInOut";
 import TimeRecordsHistory from "./components/attendance/TimeRecordsHistory";
 import ManagerTimeRecords from "./components/attendance/ManagerTimeRecords";
+import MyLeave from "./pages/user/MyLeave";
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
           <Route path="roster" element={<MyRoster />} />
           <Route path="clock" element={<ClockInOut />} />
           <Route path="history" element={<TimeRecordsHistory />} />
+          <Route path="leave" element={<MyLeave />} />
           <Route path="profile" element={<UserProfile />} />
           <Route path="change-password" element={<ChangePassword />} />
         </Route>

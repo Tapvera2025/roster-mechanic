@@ -173,24 +173,32 @@
   }
 }
 
-/* Scrollbar Styling for Better Mobile Experience */
+/* Scrollbar Styling — mirrors global style for explicit opt-in use */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--color-border-strong)) transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: hsl(var(--color-background));
-  border-radius: 4px;
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--color-border));
-  border-radius: 4px;
+  background-color: hsl(var(--color-border-strong));
+  border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--color-foreground-secondary));
+  background-color: hsl(var(--color-foreground-muted));
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Mobile Safe Area (for devices with notches) */

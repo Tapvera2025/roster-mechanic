@@ -154,6 +154,21 @@ export const clockApi = {
   })
 };
 
+// Leave API endpoints
+export const leaveApi = {
+  // Admin
+  getAll: (params) => api.get('/leave', { params }),
+  getStats: () => api.get('/leave/stats'),
+  create: (data) => api.post('/leave', data),
+  approve: (id, actionNote = '') => api.put(`/leave/${id}/approve`, { actionNote }),
+  decline: (id, actionNote = '') => api.put(`/leave/${id}/decline`, { actionNote }),
+  cancel: (id) => api.put(`/leave/${id}/cancel`),
+  // Employee self-service
+  getMy: (params) => api.get('/leave/my', { params }),
+  submitMy: (data) => api.post('/leave/my', data),
+  cancelMy: (id) => api.put(`/leave/my/${id}/cancel`),
+};
+
 // Dashboard API endpoints
 export const dashboardApi = {
   getStats: () => api.get('/dashboard/stats'),
