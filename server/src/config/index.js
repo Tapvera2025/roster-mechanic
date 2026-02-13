@@ -61,6 +61,12 @@ const envSchema = Joi.object({
   // Email (AWS SES)
   EMAIL_ENABLED: Joi.boolean().default(false),
   EMAIL_FROM: Joi.string().email().default('noreply@example.com'),
+  EMAIL_SERVICE: Joi.string().valid('smtp', 'gmail', 'ses').default('smtp'),
+  EMAIL_HOST: Joi.string().allow('').optional(),
+  EMAIL_PORT: Joi.number().default(587),
+  EMAIL_SECURE: Joi.boolean().default(false),
+  EMAIL_USER: Joi.string().allow('').optional(),
+  EMAIL_PASSWORD: Joi.string().allow('').optional(),
   AWS_REGION: Joi.string().default('ap-southeast-2'),
   AWS_SES_ACCESS_KEY: Joi.string().allow('').optional(),
   AWS_SES_SECRET_KEY: Joi.string().allow('').optional(),
@@ -99,6 +105,7 @@ const config = {
     name: envVars.APP_NAME,
     port: envVars.APP_PORT,
     url: envVars.APP_URL,
+    clientUrl: envVars.CLIENT_URL,
     timezone: envVars.APP_TIMEZONE,
   },
 
@@ -146,11 +153,15 @@ const config = {
   email: {
     enabled: envVars.EMAIL_ENABLED,
     from: envVars.EMAIL_FROM,
-    aws: {
-      region: envVars.AWS_REGION,
-      accessKey: envVars.AWS_SES_ACCESS_KEY,
-      secretKey: envVars.AWS_SES_SECRET_KEY,
-    },
+    service: envVars.EMAIL_SERVICE,
+    host: envVars.EMAIL_HOST,
+    port: envVars.EMAIL_PORT,
+    secure: envVars.EMAIL_SECURE,
+    user: envVars.EMAIL_USER,
+    password: envVars.EMAIL_PASSWORD,
+    region: envVars.AWS_REGION,
+    accessKey: envVars.AWS_SES_ACCESS_KEY,
+    secretKey: envVars.AWS_SES_SECRET_KEY,
   },
 
   storage: {

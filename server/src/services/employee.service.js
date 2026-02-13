@@ -7,7 +7,10 @@
 const Employee = require('../models/Employee');
 const EmployeeSite = require('../models/EmployeeSite');
 const User = require('../models/User');
+const Company = require('../models/Company');
 const mongoose = require('mongoose');
+const emailService = require('./email.service');
+const logger = require('../utils/logger');
 
 class EmployeeService {
   /**
@@ -216,6 +219,16 @@ class EmployeeService {
 
     // Auto-create User account for employee login (if password provided)
     let createdUserId = data.userId;
+    let plainPassword = data.password; // Store for email
+    let shouldSendEmail = false;
+
+    logger.info('Employee creation - checking email conditions', {
+      hasUserId: !!data.userId,
+      hasPassword: !!data.password,
+      sendInvitation: data.sendInvitation,
+      email: data.email,
+    });
+
     if (!data.userId && data.password) {
       // Check if user with this email already exists
       const existingUser = await User.findOne({
@@ -225,6 +238,7 @@ class EmployeeService {
 
       if (!existingUser) {
         // Create user account for the employee
+        logger.info('Creating new user account for employee', { email: data.email });
         const newUser = await User.create({
           email: data.email,
           password: data.password,
@@ -234,10 +248,23 @@ class EmployeeService {
           createdBy: userId,
         });
         createdUserId = newUser._id;
+        shouldSendEmail = true; // Send email for newly created user
+        logger.info('User created - will send email', { userId: newUser._id, sendInvitation: data.sendInvitation });
       } else {
-        // Use existing user account
+        // Use existing user account but send email if sendInvitation is true
+        logger.info('User already exists - linking to employee', { email: data.email, userId: existingUser._id });
         createdUserId = existingUser._id;
+        // If sendInvitation is enabled, send email even for existing users
+        if (data.sendInvitation !== false) {
+          shouldSendEmail = true;
+          logger.info('Will send email for existing user (sendInvitation=true)');
+        }
       }
+    } else {
+      logger.info('Skipping user creation - no password or userId provided', {
+        hasUserId: !!data.userId,
+        hasPassword: !!data.password,
+      });
     }
 
     // Create employee with context
@@ -247,6 +274,41 @@ class EmployeeService {
       companyId,
       createdBy: userId,
     });
+
+    // Send welcome email if a new user account was created AND sendInvitation is true
+    if (shouldSendEmail && plainPassword && data.sendInvitation !== false) {
+      try {
+        // Get company name for email
+        const company = await Company.findById(companyId);
+        const companyName = company?.name || 'Your Company';
+
+        await emailService.sendWelcomeEmail({
+          to: data.email,
+          name: `${data.firstName} ${data.lastName}`,
+          email: data.email,
+          password: plainPassword,
+          role: 'USER',
+          companyName,
+        });
+
+        logger.info('Welcome email sent successfully to employee', {
+          employeeId: employee._id,
+          email: data.email,
+        });
+      } catch (emailError) {
+        // Log error but don't fail employee creation if email fails
+        logger.error('Failed to send welcome email to employee', {
+          employeeId: employee._id,
+          email: data.email,
+          error: emailError.message,
+        });
+      }
+    } else if (shouldSendEmail && plainPassword && data.sendInvitation === false) {
+      logger.info('Welcome email skipped - sendInvitation is false', {
+        employeeId: employee._id,
+        email: data.email,
+      });
+    }
 
     // Remove TFN from response
     const employeeObj = employee.toObject();

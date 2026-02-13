@@ -18,12 +18,8 @@ export default function MyRoster() {
   const [viewMode, setViewMode] = useState("week");
   const [currentStartDate, setCurrentStartDate] = useState(() => {
     const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
+    today.setHours(0, 0, 0, 0);
+    return today;
   });
 
   const [shifts, setShifts] = useState([]);
@@ -137,11 +133,8 @@ export default function MyRoster() {
 
   const handleToday = () => {
     const today = new Date();
-    const diff = today.getDay() === 0 ? -6 : 1 - today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + diff);
-    monday.setHours(0, 0, 0, 0);
-    setCurrentStartDate(monday);
+    today.setHours(0, 0, 0, 0);
+    setCurrentStartDate(today);
   };
 
   const getShiftsForDate = (date) => {

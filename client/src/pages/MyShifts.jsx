@@ -12,12 +12,12 @@ export default function MyShifts() {
   // Get user info from localStorage
   const userName = localStorage.getItem('userName') || 'Employee';
 
-  // Calculate week range
+  // Calculate week range - starts from current date, shows next 7 days
   const getWeekRange = (date) => {
     const start = new Date(date);
-    start.setDate(start.getDate() - start.getDay()); // Start of week (Sunday)
+    start.setHours(0, 0, 0, 0); // Start from the given date
     const end = new Date(start);
-    end.setDate(end.getDate() + 6); // End of week (Saturday)
+    end.setDate(end.getDate() + 6); // Next 7 days
     return { start, end };
   };
 

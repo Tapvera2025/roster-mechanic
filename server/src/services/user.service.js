@@ -6,7 +6,10 @@
 
 const User = require('../models/User');
 const Employee = require('../models/Employee');
+const Company = require('../models/Company');
 const mongoose = require('mongoose');
+const emailService = require('./email.service');
+const logger = require('../utils/logger');
 
 class UserService {
   /**
@@ -167,6 +170,9 @@ class UserService {
       throw error;
     }
 
+    // Store the plain password before creating user (for email)
+    const plainPassword = data.password;
+
     // Create user with context
     // Password will be hashed automatically by User model pre-save hook
     const user = await User.create({
@@ -180,6 +186,34 @@ class UserService {
     delete userObj.password;
     delete userObj.refreshToken;
     delete userObj.passwordResetToken;
+
+    // Send welcome email with login credentials
+    try {
+      // Get company name for email
+      const company = await Company.findById(companyId);
+      const companyName = company?.name || 'Your Company';
+
+      await emailService.sendWelcomeEmail({
+        to: user.email,
+        name: user.name,
+        email: user.email,
+        password: plainPassword,
+        role: user.role,
+        companyName,
+      });
+
+      logger.info('Welcome email sent successfully', {
+        userId: user._id,
+        email: user.email,
+      });
+    } catch (emailError) {
+      // Log error but don't fail user creation if email fails
+      logger.error('Failed to send welcome email', {
+        userId: user._id,
+        email: user.email,
+        error: emailError.message,
+      });
+    }
 
     return userObj;
   }

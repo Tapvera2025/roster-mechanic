@@ -33,7 +33,7 @@ export default function Scheduler() {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const optionsRef = useRef(null);
 
-  // Current start date for the calendar view
+  // Current start date for the calendar view - starts from today
   const [currentStartDate, setCurrentStartDate] = useState(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

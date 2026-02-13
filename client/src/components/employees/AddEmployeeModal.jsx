@@ -22,6 +22,7 @@ export default function AddEmployeeModal({
     department: "",
     password: "",
     isActive: true,
+    sendInvitation: true, // Send invitation by default
   });
 
   const [sites, setSites] = useState([]);
@@ -64,6 +65,7 @@ export default function AddEmployeeModal({
           department: employee.department || "",
           password: "", // Don't populate password for security
           isActive: employee.isActive !== undefined ? employee.isActive : true,
+          sendInvitation: true, // Default to ON even when editing
         });
         setSelectedSites([]);
       } else {
@@ -76,6 +78,7 @@ export default function AddEmployeeModal({
           department: "",
           password: "",
           isActive: true,
+          sendInvitation: true,
         });
         setSelectedSites([]);
       }
@@ -549,11 +552,26 @@ export default function AddEmployeeModal({
                   <Label className="mb-0">Send Invitation</Label>
                   <button
                     type="button"
-                    className="w-12 h-6 bg-blue-500 rounded-full relative"
+                    onClick={() => handleChange("sendInvitation", !formData.sendInvitation)}
+                    className={`w-12 h-6 rounded-full relative transition-colors ${
+                      formData.sendInvitation ? "bg-blue-500" : "bg-red-500"
+                    }`}
                   >
-                    <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5" />
+                    <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${
+                      formData.sendInvitation ? "right-0.5" : "left-0.5"
+                    }`} />
                   </button>
                 </div>
+                {formData.sendInvitation && formData.password && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    Welcome email with login credentials will be sent to {formData.email || 'employee'}
+                  </p>
+                )}
+                {!formData.sendInvitation && formData.password && (
+                  <p className="text-xs text-[hsl(var(--color-foreground-secondary))] mt-1">
+                    No email will be sent. Share credentials manually.
+                  </p>
+                )}
               </div>
             </div>
           </div>
