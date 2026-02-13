@@ -1,8 +1,7 @@
 import { Search, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState } from "react"; // kept for searchField state
 
-export default function ClientFilters() {
-  const [showInactive, setShowInactive] = useState(false);
+export default function ClientFilters({ showInactive, setShowInactive }) {
   const [searchField, setSearchField] = useState("Client Name");
 
   return (

@@ -13,6 +13,8 @@ import {
   Eye,
   EyeOff,
   ChevronUp,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "../ui/Button";
@@ -20,11 +22,13 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { siteApi, clientApi } from "../../lib/api";
 import staticClients from "../../data/clients";
+import MapModal from "./MapModal";
 
 export default function AddSiteModal({ onClose, onSuccess, site = null }) {
   const [activeTab, setActiveTab] = useState("address");
+  // DB stores geoFenceRadius in meters; slider/UI uses km
   const [geoFenceRadius, setGeoFenceRadius] = useState(
-    site?.geoFenceRadius || 0.3,
+    site?.geoFenceRadius ? site.geoFenceRadius / 1000 : 0.3,
   );
   const [accessCodeExpanded, setAccessCodeExpanded] = useState(true);
   const [showAccessCode, setShowAccessCode] = useState(false);
@@ -37,6 +41,12 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [clients, setClients] = useState(staticClients);
+
+  // Map / geocoding state
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
 
   const [accessCodeData, setAccessCodeData] = useState({
     codeName: "",
@@ -99,6 +109,65 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const showWarningDialog = (message) => {
+    setWarningMessage(message);
+    setShowWarning(true);
+  };
+
+  const handleGetMapAddress = async () => {
+    const addressParts = [
+      formData.address,
+      formData.townSuburb,
+      formData.state,
+      formData.postalCode,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    if (!addressParts.trim()) {
+      showWarningDialog("Please enter site address");
+      return;
+    }
+
+    setGeocoding(true);
+    try {
+      const query = encodeURIComponent(addressParts);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=au`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        handleInputChange("latitude", parseFloat(lat).toFixed(6));
+        handleInputChange("longitude", parseFloat(lon).toFixed(6));
+        toast.success("Location coordinates updated from address");
+      } else {
+        showWarningDialog(
+          "Could not find coordinates for the entered address. Please check the address and try again."
+        );
+      }
+    } catch {
+      showWarningDialog(
+        "Failed to fetch coordinates. Please check your internet connection and try again."
+      );
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
+  const handleMapSave = ({ latitude, longitude, address, state, townSuburb, postalCode, geoFenceRadius: radius }) => {
+    handleInputChange("latitude", latitude);
+    handleInputChange("longitude", longitude);
+    if (address !== undefined) handleInputChange("address", address);
+    if (state !== undefined) handleInputChange("state", state);
+    if (townSuburb !== undefined) handleInputChange("townSuburb", townSuburb);
+    if (postalCode !== undefined) handleInputChange("postalCode", postalCode);
+    if (radius !== undefined) setGeoFenceRadius(radius);
+    toast.success("Location updated from map");
+  };
+
   const handleSave = async () => {
     try {
       setSubmitting(true);
@@ -113,7 +182,7 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
           : null,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        geoFenceRadius: geoFenceRadius,
+        geoFenceRadius: Math.round(geoFenceRadius * 1000), // convert km → meters for DB
         defaultShiftDuration: formData.defaultShiftDuration
           ? parseInt(formData.defaultShiftDuration)
           : null,
@@ -646,14 +715,21 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
                       <div className="flex gap-3 mb-6">
                         <Button
                           variant="outline"
-                          className="bg-blue-600 text-white hover:bg-blue-700"
+                          className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+                          onClick={handleGetMapAddress}
+                          disabled={geocoding}
                         >
-                          <Target className="w-4 h-4 mr-2" />
-                          Get Map Address
+                          {geocoding ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Target className="w-4 h-4 mr-2" />
+                          )}
+                          {geocoding ? "Fetching..." : "Get Map Address"}
                         </Button>
                         <Button
                           variant="outline"
                           className="bg-blue-600 text-white hover:bg-blue-700"
+                          onClick={() => setShowMapModal(true)}
                         >
                           <MapPin className="w-4 h-4 mr-2" />
                           View Map
@@ -672,7 +748,7 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
                           <div className="flex-1 relative max-w-lg">
                             <input
                               type="range"
-                              min="0"
+                              min="0.1"
                               max="5"
                               step="0.1"
                               value={geoFenceRadius}
@@ -681,7 +757,7 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
                               }
                               className="w-full h-2 bg-[hsl(var(--color-border))] rounded-lg appearance-none cursor-pointer slider-thumb"
                               style={{
-                                background: `linear-gradient(to right, #dc2626 0%, #dc2626 ${(geoFenceRadius / 5) * 100}%, hsl(var(--color-border)) ${(geoFenceRadius / 5) * 100}%, hsl(var(--color-border)) 100%)`,
+                                background: `linear-gradient(to right, #dc2626 0%, #dc2626 ${((geoFenceRadius - 0.1) / 4.9) * 100}%, hsl(var(--color-border)) ${((geoFenceRadius - 0.1) / 4.9) * 100}%, hsl(var(--color-border)) 100%)`,
                               }}
                             />
                           </div>
@@ -1012,6 +1088,52 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
           </div>
         </div>
       </div>
+
+      {/* Warning Dialog */}
+      {showWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4">
+          <div className="bg-white rounded shadow-2xl w-full max-w-sm">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#8B0000] rounded-t">
+              <div className="flex items-center gap-2 text-white">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="font-semibold text-sm">Warning</span>
+              </div>
+              <button
+                onClick={() => setShowWarning(false)}
+                className="text-white hover:text-gray-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-6 text-sm text-gray-700 min-h-[80px]">
+              {warningMessage}
+            </div>
+            <div className="flex justify-end px-4 py-3 border-t border-gray-200">
+              <button
+                onClick={() => setShowWarning(false)}
+                className="px-5 py-2 bg-[#8B0000] text-white text-sm rounded hover:bg-[#6B0000] transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Map Modal */}
+      {showMapModal && (
+        <MapModal
+          initLatitude={formData.latitude}
+          initLongitude={formData.longitude}
+          initAddress={formData.address}
+          initState={formData.state}
+          initTownSuburb={formData.townSuburb}
+          initPostalCode={formData.postalCode}
+          initGeoFenceRadius={geoFenceRadius}
+          onClose={() => setShowMapModal(false)}
+          onSave={handleMapSave}
+        />
+      )}
     </div>
   );
 }

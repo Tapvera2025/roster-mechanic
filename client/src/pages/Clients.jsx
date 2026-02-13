@@ -23,6 +23,9 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState(null);
   const addMenuRef = useRef(null);
 
+  // Filter state
+  const [showInactive, setShowInactive] = useState(false);
+
   // API state
   const [clients, setClients] = useState(staticClients); // Start with static data
   const [loading, setLoading] = useState(false);
@@ -38,6 +41,7 @@ export default function Clients() {
       const response = await clientApi.getAll({
         page: currentPage,
         limit: currentLimit,
+        status: showInactive ? undefined : "ACTIVE",
       });
 
       // Try different response structures
@@ -63,11 +67,10 @@ export default function Clients() {
     }
   };
 
-  // Fetch clients on mount only
+  // Re-fetch whenever filter or page changes
   useEffect(() => {
-    // Try to fetch from API, but keep static data if it fails
     fetchClients();
-  }, []);
+  }, [showInactive, currentPage, currentLimit]);
 
   // Handle refresh button
   const handleRefresh = () => {
@@ -140,7 +143,7 @@ export default function Clients() {
       <div className="p-3 sm:p-6">
         {/* Filter Section */}
         <div className="mb-4 sm:mb-6">
-          <ClientFilters />
+          <ClientFilters showInactive={showInactive} setShowInactive={setShowInactive} />
         </div>
 
         {/* Action Bar */}
