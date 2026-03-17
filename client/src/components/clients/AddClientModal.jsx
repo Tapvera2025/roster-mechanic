@@ -5,6 +5,7 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { clientApi } from "../../lib/api";
+import { AUSTRALIAN_STATES } from "../../constants/locations";
 
 export default function AddClientModal({ onClose, onSuccess, client = null }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -180,14 +181,11 @@ export default function AddClientModal({ onClose, onSuccess, client = null }) {
                 onChange={(e) => handleInputChange("state", e.target.value)}
               >
                 <option value="">Select State</option>
-                <option value="QLD">QLD</option>
-                <option value="NSW">NSW</option>
-                <option value="VIC">VIC</option>
-                <option value="SA">SA</option>
-                <option value="WA">WA</option>
-                <option value="TAS">TAS</option>
-                <option value="NT">NT</option>
-                <option value="ACT">ACT</option>
+                {AUSTRALIAN_STATES.map((state) => (
+                  <option key={state.code} value={state.code}>
+                    {state.code} - {state.name}
+                  </option>
+                ))}
               </Select>
             </div>
 

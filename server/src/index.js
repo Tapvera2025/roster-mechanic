@@ -120,6 +120,7 @@ v1Router.use('/shifts', require('./routes/shift.routes'));
 v1Router.use('/clock', require('./routes/clockInOut.routes'));
 v1Router.use('/dashboard', require('./routes/dashboard.routes'));
 v1Router.use('/leave', require('./routes/leave.routes'));
+v1Router.use('/geocoding', require('./routes/geocoding.routes'));
 
 // Mount API version
 app.use('/api/v1', v1Router);

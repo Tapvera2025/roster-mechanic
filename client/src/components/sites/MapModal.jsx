@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { X, MapPin, Maximize2 } from "lucide-react";
 import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
+import { AUSTRALIAN_STATES } from "../../constants/locations";
 
 let L = null;
 
@@ -227,15 +228,12 @@ export default function MapModal({
                 onChange={(e) => setState(e.target.value)}
                 className="flex-1"
               >
-                <option value="">Select</option>
-                <option value="QLD">QLD</option>
-                <option value="NSW">NSW</option>
-                <option value="VIC">VIC</option>
-                <option value="WA">WA</option>
-                <option value="SA">SA</option>
-                <option value="TAS">TAS</option>
-                <option value="NT">NT</option>
-                <option value="ACT">ACT</option>
+                <option value="">Select State</option>
+                {AUSTRALIAN_STATES.map((st) => (
+                  <option key={st.code} value={st.code}>
+                    {st.code} - {st.name}
+                  </option>
+                ))}
               </Select>
             </div>
             <div className="flex items-center gap-3">

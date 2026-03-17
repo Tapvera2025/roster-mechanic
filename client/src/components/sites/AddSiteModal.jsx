@@ -21,9 +21,10 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { LocationAutocomplete } from "../ui/LocationAutocomplete";
-import { siteApi, clientApi } from "../../lib/api";
+import { siteApi, clientApi, geocodingApi } from "../../lib/api";
 import staticClients from "../../data/clients";
 import MapModal from "./MapModal";
+import { AUSTRALIAN_STATES, AUSTRALIAN_TIMEZONES } from "../../constants/locations";
 
 export default function AddSiteModal({ onClose, onSuccess, site = null }) {
   const [activeTab, setActiveTab] = useState("address");
@@ -132,26 +133,74 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
 
     setGeocoding(true);
     try {
-      const query = encodeURIComponent(addressParts);
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=au`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await response.json();
+      const response = await geocodingApi.search(addressParts, "au", 1);
+      const data = response.data.data || [];
 
       if (data && data.length > 0) {
-        const { lat, lon } = data[0];
+        const result = data[0];
+        const { lat, lon, address } = result;
+
+        // Helper function to map full state name to abbreviation
+        const mapStateToCode = (stateName) => {
+          if (!stateName) return "";
+          const state = AUSTRALIAN_STATES.find(
+            (s) => s.name.toLowerCase() === stateName.toLowerCase()
+          );
+          if (state) return state.code;
+          const stateByCode = AUSTRALIAN_STATES.find(
+            (s) => s.code.toLowerCase() === stateName.toLowerCase()
+          );
+          return stateByCode ? stateByCode.code : stateName;
+        };
+
         handleInputChange("latitude", parseFloat(lat).toFixed(6));
         handleInputChange("longitude", parseFloat(lon).toFixed(6));
-        toast.success("Location coordinates updated from address");
+
+        // Also update address fields if available
+        if (address) {
+          if (address.road || address.street) {
+            handleInputChange("address", address.road || address.street);
+          }
+          if (address.suburb || address.town || address.city) {
+            handleInputChange(
+              "townSuburb",
+              address.suburb || address.town || address.city
+            );
+          }
+          if (address.state) {
+            const stateCode = mapStateToCode(address.state);
+            handleInputChange("state", stateCode);
+
+            // Auto-select timezone based on state
+            const timezoneMap = {
+              'NSW': 'Australia/Sydney',
+              'VIC': 'Australia/Melbourne',
+              'QLD': 'Australia/Brisbane',
+              'SA': 'Australia/Adelaide',
+              'WA': 'Australia/Perth',
+              'TAS': 'Australia/Hobart',
+              'NT': 'Australia/Darwin',
+              'ACT': 'Australia/Canberra',
+            };
+            if (stateCode && timezoneMap[stateCode]) {
+              handleInputChange("timezone", timezoneMap[stateCode]);
+            }
+          }
+          if (address.postcode) {
+            handleInputChange("postalCode", address.postcode);
+          }
+        }
+
+        toast.success("Location details updated from address");
       } else {
         showWarningDialog(
           "Could not find coordinates for the entered address. Please check the address and try again."
         );
       }
-    } catch {
+    } catch (error) {
+      console.error("Geocoding error:", error);
       showWarningDialog(
-        "Failed to fetch coordinates. Please check your internet connection and try again."
+        error.response?.data?.message || "Failed to fetch coordinates. Please try again."
       );
     } finally {
       setGeocoding(false);
@@ -597,12 +646,34 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
                             handleInputChange("address", e.target.value)
                           }
                           onSelect={(addressData) => {
+                            // Auto-select timezone based on state
+                            const autoSelectTimezone = (stateCode) => {
+                              const timezoneMap = {
+                                'NSW': 'Australia/Sydney',
+                                'VIC': 'Australia/Melbourne',
+                                'QLD': 'Australia/Brisbane',
+                                'SA': 'Australia/Adelaide',
+                                'WA': 'Australia/Perth',
+                                'TAS': 'Australia/Hobart',
+                                'NT': 'Australia/Darwin',
+                                'ACT': 'Australia/Canberra',
+                              };
+                              return timezoneMap[stateCode] || 'Australia/Sydney';
+                            };
+
+                            // Update all address fields
                             handleInputChange("address", addressData.address);
                             handleInputChange("townSuburb", addressData.townSuburb);
                             handleInputChange("state", addressData.state);
                             handleInputChange("postalCode", addressData.postalCode);
                             handleInputChange("latitude", addressData.latitude);
                             handleInputChange("longitude", addressData.longitude);
+
+                            // Auto-select timezone based on state
+                            if (addressData.state) {
+                              handleInputChange("timezone", autoSelectTimezone(addressData.state));
+                            }
+
                             toast.success("Location details auto-filled");
                           }}
                           placeholder="Enter a location"
@@ -620,10 +691,12 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
                             handleInputChange("state", e.target.value)
                           }
                         >
-                          <option value="">Select</option>
-                          <option value="QLD">QLD</option>
-                          <option value="NSW">NSW</option>
-                          <option value="VIC">VIC</option>
+                          <option value="">Select State</option>
+                          {AUSTRALIAN_STATES.map((state) => (
+                            <option key={state.code} value={state.code}>
+                              {state.code} - {state.name}
+                            </option>
+                          ))}
                         </Select>
                       </div>
 
@@ -671,27 +744,12 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
                           }
                           className="max-w-md"
                         >
-                          <option value="Australia/Perth">
-                            (UTC+08:00) Perth
-                          </option>
-                          <option value="Australia/Darwin">
-                            (UTC+09:30) Darwin
-                          </option>
-                          <option value="Australia/Brisbane">
-                            (UTC+10:00) Brisbane
-                          </option>
-                          <option value="Australia/Adelaide">
-                            (UTC+10:30) Adelaide
-                          </option>
-                          <option value="Australia/Sydney">
-                            (UTC+10:00) Sydney
-                          </option>
-                          <option value="Australia/Melbourne">
-                            (UTC+10:00) Melbourne
-                          </option>
-                          <option value="Australia/Hobart">
-                            (UTC+10:00) Hobart
-                          </option>
+                          <option value="">Select Timezone</option>
+                          {AUSTRALIAN_TIMEZONES.map((tz) => (
+                            <option key={tz.value} value={tz.value}>
+                              {tz.label}
+                            </option>
+                          ))}
                         </Select>
                       </div>
 

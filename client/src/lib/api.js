@@ -175,4 +175,12 @@ export const dashboardApi = {
   getAttendance: () => api.get('/dashboard/attendance'),
 };
 
+// Geocoding API endpoints
+export const geocodingApi = {
+  search: (query, countryCode = 'au', limit = 5) =>
+    api.get('/geocoding/search', { params: { q: query, countryCode, limit } }),
+  reverse: (lat, lon) =>
+    api.get('/geocoding/reverse', { params: { lat, lon } }),
+};
+
 export default api;

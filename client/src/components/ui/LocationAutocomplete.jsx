@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { MapPin, Loader2, X } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { geocodingApi } from "../../lib/api";
+import { AUSTRALIAN_STATES } from "../../constants/locations";
 
 export function LocationAutocomplete({
   value,
@@ -46,13 +48,8 @@ export function LocationAutocomplete({
 
     try {
       setIsLoading(true);
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5${countryCode ? `&countrycodes=${countryCode}` : ""}`,
-        {
-          headers: { "Accept-Language": "en" },
-        }
-      );
-      const data = await response.json();
+      const response = await geocodingApi.search(query, countryCode, 5);
+      const data = response.data.data || [];
 
       const formattedSuggestions = data.map((item) => ({
         display_name: item.display_name,
@@ -98,6 +95,26 @@ export function LocationAutocomplete({
     setIsOpen(false);
     setSuggestions([]);
 
+    // Helper function to map full state name to abbreviation
+    const mapStateToCode = (stateName) => {
+      if (!stateName) return "";
+
+      // Find matching state by full name (case-insensitive)
+      const state = AUSTRALIAN_STATES.find(
+        (s) => s.name.toLowerCase() === stateName.toLowerCase()
+      );
+
+      // Return code if found, otherwise check if it's already a code
+      if (state) return state.code;
+
+      // Check if the input is already a valid state code
+      const stateByCode = AUSTRALIAN_STATES.find(
+        (s) => s.code.toLowerCase() === stateName.toLowerCase()
+      );
+
+      return stateByCode ? stateByCode.code : stateName;
+    };
+
     // Extract address components
     const addressData = {
       fullAddress: suggestion.display_name,
@@ -107,7 +124,7 @@ export function LocationAutocomplete({
         suggestion.address.town ||
         suggestion.address.city ||
         "",
-      state: suggestion.address.state || "",
+      state: mapStateToCode(suggestion.address.state || ""),
       postalCode: suggestion.address.postcode || "",
       latitude: suggestion.lat,
       longitude: suggestion.lon,

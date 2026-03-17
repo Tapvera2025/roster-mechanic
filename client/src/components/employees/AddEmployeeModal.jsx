@@ -7,6 +7,7 @@ import { Label } from "../ui/Label";
 import { LocationAutocomplete } from "../ui/LocationAutocomplete";
 import toast from "react-hot-toast";
 import { siteApi, employeeApi } from "../../lib/api";
+import { AUSTRALIAN_STATES } from "../../constants/locations";
 
 export default function AddEmployeeModal({
   isOpen,
@@ -358,14 +359,11 @@ export default function AddEmployeeModal({
                         onChange={(e) => handleChange("state", e.target.value)}
                       >
                         <option value="">Select State</option>
-                        <option value="NSW">NSW</option>
-                        <option value="QLD">QLD</option>
-                        <option value="VIC">VIC</option>
-                        <option value="SA">SA</option>
-                        <option value="WA">WA</option>
-                        <option value="TAS">TAS</option>
-                        <option value="NT">NT</option>
-                        <option value="ACT">ACT</option>
+                        {AUSTRALIAN_STATES.map((state) => (
+                          <option key={state.code} value={state.code}>
+                            {state.code} - {state.name}
+                          </option>
+                        ))}
                       </Select>
                     </div>
                     <div>
