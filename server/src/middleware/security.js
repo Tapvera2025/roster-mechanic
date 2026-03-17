@@ -160,23 +160,11 @@ const hppProtection = hpp({
 });
 
 /**
- * CORS Configuration (environment-specific)
+ * CORS Configuration (allow all origins)
  */
 const corsOptions = {
-  origin: (origin, callback) => {
-    const allowedOrigins = config.cors.origin.split(',');
-
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1 || config.isDevelopment()) {
-      callback(null, true);
-    } else {
-      logger.warn('CORS blocked origin', { origin, requestId: 'N/A' });
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: config.cors.credentials,
+  origin: true, // Allow all origins
+  credentials: true,
   optionsSuccessStatus: 200,
 };
 
