@@ -4,6 +4,7 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Label } from "../ui/Label";
+import { LocationAutocomplete } from "../ui/LocationAutocomplete";
 import toast from "react-hot-toast";
 import { siteApi, employeeApi } from "../../lib/api";
 
@@ -23,6 +24,10 @@ export default function AddEmployeeModal({
     password: "",
     isActive: true,
     sendInvitation: true, // Send invitation by default
+    address: "",
+    townSuburb: "",
+    state: "",
+    postalCode: "",
   });
 
   const [sites, setSites] = useState([]);
@@ -66,6 +71,10 @@ export default function AddEmployeeModal({
           password: "", // Don't populate password for security
           isActive: employee.isActive !== undefined ? employee.isActive : true,
           sendInvitation: true, // Default to ON even when editing
+          address: employee.address || "",
+          townSuburb: employee.townSuburb || "",
+          state: employee.state || "",
+          postalCode: employee.postalCode || "",
         });
         setSelectedSites([]);
       } else {
@@ -79,6 +88,10 @@ export default function AddEmployeeModal({
           password: "",
           isActive: true,
           sendInvitation: true,
+          address: "",
+          townSuburb: "",
+          state: "",
+          postalCode: "",
         });
         setSelectedSites([]);
       }
@@ -312,19 +325,38 @@ export default function AddEmployeeModal({
                 <div className="space-y-4">
                   <div>
                     <Label>Address</Label>
-                    <Input className="mt-1" placeholder="Enter a location" />
+                    <LocationAutocomplete
+                      className="mt-1"
+                      value={formData.address}
+                      onChange={(e) => handleChange("address", e.target.value)}
+                      onSelect={(addressData) => {
+                        handleChange("address", addressData.address);
+                        handleChange("townSuburb", addressData.townSuburb);
+                        handleChange("state", addressData.state);
+                        handleChange("postalCode", addressData.postalCode);
+                        toast.success("Address details auto-filled");
+                      }}
+                      placeholder="Enter a location"
+                      countryCode="au"
+                    />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label>Town/Suburb</Label>
                       <Input
                         className="mt-1"
+                        value={formData.townSuburb}
+                        onChange={(e) => handleChange("townSuburb", e.target.value)}
                         placeholder="Enter Suburb, Town, City or Postcode"
                       />
                     </div>
                     <div>
                       <Label>State</Label>
-                      <Select className="mt-1">
+                      <Select
+                        className="mt-1"
+                        value={formData.state}
+                        onChange={(e) => handleChange("state", e.target.value)}
+                      >
                         <option value="">Select State</option>
                         <option value="NSW">NSW</option>
                         <option value="QLD">QLD</option>
@@ -338,7 +370,12 @@ export default function AddEmployeeModal({
                     </div>
                     <div>
                       <Label>Postal Code</Label>
-                      <Input className="mt-1" placeholder="Postal Code" />
+                      <Input
+                        className="mt-1"
+                        value={formData.postalCode}
+                        onChange={(e) => handleChange("postalCode", e.target.value)}
+                        placeholder="Postal Code"
+                      />
                     </div>
                   </div>
                 </div>

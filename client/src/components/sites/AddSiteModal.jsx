@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
+import { LocationAutocomplete } from "../ui/LocationAutocomplete";
 import { siteApi, clientApi } from "../../lib/api";
 import staticClients from "../../data/clients";
 import MapModal from "./MapModal";
@@ -590,12 +591,22 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
                         <label className="block text-sm font-medium text-[hsl(var(--color-foreground-secondary))] mb-1">
                           Address
                         </label>
-                        <Input
+                        <LocationAutocomplete
                           value={formData.address}
                           onChange={(e) =>
                             handleInputChange("address", e.target.value)
                           }
+                          onSelect={(addressData) => {
+                            handleInputChange("address", addressData.address);
+                            handleInputChange("townSuburb", addressData.townSuburb);
+                            handleInputChange("state", addressData.state);
+                            handleInputChange("postalCode", addressData.postalCode);
+                            handleInputChange("latitude", addressData.latitude);
+                            handleInputChange("longitude", addressData.longitude);
+                            toast.success("Location details auto-filled");
+                          }}
                           placeholder="Enter a location"
+                          countryCode="au"
                         />
                       </div>
 
