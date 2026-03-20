@@ -11,6 +11,8 @@ import {
 import { Select } from "../components/ui/Select";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
+import SortableHeader from "../components/ui/SortableHeader";
+import { useTableSort } from "../hooks/useTableSort";
 
 export default function SiteActivities() {
   const [activeTab, setActiveTab] = useState("daily");
@@ -18,6 +20,7 @@ export default function SiteActivities() {
   const [dateRange, setDateRange] = useState("current_month");
   const [searchQuery, setSearchQuery] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [activities, setActivities] = useState([]); // Data will be fetched from API
 
   const tabs = [
     { id: "daily", label: "Daily Activity Report", icon: FileText },
@@ -26,13 +29,19 @@ export default function SiteActivities() {
   ];
 
   const columns = [
-    { label: "Day", sortable: true },
-    { label: "Date", sortable: true },
-    { label: "Site", sortable: true },
-    { label: "Report", sortable: true },
-    { label: "Reported By", sortable: true },
-    { label: "Attachments", sortable: true },
+    { label: "Day", sortable: true, sortKey: "day" },
+    { label: "Date", sortable: true, sortKey: "date" },
+    { label: "Site", sortable: true, sortKey: "site" },
+    { label: "Report", sortable: true, sortKey: "report" },
+    { label: "Reported By", sortable: true, sortKey: "reportedBy" },
+    { label: "Attachments", sortable: true, sortKey: "attachments" },
   ];
+
+  // Table sorting
+  const { sortedData: sortedActivities, requestSort, getSortIndicator } = useTableSort(activities, {
+    defaultColumn: 'date',
+    defaultDirection: 'desc',
+  });
 
   return (
     <div className="min-h-screen bg-[hsl(var(--color-surface-elevated))]">
@@ -145,26 +154,17 @@ export default function SiteActivities() {
                     key={index}
                     className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider"
                   >
-                    <div className="flex items-center gap-1">
-                      {column.label}
-                      {column.sortable && (
-                        <button className="hover:bg-[hsl(var(--color-border))] rounded p-0.5">
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M7 10l5 5 5-5"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
+                    {column.sortable ? (
+                      <SortableHeader
+                        label={column.label}
+                        sortKey={column.sortKey}
+                        onSort={requestSort}
+                        sortDirection={getSortIndicator(column.sortKey)}
+                        className="uppercase text-xs"
+                      />
+                    ) : (
+                      column.label
+                    )}
                   </th>
                 ))}
               </tr>

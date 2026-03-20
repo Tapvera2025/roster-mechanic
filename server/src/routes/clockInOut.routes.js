@@ -31,7 +31,7 @@ router.post(
   '/in',
   uploadSinglePhoto,
   handleUploadError,
-  clockInValidation,
+  ...clockInValidation,
   validate,
   clockInOutController.clockIn
 );
@@ -45,7 +45,7 @@ router.post(
   '/out',
   uploadSinglePhoto,
   handleUploadError,
-  clockOutValidation,
+  ...clockOutValidation,
   validate,
   clockInOutController.clockOut
 );
@@ -55,14 +55,14 @@ router.post(
  * @route GET /api/v1/clock/status
  * @access Private (Authenticated employees)
  */
-router.get('/status', getStatusValidation, validate, clockInOutController.getCurrentStatus);
+router.get('/status', ...getStatusValidation, validate, clockInOutController.getCurrentStatus);
 
 /**
  * Get Employee Time Record History
  * @route GET /api/v1/clock/history
  * @access Private (Authenticated employees)
  */
-router.get('/history', getHistoryValidation, validate, clockInOutController.getMyHistory);
+router.get('/history', ...getHistoryValidation, validate, clockInOutController.getMyHistory);
 
 /**
  * Get Manager View (All Employees)
@@ -72,7 +72,7 @@ router.get('/history', getHistoryValidation, validate, clockInOutController.getM
 router.get(
   '/records',
   authorize('ADMIN', 'MANAGER'),
-  getManagerViewValidation,
+  ...getManagerViewValidation,
   validate,
   clockInOutController.getManagerView
 );
@@ -85,7 +85,7 @@ router.get(
 router.get(
   '/export',
   authorize('ADMIN', 'MANAGER'),
-  exportCSVValidation,
+  ...exportCSVValidation,
   validate,
   clockInOutController.exportCSV
 );

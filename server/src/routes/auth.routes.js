@@ -6,7 +6,7 @@ const validate = require('../middleware/validate');
 const { loginValidation } = require('../validators/auth.validator');
 
 // Public routes (no auth required)
-router.post('/login', loginValidation, validate, authController.login);
+router.post('/login', ...loginValidation, validate, authController.login);
 
 // Protected routes (auth required)
 router.get('/me', auth, authController.getMe);

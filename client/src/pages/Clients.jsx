@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Settings,
   Maximize,
+  Minimize,
   RotateCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -14,8 +15,12 @@ import AddClientModal from "../components/clients/AddClientModal";
 import AddMultipleClientsModal from "../components/clients/AddMultipleClientsModal";
 import { clientApi } from "../lib/api";
 import staticClients from "../data/clients";
+import { useFullscreen } from "../hooks/useFullscreen";
 
 export default function Clients() {
+  const pageRef = useRef(null);
+  const { isFullscreen, toggleFullscreen, isSupported } = useFullscreen(pageRef);
+
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [showMultipleClientsModal, setShowMultipleClientsModal] =
@@ -107,7 +112,7 @@ export default function Clients() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--color-surface-elevated))]">
+    <div ref={pageRef} className="min-h-screen bg-[hsl(var(--color-surface-elevated))]">
       {/* Clients Submenu Bar */}
       <div className="bg-blue-600 text-white px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
@@ -122,12 +127,19 @@ export default function Clients() {
             >
               <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <button
-              className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
-              title="Expand"
-            >
-              <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
+            {isSupported && (
+              <button
+                onClick={toggleFullscreen}
+                className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isFullscreen ? (
+                  <Minimize className="w-4 h-4 sm:w-5 sm:h-5" />
+                ) : (
+                  <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
+              </button>
+            )}
             <button
               onClick={handleRefresh}
               className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"

@@ -1,13 +1,19 @@
-import { useState, useEffect } from "react";
-import { Users, Plus, Link2, ChevronDown, Settings, Maximize, RotateCw, Mail, Trash2, Edit } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Users, Plus, Link2, ChevronDown, Settings, Maximize, Minimize, RotateCw, Trash2, Edit } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import SortableHeader from "../components/ui/SortableHeader";
 import toast from "react-hot-toast";
 import { employeeApi } from "../lib/api";
 import AddEmployeeModal from "../components/employees/AddEmployeeModal";
+import { useFullscreen } from "../hooks/useFullscreen";
+import { useTableSort } from "../hooks/useTableSort";
 
 export default function Employees() {
+  const pageRef = useRef(null);
+  const { isFullscreen, toggleFullscreen, isSupported } = useFullscreen(pageRef);
+
   const [showInactive, setShowInactive] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedEmployees, setSelectedEmployees] = useState([]);
@@ -23,6 +29,12 @@ export default function Employees() {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
+
+  // Table sorting
+  const { sortedData: sortedEmployees, requestSort, getSortIndicator } = useTableSort(employees, {
+    defaultColumn: 'firstName',
+    defaultDirection: 'asc',
+  });
 
   // Fetch employees
   const fetchEmployees = async () => {
@@ -120,7 +132,7 @@ export default function Employees() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div ref={pageRef} className="min-h-screen">
       {/* Employees Header */}
       <div className="bg-[hsl(var(--color-primary))] text-white px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
@@ -132,9 +144,19 @@ export default function Employees() {
             <button className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors" title="Settings">
               <Settings className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors" title="Expand">
-              <Maximize className="w-5 h-5" />
-            </button>
+            {isSupported && (
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isFullscreen ? (
+                  <Minimize className="w-5 h-5" />
+                ) : (
+                  <Maximize className="w-5 h-5" />
+                )}
+              </button>
+            )}
             <button
               onClick={fetchEmployees}
               className="p-2 hover:bg-[hsl(var(--color-primary-dark))] rounded-lg transition-colors"
@@ -236,31 +258,78 @@ export default function Employees() {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Photo</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Emp No.</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">First Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Last Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Mobile</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Position</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Department</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">
+                    <SortableHeader
+                      label="Name"
+                      sortKey="firstName"
+                      onSort={requestSort}
+                      sortDirection={getSortIndicator('firstName')}
+                      className="uppercase text-xs"
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">
+                    <SortableHeader
+                      label="Email"
+                      sortKey="email"
+                      onSort={requestSort}
+                      sortDirection={getSortIndicator('email')}
+                      className="uppercase text-xs"
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">
+                    <SortableHeader
+                      label="Mobile"
+                      sortKey="phone"
+                      onSort={requestSort}
+                      sortDirection={getSortIndicator('phone')}
+                      className="uppercase text-xs"
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">
+                    <SortableHeader
+                      label="Status"
+                      sortKey="isActive"
+                      onSort={requestSort}
+                      sortDirection={getSortIndicator('isActive')}
+                      className="uppercase text-xs"
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">
+                    <SortableHeader
+                      label="Position"
+                      sortKey="position"
+                      onSort={requestSort}
+                      sortDirection={getSortIndicator('position')}
+                      className="uppercase text-xs"
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">
+                    <SortableHeader
+                      label="Department"
+                      sortKey="department"
+                      onSort={requestSort}
+                      sortDirection={getSortIndicator('department')}
+                      className="uppercase text-xs"
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--color-border))]">
                 {loading ? (
                   <tr>
-                    <td colSpan="11" className="px-4 py-8 text-center text-[hsl(var(--color-foreground-secondary))]">
+                    <td colSpan="10" className="px-4 py-8 text-center text-[hsl(var(--color-foreground-secondary))]">
                       Loading...
                     </td>
                   </tr>
                 ) : employees.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="px-4 py-8 text-center text-[hsl(var(--color-foreground-secondary))]">
+                    <td colSpan="10" className="px-4 py-8 text-center text-[hsl(var(--color-foreground-secondary))]">
                       No employees found
                     </td>
                   </tr>
                 ) : (
-                  employees.map((employee, index) => (
+                  sortedEmployees.map((employee, index) => (
                     <tr key={employee.id} className="hover:bg-[hsl(var(--color-surface-elevated))]">
                       <td className="px-4 py-3">
                         <input
@@ -279,10 +348,10 @@ export default function Employees() {
                         {(pagination.page - 1) * pagination.limit + index + 1}
                       </td>
                       <td className="px-4 py-3 text-sm text-[hsl(var(--color-primary))] hover:underline cursor-pointer">
-                        {employee.firstName}
+                        {employee.firstName} {employee.lastName}
                       </td>
-                      <td className="px-4 py-3 text-sm text-[hsl(var(--color-primary))] hover:underline cursor-pointer">
-                        {employee.lastName}
+                      <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
+                        {employee.email || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
                         {employee.phone || '-'}
@@ -301,11 +370,6 @@ export default function Employees() {
                       </td>
                       <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
                         {employee.department || '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button className="text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-primary-dark))]">
-                          <Mail className="w-4 h-4" />
-                        </button>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">

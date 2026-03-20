@@ -15,10 +15,10 @@ router.use(auth);
 
 // Employee CRUD routes
 router.get('/', employeeController.getAllEmployees);
-router.get('/:id', getEmployeeByIdValidation, validate, employeeController.getEmployeeById);
-router.post('/', authorize('ADMIN', 'MANAGER'), createEmployeeValidation, validate, employeeController.createEmployee);
-router.put('/:id', authorize('ADMIN', 'MANAGER'), updateEmployeeValidation, validate, employeeController.updateEmployee);
-router.delete('/:id', authorize('ADMIN', 'MANAGER'), deleteEmployeeValidation, validate, employeeController.deleteEmployee);
+router.get('/:id', ...getEmployeeByIdValidation, validate, employeeController.getEmployeeById);
+router.post('/', authorize('ADMIN', 'MANAGER'), ...createEmployeeValidation, validate, employeeController.createEmployee);
+router.put('/:id', authorize('ADMIN', 'MANAGER'), ...updateEmployeeValidation, validate, employeeController.updateEmployee);
+router.delete('/:id', authorize('ADMIN', 'MANAGER'), ...deleteEmployeeValidation, validate, employeeController.deleteEmployee);
 
 // Employee site assignment
 router.post('/:id/sites', authorize('ADMIN', 'MANAGER'), employeeController.assignToSites);

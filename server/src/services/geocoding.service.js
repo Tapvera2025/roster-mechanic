@@ -1,8 +1,8 @@
 /**
  * Geocoding Service
  *
- * Proxy service for geocoding/location search using OpenStreetMap Nominatim
- * Provides caching, rate limiting, and proper User-Agent headers
+ * Proxy service for geocoding/location search using Google Maps Geocoding API
+ * Provides caching and proper error handling
  */
 
 const axios = require('axios');
@@ -13,30 +13,91 @@ const geocodeCache = new NodeCache({ stdTTL: 86400, checkperiod: 3600 });
 
 class GeocodingService {
   constructor() {
-    this.baseURL = 'https://nominatim.openstreetmap.org';
-    this.userAgent = 'RosterMechanic/1.0 (https://rostermechanic.com.au)';
-    this.lastRequestTime = 0;
-    this.minRequestInterval = 1000; // 1 second between requests (Nominatim requirement)
+    this.geocodeURL = 'https://maps.googleapis.com/maps/api/geocode/json';
+    this.autocompleteURL = 'https://maps.googleapis.com/maps/api/place/autocomplete/json';
+    this.placeDetailsURL = 'https://maps.googleapis.com/maps/api/place/details/json';
+    this.apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    if (!this.apiKey) {
+      console.warn('WARNING: GOOGLE_MAPS_API_KEY not set in environment variables');
+    }
   }
 
   /**
-   * Rate limit requests to comply with Nominatim usage policy
+   * Helper function to map full state name to abbreviation for Australian states
    * @private
    */
-  async rateLimit() {
-    const now = Date.now();
-    const timeSinceLastRequest = now - this.lastRequestTime;
+  mapStateToCode(stateName) {
+    if (!stateName) return '';
 
-    if (timeSinceLastRequest < this.minRequestInterval) {
-      const waitTime = this.minRequestInterval - timeSinceLastRequest;
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    const stateMap = {
+      'New South Wales': 'NSW',
+      'Victoria': 'VIC',
+      'Queensland': 'QLD',
+      'South Australia': 'SA',
+      'Western Australia': 'WA',
+      'Tasmania': 'TAS',
+      'Northern Territory': 'NT',
+      'Australian Capital Territory': 'ACT',
+    };
+
+    // Check if it's already a code
+    if (Object.values(stateMap).includes(stateName.toUpperCase())) {
+      return stateName.toUpperCase();
     }
 
-    this.lastRequestTime = Date.now();
+    // Try to find by full name
+    return stateMap[stateName] || stateName;
   }
 
   /**
-   * Search for locations by query string
+   * Parse Google Maps address components into structured format
+   * @private
+   */
+  parseAddressComponents(addressComponents) {
+    let street = '';
+    let suburb = '';
+    let state = '';
+    let postcode = '';
+    let country = '';
+
+    addressComponents.forEach((component) => {
+      const types = component.types;
+
+      if (types.includes('street_number')) {
+        street = component.long_name + ' ';
+      }
+      if (types.includes('route')) {
+        street += component.long_name;
+      }
+      if (types.includes('locality') || types.includes('postal_town')) {
+        suburb = component.long_name;
+      }
+      if (types.includes('administrative_area_level_1')) {
+        state = this.mapStateToCode(component.long_name);
+      }
+      if (types.includes('postal_code')) {
+        postcode = component.long_name;
+      }
+      if (types.includes('country')) {
+        country = component.short_name;
+      }
+    });
+
+    return {
+      road: street.trim(),
+      street: street.trim(),
+      suburb: suburb,
+      town: suburb,
+      city: suburb,
+      state: state,
+      postcode: postcode,
+      country: country,
+    };
+  }
+
+  /**
+   * Search for locations using Places Autocomplete API
    * @param {Object} params - Search parameters
    * @param {String} params.query - Search query
    * @param {String} params.countryCode - Optional country code filter (e.g., 'au')
@@ -44,7 +105,11 @@ class GeocodingService {
    * @returns {Promise<Array>} - Array of location results
    */
   async search({ query, countryCode, limit = 5 }) {
-    if (!query || query.trim().length < 3) {
+    if (!this.apiKey) {
+      throw new Error('Google Maps API key not configured');
+    }
+
+    if (!query || query.trim().length < 1) {
       return [];
     }
 
@@ -56,50 +121,80 @@ class GeocodingService {
       return cached;
     }
 
-    // Rate limit the request
-    await this.rateLimit();
-
     try {
-      const params = {
-        q: query,
-        format: 'json',
-        addressdetails: 1,
-        limit,
+      // Step 1: Get autocomplete predictions
+      const autocompleteParams = {
+        input: query,
+        key: this.apiKey,
+        types: 'geocode', // Focus on addresses
       };
 
       if (countryCode) {
-        params.countrycodes = countryCode.toLowerCase();
+        autocompleteParams.components = `country:${countryCode.toLowerCase()}`;
       }
 
-      const response = await axios.get(`${this.baseURL}/search`, {
-        params,
-        headers: {
-          'User-Agent': this.userAgent,
-          'Accept-Language': 'en',
-        },
+      const autocompleteResponse = await axios.get(this.autocompleteURL, {
+        params: autocompleteParams,
         timeout: 10000,
       });
 
-      const results = response.data.map((item) => ({
-        display_name: item.display_name,
-        address: item.address || {},
-        lat: item.lat,
-        lon: item.lon,
-        place_id: item.place_id,
-        type: item.type,
-        importance: item.importance,
-      }));
+      if (autocompleteResponse.data.status !== 'OK') {
+        if (autocompleteResponse.data.status === 'ZERO_RESULTS') {
+          return [];
+        }
+        throw new Error(`Google Places API error: ${autocompleteResponse.data.status}`);
+      }
+
+      const predictions = autocompleteResponse.data.predictions.slice(0, limit);
+
+      // Step 2: Get details for each prediction to get coordinates
+      const detailsPromises = predictions.map(async (prediction) => {
+        try {
+          const detailsResponse = await axios.get(this.placeDetailsURL, {
+            params: {
+              place_id: prediction.place_id,
+              fields: 'formatted_address,geometry,address_components',
+              key: this.apiKey,
+            },
+            timeout: 10000,
+          });
+
+          if (detailsResponse.data.status === 'OK') {
+            const place = detailsResponse.data.result;
+            const address = this.parseAddressComponents(place.address_components);
+
+            return {
+              display_name: place.formatted_address,
+              address: address,
+              lat: place.geometry.location.lat.toString(),
+              lon: place.geometry.location.lng.toString(),
+              place_id: prediction.place_id,
+              type: 'autocomplete',
+              importance: 1,
+            };
+          }
+          return null;
+        } catch (err) {
+          console.error(`Failed to get details for place_id ${prediction.place_id}:`, err.message);
+          return null;
+        }
+      });
+
+      const results = (await Promise.all(detailsPromises)).filter(Boolean);
 
       // Cache the results
       geocodeCache.set(cacheKey, results);
 
       return results;
     } catch (error) {
-      console.error('Geocoding search error:', error.message);
+      console.error('Autocomplete search error:', error.message);
 
-      // Return empty array on error instead of throwing
       if (error.response?.status === 429) {
         throw new Error('Rate limit exceeded. Please try again in a moment.');
+      }
+
+      if (error.message.includes('API key')) {
+        throw new Error('Google Maps API configuration error');
       }
 
       throw new Error('Failed to fetch location suggestions. Please try again.');
@@ -114,6 +209,10 @@ class GeocodingService {
    * @returns {Promise<Object>} - Location details
    */
   async reverse({ lat, lon }) {
+    if (!this.apiKey) {
+      throw new Error('Google Maps API key not configured');
+    }
+
     if (!lat || !lon) {
       throw new Error('Latitude and longitude are required');
     }
@@ -141,30 +240,31 @@ class GeocodingService {
       return cached;
     }
 
-    // Rate limit the request
-    await this.rateLimit();
-
     try {
-      const response = await axios.get(`${this.baseURL}/reverse`, {
+      const response = await axios.get(this.geocodeURL, {
         params: {
-          lat: latitude,
-          lon: longitude,
-          format: 'json',
-          addressdetails: 1,
-        },
-        headers: {
-          'User-Agent': this.userAgent,
-          'Accept-Language': 'en',
+          latlng: `${latitude},${longitude}`,
+          key: this.apiKey,
         },
         timeout: 10000,
       });
 
+      if (response.data.status !== 'OK') {
+        if (response.data.status === 'ZERO_RESULTS') {
+          throw new Error('No address found for these coordinates');
+        }
+        throw new Error(`Google Maps API error: ${response.data.status}`);
+      }
+
+      const item = response.data.results[0];
+      const address = this.parseAddressComponents(item.address_components);
+
       const result = {
-        display_name: response.data.display_name,
-        address: response.data.address || {},
-        lat: response.data.lat,
-        lon: response.data.lon,
-        place_id: response.data.place_id,
+        display_name: item.formatted_address,
+        address: address,
+        lat: item.geometry.location.lat.toString(),
+        lon: item.geometry.location.lng.toString(),
+        place_id: item.place_id,
       };
 
       // Cache the result
@@ -176,6 +276,10 @@ class GeocodingService {
 
       if (error.response?.status === 429) {
         throw new Error('Rate limit exceeded. Please try again in a moment.');
+      }
+
+      if (error.message.includes('API key')) {
+        throw new Error('Google Maps API configuration error');
       }
 
       throw new Error('Failed to reverse geocode coordinates. Please try again.');

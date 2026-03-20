@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation } from 'lucide-react';
+import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation, Calendar } from 'lucide-react';
 import { clockApi, shiftApi } from '../../lib/api';
 
 export default function ClockInOut() {
@@ -15,6 +15,7 @@ export default function ClockInOut() {
   const [statusLoading, setStatusLoading] = useState(true);
 
   const [todayShifts, setTodayShifts] = useState([]);
+  const [upcomingShifts, setUpcomingShifts] = useState([]);
   const [shiftsLoading, setShiftsLoading] = useState(true);
   const [selectedShift, setSelectedShift] = useState(null);
 
@@ -33,6 +34,7 @@ export default function ClockInOut() {
         setEmployeeId(id);
         fetchCurrentStatus(id);
         fetchTodayShifts();
+        fetchUpcomingShifts();
       } catch (err) {
         setError('Could not load your employee profile. Please contact your manager.');
         setStatusLoading(false);
@@ -85,6 +87,25 @@ export default function ClockInOut() {
       setError('Failed to load your shifts for today');
     } finally {
       setShiftsLoading(false);
+    }
+  };
+
+  const fetchUpcomingShifts = async () => {
+    try {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+
+      const response = await shiftApi.getMyShifts(
+        tomorrow.toISOString().split('T')[0],
+        nextWeek.toISOString().split('T')[0]
+      );
+      const shifts = response.data.data || [];
+      const scheduledShifts = shifts.filter(shift => shift.status === 'SCHEDULED');
+      setUpcomingShifts(scheduledShifts);
+    } catch (err) {
+      console.error('Failed to fetch upcoming shifts:', err);
     }
   };
 
@@ -145,7 +166,7 @@ export default function ClockInOut() {
       setSuccess('Clocked in successfully!');
       setClockStatus(response.data.data);
       setPhoto(null); setPhotoPreview(null);
-      setTimeout(() => { fetchCurrentStatus(); fetchTodayShifts(); }, 1000);
+      setTimeout(() => { fetchCurrentStatus(); fetchTodayShifts(); fetchUpcomingShifts(); }, 1000);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to clock in');
     } finally { setLoading(false); }
@@ -160,7 +181,7 @@ export default function ClockInOut() {
       setSuccess(`Clocked out successfully! Total time: ${response.data.data.totalHours} hours`);
       setClockStatus(null);
       setPhoto(null); setPhotoPreview(null);
-      setTimeout(() => { fetchCurrentStatus(); fetchTodayShifts(); }, 1000);
+      setTimeout(() => { fetchCurrentStatus(); fetchTodayShifts(); fetchUpcomingShifts(); }, 1000);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to clock out');
     } finally { setLoading(false); }
@@ -169,6 +190,23 @@ export default function ClockInOut() {
   const formatShiftTime = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatShiftDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const calculateShiftDuration = (startTime, endTime) => {
+    if (!startTime || !endTime) return '';
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const hours = (end - start) / (1000 * 60 * 60);
+    return `${hours.toFixed(1)} hrs`;
   };
 
   if (statusLoading || shiftsLoading) {
@@ -450,6 +488,73 @@ export default function ClockInOut() {
             </div>
           </div>
         </div>
+
+        {/* Upcoming Shifts */}
+        {upcomingShifts.length > 0 && (
+          <div className="mt-6 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="w-5 h-5 text-[hsl(var(--color-primary))]" />
+              <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))]">Upcoming Shifts</h2>
+              <span className="ml-auto text-sm text-[hsl(var(--color-foreground-secondary))]">
+                Next 7 days
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {upcomingShifts.map((shift) => (
+                <div
+                  key={shift.id}
+                  className="border border-[hsl(var(--color-border))] rounded-lg p-4 hover:border-[hsl(var(--color-primary))]/50 hover:bg-[hsl(var(--color-surface-elevated))] transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-[hsl(var(--color-primary))]" />
+                        <span className="font-medium text-[hsl(var(--color-foreground))]">
+                          {formatShiftDate(shift.date)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm text-[hsl(var(--color-foreground-secondary))]">
+                        <Clock className="w-4 h-4" />
+                        <span>
+                          {formatShiftTime(shift.startTime)} - {formatShiftTime(shift.endTime)}
+                        </span>
+                        <span className="text-[hsl(var(--color-foreground-muted))]">•</span>
+                        <span>{calculateShiftDuration(shift.startTime, shift.endTime)}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm text-[hsl(var(--color-foreground-secondary))]">
+                        <MapPin className="w-4 h-4 text-[hsl(var(--color-primary))]" />
+                        <span>{shift.siteId?.siteLocationName || 'Unknown Site'}</span>
+                      </div>
+
+                      {shift.siteId?.address && (
+                        <div className="text-xs text-[hsl(var(--color-foreground-muted))] ml-6">
+                          {shift.siteId.address}, {shift.siteId.townSuburb} {shift.siteId.state} {shift.siteId.postalCode}
+                        </div>
+                      )}
+
+                      {shift.shiftType && (
+                        <div className="mt-2">
+                          <span className="inline-block px-2 py-1 bg-[hsl(var(--color-primary))]/10 text-[hsl(var(--color-primary))] text-xs rounded border border-[hsl(var(--color-primary))]/20 font-medium">
+                            {shift.shiftType}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-shrink-0">
+                      <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200 font-medium">
+                        Scheduled
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

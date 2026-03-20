@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Settings,
   Maximize,
+  Minimize,
   RotateCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -12,13 +13,19 @@ import SitesTable from "../components/sites/SitesTable";
 import SiteFilters from "../components/sites/SiteFilters";
 import AddSiteModal from "../components/sites/AddSiteModal";
 import AddMultipleSitesModal from "../components/sites/AddMultipleSitesModal";
+import MapModal from "../components/sites/MapModal";
 import { siteApi } from "../lib/api";
+import { useFullscreen } from "../hooks/useFullscreen";
 
 export default function Sites() {
+  const pageRef = useRef(null);
+  const { isFullscreen, toggleFullscreen, isSupported } = useFullscreen(pageRef);
+
   const [showInactive, setShowInactive] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [showAddSiteModal, setShowAddSiteModal] = useState(false);
   const [showMultipleSitesModal, setShowMultipleSitesModal] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
   const [selectedSite, setSelectedSite] = useState(null);
   const addMenuRef = useRef(null);
 
@@ -70,10 +77,17 @@ export default function Sites() {
     setShowAddSiteModal(true);
   };
 
+  // Handle map icon click to view site location
+  const handleMapClick = (site) => {
+    setSelectedSite(site);
+    setShowMapModal(true);
+  };
+
   // Handle close modal
   const handleCloseModal = () => {
     setShowAddSiteModal(false);
     setShowMultipleSitesModal(false);
+    setShowMapModal(false);
     setSelectedSite(null);
   };
 
@@ -90,7 +104,7 @@ export default function Sites() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--color-surface-elevated))]">
+    <div ref={pageRef} className="min-h-screen bg-[hsl(var(--color-surface-elevated))]">
       {/* Sites Submenu Bar */}
       <div className="bg-blue-600 text-white px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
@@ -105,12 +119,19 @@ export default function Sites() {
             >
               <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <button
-              className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
-              title="Expand"
-            >
-              <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
+            {isSupported && (
+              <button
+                onClick={toggleFullscreen}
+                className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                {isFullscreen ? (
+                  <Minimize className="w-4 h-4 sm:w-5 sm:h-5" />
+                ) : (
+                  <Maximize className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
+              </button>
+            )}
             <button
               onClick={handleRefresh}
               className="p-1.5 sm:p-2 hover:bg-blue-700 rounded transition-colors"
@@ -197,6 +218,7 @@ export default function Sites() {
           loading={loading}
           showInactive={showInactive}
           onSiteClick={handleSiteClick}
+          onMapClick={handleMapClick}
         />
       </div>
 
@@ -224,6 +246,20 @@ export default function Sites() {
             fetchSites();
             toast.success("Sites created successfully");
           }}
+        />
+      )}
+
+      {/* View Site Location Modal */}
+      {showMapModal && selectedSite && (
+        <MapModal
+          onClose={handleCloseModal}
+          initLatitude={selectedSite.latitude}
+          initLongitude={selectedSite.longitude}
+          initAddress={selectedSite.address}
+          initState={selectedSite.state}
+          initTownSuburb={selectedSite.townSuburb}
+          initPostalCode={selectedSite.postalCode}
+          initGeoFenceRadius={selectedSite.geoFenceRadius}
         />
       )}
     </div>

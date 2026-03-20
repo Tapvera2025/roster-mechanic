@@ -189,6 +189,39 @@ class EmailService {
   }
 
   /**
+   * Send shift assignment email
+   * @param {Object} data - Email data
+   * @param {String} data.to - Recipient email
+   * @param {String} data.employeeName - Employee's name
+   * @param {String} data.siteName - Site name
+   * @param {String} data.shiftDate - Shift date (formatted)
+   * @param {String} data.startTime - Shift start time (formatted)
+   * @param {String} data.endTime - Shift end time (formatted)
+   * @param {String} data.shiftType - Shift type
+   * @param {String} data.notes - Additional notes (optional)
+   * @param {Boolean} data.isAdhoc - Whether this is an adhoc shift (optional)
+   * @returns {Promise<Object>} - Email send result
+   */
+  async sendShiftAssignmentEmail({ to, employeeName, siteName, shiftDate, startTime, endTime, shiftType, notes, isAdhoc = false }) {
+    const subject = isAdhoc ? `Adhoc Shift Assignment - ${shiftDate}` : `New Shift Assignment - ${shiftDate}`;
+
+    const html = this.getShiftAssignmentTemplate({
+      employeeName,
+      siteName,
+      shiftDate,
+      startTime,
+      endTime,
+      shiftType,
+      notes,
+      isAdhoc,
+      loginUrl: config.app?.clientUrl || 'http://localhost:5173',
+      appName: config.app?.name || 'RosterMechanic',
+    });
+
+    return this.sendEmail({ to, subject, html });
+  }
+
+  /**
    * Get welcome email HTML template
    */
   getWelcomeEmailTemplate({ name, email, password, role, companyName, loginUrl, appName }) {
@@ -387,6 +420,101 @@ class EmailService {
             <td style="padding: 30px; background-color: #f8fafc; text-align: center; border-top: 1px solid #e5e7eb;">
               <p style="margin: 0; color: #999999; font-size: 12px;">
                 This is an automated message from ${appName}.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+  }
+
+  /**
+   * Get shift assignment email HTML template
+   */
+  getShiftAssignmentTemplate({ employeeName, siteName, shiftDate, startTime, endTime, shiftType, notes, isAdhoc = false, loginUrl, appName }) {
+    const headerColor = isAdhoc ? '#f97316' : '#10b981'; // Orange for adhoc, green for regular
+    const headerTitle = isAdhoc ? 'Adhoc Shift Assignment' : 'New Shift Assignment';
+    const backgroundColor = isAdhoc ? '#fff7ed' : '#f0fdf4'; // Light orange for adhoc, light green for regular
+    const borderColor = isAdhoc ? '#f97316' : '#10b981';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${headerTitle}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 30px; background-color: ${headerColor}; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px;">${headerTitle}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 20px 0; color: #333333; font-size: 22px;">Hello ${employeeName},</h2>
+
+              <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
+                You have been assigned a new shift. Please review the details below:
+              </p>
+
+              <!-- Shift Details Box -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+                <tr>
+                  <td style="padding: 25px; background-color: ${backgroundColor}; border-left: 4px solid ${borderColor}; border-radius: 4px;">
+                    <p style="margin: 0 0 12px 0; color: #666666; font-size: 15px;">
+                      <strong style="color: #333333;">Site:</strong> ${siteName}
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #666666; font-size: 15px;">
+                      <strong style="color: #333333;">Date:</strong> ${shiftDate}
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #666666; font-size: 15px;">
+                      <strong style="color: #333333;">Time:</strong> ${startTime} - ${endTime}
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #666666; font-size: 15px;">
+                      <strong style="color: #333333;">Shift Type:</strong> <span style="padding: 2px 8px; background-color: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 13px; font-weight: 500;">${shiftType}</span>
+                    </p>
+                    ${notes ? `<p style="margin: 12px 0 0 0; padding-top: 12px; border-top: 1px solid #d1fae5; color: #666666; font-size: 14px;">
+                      <strong style="color: #333333;">Notes:</strong> ${notes}
+                    </p>` : ''}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 30px 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                Please make sure you arrive on time and are prepared for your shift. If you have any questions or concerns, please contact your manager.
+              </p>
+
+              <!-- View Roster Button -->
+              <table role="presentation" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 4px; background-color: #10b981;">
+                    <a href="${loginUrl}/user/roster" target="_blank" style="display: inline-block; padding: 14px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold;">
+                      View My Roster
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; background-color: #f8fafc; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #999999; font-size: 12px;">
+                This is an automated message from ${appName}. Please do not reply to this email.
               </p>
             </td>
           </tr>

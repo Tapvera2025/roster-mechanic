@@ -3,7 +3,9 @@ import { Clock, Users, FileText, MapPin, Upload, Plus, Mail, Printer, Download, 
 import AttendanceFilters from "../components/attendance/AttendanceFilters";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Select";
+import SortableHeader from "../components/ui/SortableHeader";
 import { clockApi, schedulerApi, employeeApi } from "../lib/api";
+import { useTableSort } from "../hooks/useTableSort";
 
 export default function TimeAttendance() {
   const [activeTab, setActiveTab] = useState("timecard");
@@ -32,14 +34,20 @@ export default function TimeAttendance() {
   ];
 
   const columns = [
-    { label: "Employee", sortable: true, section: "employee" },
-    { label: "Date", sortable: true, section: "shift" },
-    { label: "Site", sortable: true, section: "shift" },
-    { label: "Clock In", sortable: true, section: "clocked" },
-    { label: "Clock Out", sortable: true, section: "clocked" },
-    { label: "Total HRS", sortable: true, section: "clocked" },
-    { label: "Status", sortable: true, section: "other" },
+    { label: "Employee", sortable: true, section: "employee", sortKey: "employeeId.firstName" },
+    { label: "Date", sortable: true, section: "shift", sortKey: "clockInTime" },
+    { label: "Site", sortable: true, section: "shift", sortKey: "siteId.siteLocationName" },
+    { label: "Clock In", sortable: true, section: "clocked", sortKey: "clockInTime" },
+    { label: "Clock Out", sortable: true, section: "clocked", sortKey: "clockOutTime" },
+    { label: "Total HRS", sortable: true, section: "clocked", sortKey: "totalHours" },
+    { label: "Status", sortable: true, section: "other", sortKey: "status" },
   ];
+
+  // Table sorting
+  const { sortedData: sortedRecords, requestSort, getSortIndicator } = useTableSort(records, {
+    defaultColumn: 'clockInTime',
+    defaultDirection: 'desc',
+  });
 
   // Fetch initial data
   useEffect(() => {
@@ -271,26 +279,17 @@ export default function TimeAttendance() {
                           key={index}
                           className="px-4 py-3 text-left text-xs font-medium text-[hsl(var(--color-foreground-secondary))] uppercase tracking-wider whitespace-nowrap border-b border-[hsl(var(--color-border))]"
                         >
-                          <div className="flex items-center gap-1">
-                            {column.label}
-                            {column.sortable && (
-                              <button className="hover:bg-[hsl(var(--color-surface-elevated))] rounded p-0.5">
-                                <svg
-                                  className="w-3 h-3"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M7 10l5 5 5-5"
-                                  />
-                                </svg>
-                              </button>
-                            )}
-                          </div>
+                          {column.sortable ? (
+                            <SortableHeader
+                              label={column.label}
+                              sortKey={column.sortKey}
+                              onSort={requestSort}
+                              sortDirection={getSortIndicator(column.sortKey)}
+                              className="uppercase text-xs"
+                            />
+                          ) : (
+                            column.label
+                          )}
                         </th>
                       ))}
                     </tr>
@@ -315,7 +314,7 @@ export default function TimeAttendance() {
                         </td>
                       </tr>
                     ) : (
-                      records.map((record) => (
+                      sortedRecords.map((record) => (
                         <tr key={record._id} className="hover:bg-[hsl(var(--color-surface-elevated))] transition-colors">
                           <td className="px-4 py-3">
                             <input type="checkbox" className="rounded border-[hsl(var(--color-border))]" />

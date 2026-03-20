@@ -66,10 +66,14 @@ export const schedulerApi = {
 export const shiftApi = {
   getById: (id) => api.get(`/scheduler/shifts/${id}`),
   create: (data) => api.post('/scheduler/shifts', data),
+  createAdhoc: (data) => api.post('/scheduler/shifts/adhoc', data),
   update: (id, data) => api.put(`/scheduler/shifts/${id}`, data),
   delete: (id) => api.delete(`/scheduler/shifts/${id}`),
   getMyShifts: (startDate, endDate) => api.get('/shifts/my-shifts', { params: { startDate, endDate } }),
-  getMyEmployee: () => api.get('/shifts/my-employee')
+  getMyEmployee: () => api.get('/shifts/my-employee'),
+  getDeleted: (siteId) => api.get('/scheduler/shifts/deleted', { params: { siteId } }),
+  restore: (id) => api.put(`/scheduler/shifts/${id}/restore`),
+  permanentDelete: (id) => api.delete(`/scheduler/shifts/${id}/permanent`)
 };
 
 // Weather API endpoints

@@ -14,6 +14,20 @@ const logger = require('../utils/logger');
 
 class EmployeeService {
   /**
+   * Generate a random temporary password
+   * @returns {String} - Random password
+   */
+  generateTempPassword() {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+  }
+
+  /**
    * Get all employees with filters and pagination
    * @param {Object} context - { companyId, userId, role }
    * @param {Object} filters - { search, isActive, department, position, page, limit, sortBy, order }
@@ -433,11 +447,66 @@ class EmployeeService {
     delete data.tfn;
     delete data.companyId;
 
+    // Check if email is being changed
+    const emailChanged = data.email && data.email !== employee.email;
+    const oldEmail = employee.email;
+
     // Update employee
     Object.assign(employee, data);
     employee.updatedBy = userId;
 
     await employee.save();
+
+    // If email changed and employee has a linked user account, update user and send credentials
+    if (emailChanged && employee.userId) {
+      try {
+        // Find the linked user account
+        const user = await User.findOne({
+          _id: employee.userId,
+          companyId,
+        });
+
+        if (user) {
+          // Generate new temporary password
+          const newPassword = this.generateTempPassword();
+
+          // Update user's email and password
+          user.email = data.email;
+          user.password = newPassword;
+          user.passwordChangedAt = new Date();
+          user.updatedBy = userId;
+
+          await user.save();
+
+          // Get company name for email
+          const company = await Company.findById(companyId);
+          const companyName = company?.name || 'Your Company';
+
+          // Send credentials to new email
+          await emailService.sendWelcomeEmail({
+            to: data.email,
+            name: `${employee.firstName} ${employee.lastName}`,
+            email: data.email,
+            password: newPassword,
+            role: user.role,
+            companyName,
+          });
+
+          logger.info('Email changed - credentials sent to new email', {
+            employeeId: employee._id,
+            oldEmail,
+            newEmail: data.email,
+          });
+        }
+      } catch (emailError) {
+        // Log error but don't fail employee update if email fails
+        logger.error('Failed to send credentials after email change', {
+          employeeId: employee._id,
+          newEmail: data.email,
+          error: emailError.message,
+        });
+      }
+    }
 
     // Remove TFN from response
     const employeeObj = employee.toObject();

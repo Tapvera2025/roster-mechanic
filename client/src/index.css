@@ -284,3 +284,57 @@ body {
 .animate-pulse-glow {
   animation: pulse-glow 3s ease-in-out infinite;
 }
+
+/* Mobile Bottom Sheet Slide Up Animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Mobile Touch Optimizations */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area for notched devices (iPhone X+) */
+.h-safe-bottom {
+  height: env(safe-area-inset-bottom);
+  min-height: 20px;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Mobile Responsive Text */
+@media (max-width: 640px) {
+  .text-responsive-lg {
+    font-size: 1.25rem;
+  }
+  .text-responsive-base {
+    font-size: 1rem;
+  }
+  .text-responsive-sm {
+    font-size: 0.875rem;
+  }
+}
+
+/* Prevent zoom on double-tap for iOS */
+button, a, input, textarea, select {
+  touch-action: manipulation;
+}

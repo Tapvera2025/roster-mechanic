@@ -147,17 +147,29 @@ export default function MyShifts() {
                 </div>
                 <div className="divide-y divide-gray-200">
                   {dateShifts.map((shift) => (
-                    <div key={shift.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div
+                      key={shift.id}
+                      className={`p-4 transition-colors ${
+                        shift.isAdhoc
+                          ? 'bg-orange-50 hover:bg-orange-100 border-l-4 border-orange-500'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <Clock className="w-4 h-4 text-blue-600" />
+                            <Clock className={`w-4 h-4 ${shift.isAdhoc ? 'text-orange-600' : 'text-blue-600'}`} />
                             <span className="font-semibold text-gray-900">
                               {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
                             </span>
                             <span className="text-sm text-gray-600">
                               ({calculateDuration(shift.startTime, shift.endTime)} hrs)
                             </span>
+                            {shift.isAdhoc && (
+                              <span className="px-2 py-0.5 text-xs font-medium bg-orange-500 text-white rounded">
+                                ADHOC
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">

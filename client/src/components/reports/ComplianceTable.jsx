@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import SortableHeader from "../ui/SortableHeader";
+import { useTableSort } from "../../hooks/useTableSort";
 import complianceData from "../../data/complianceData";
 
 export default function ComplianceTable({ filters }) {
@@ -57,11 +59,17 @@ export default function ComplianceTable({ filters }) {
     return data;
   }, [filters]);
 
+  // Table sorting
+  const { sortedData, requestSort, getSortIndicator } = useTableSort(filteredData, {
+    defaultColumn: 'empNo',
+    defaultDirection: 'asc',
+  });
+
   // Pagination
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentData = filteredData.slice(startIndex, endIndex);
+  const currentData = sortedData.slice(startIndex, endIndex);
 
   const handleSelectAll = () => {
     if (selectedRows.length === currentData.length) {
@@ -134,16 +142,96 @@ export default function ComplianceTable({ filters }) {
                   className="rounded border-[hsl(var(--color-border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))] focus:ring-offset-0 bg-[hsl(var(--color-surface-elevated))] w-3.5 h-3.5 sm:w-4 sm:h-4"
                 />
               </th>
-              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Emp No.</th>
-              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Employee Name</th>
-              <th className="hidden md:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Mobile</th>
-              <th className="hidden lg:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">State</th>
-              <th className="hidden xl:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Dept/Work Group</th>
-              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">License/Cert.</th>
-              <th className="hidden sm:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Cert. No.</th>
-              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Expiry Date</th>
-              <th className="hidden md:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Days Left</th>
-              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">Status</th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="Emp No."
+                  sortKey="empNo"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('empNo')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="Employee Name"
+                  sortKey="employeeName"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('employeeName')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="hidden md:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="Mobile"
+                  sortKey="mobile"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('mobile')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="hidden lg:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="State"
+                  sortKey="state"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('state')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="hidden xl:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="Dept/Work Group"
+                  sortKey="deptWorkGroup"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('deptWorkGroup')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="License/Cert."
+                  sortKey="licenseCert"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('licenseCert')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="hidden sm:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="Cert. No."
+                  sortKey="certNo"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('certNo')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="Expiry Date"
+                  sortKey="expiryDate"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('expiryDate')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="hidden md:table-cell px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="Days Left"
+                  sortKey="daysToExpire"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('daysToExpire')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
+              <th className="px-2 sm:px-3 lg:px-4 py-2.5 sm:py-3 lg:py-4 text-left whitespace-nowrap">
+                <SortableHeader
+                  label="Status"
+                  sortKey="status"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('status')}
+                  className="text-[10px] sm:text-xs uppercase"
+                />
+              </th>
             </tr>
           </thead>
 

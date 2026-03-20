@@ -63,6 +63,13 @@ const shiftSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Adhoc shift flag (for emergency/unplanned shifts)
+    isAdhoc: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
     notes: {
       type: String,
       maxlength: [1000, 'Notes cannot exceed 1000 characters'],
@@ -100,6 +107,27 @@ const shiftSchema = new mongoose.Schema(
       coordinates: {
         type: [Number],
       },
+    },
+
+    // Track who deleted the shift (for soft delete)
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+
+    // Employees assigned to this shift (for multi-employee shifts)
+    employees: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Employee',
+      },
+    ],
+
+    // Position/role for the shift
+    position: {
+      type: String,
+      maxlength: [200, 'Position cannot exceed 200 characters'],
     },
   },
   {
@@ -157,6 +185,7 @@ shiftSchema.index({ siteId: 1, date: 1, companyId: 1 });
 shiftSchema.index({ date: 1, startTime: 1, companyId: 1 });
 shiftSchema.index({ status: 1, companyId: 1 });
 shiftSchema.index({ shiftType: 1, companyId: 1 });
+shiftSchema.index({ isAdhoc: 1, companyId: 1 });
 
 // Geospatial index for location-based queries
 shiftSchema.index({ 'clockInLocation': '2dsphere' });

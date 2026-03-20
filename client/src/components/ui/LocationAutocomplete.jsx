@@ -40,7 +40,7 @@ export function LocationAutocomplete({
   }, []);
 
   const fetchSuggestions = async (query) => {
-    if (!query || query.length < 3) {
+    if (!query || query.length < 1) {
       setSuggestions([]);
       setIsLoading(false);
       return;

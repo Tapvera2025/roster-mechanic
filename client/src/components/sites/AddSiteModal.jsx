@@ -428,8 +428,8 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
                   onChange={(e) => handleInputChange("client", e.target.value)}
                 >
                   <option value="">Select Client</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.clientName}>
+                  {clients.map((client, index) => (
+                    <option key={client.id || client._id || `client-${index}`} value={client.clientName}>
                       {client.clientName}
                     </option>
                   ))}

@@ -17,11 +17,13 @@ const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const morgan = require('morgan');
 const path = require('path');
+const http = require('http');
 
 // Load configuration FIRST (uses dotenv-flow)
 const config = require('./config');
 const database = require('./config/database');
 const logger = require('./utils/logger');
+const socketService = require('./services/socket.service');
 
 // Security middleware
 const {
@@ -175,8 +177,14 @@ const startServer = async () => {
     await database.connect();
     logger.info('✓ Database connected successfully');
 
-    // 2. Start HTTP server
-    const server = app.listen(PORT, () => {
+    // 2. Create HTTP server
+    const server = http.createServer(app);
+
+    // 3. Initialize Socket.IO
+    socketService.initialize(server);
+
+    // 4. Start HTTP server
+    server.listen(PORT, () => {
       logger.info('✓ Server started successfully', {
         port: PORT,
         environment: config.env,
@@ -186,6 +194,7 @@ const startServer = async () => {
 
       logger.info(`✓ Server running on ${config.app.url}`);
       logger.info(`✓ Client URL: ${config.client.url}`);
+      logger.info(`✓ Socket.IO enabled for real-time updates`);
 
       if (config.isDevelopment()) {
         logger.info('🔥 Development mode enabled');
@@ -206,11 +215,17 @@ const startServer = async () => {
         logger.info('✓ HTTP server closed');
 
         try {
-          // 2. Close database connection
+          // 2. Close Socket.IO connections
+          if (socketService.getIO()) {
+            socketService.getIO().close();
+            logger.info('✓ Socket.IO connections closed');
+          }
+
+          // 3. Close database connection
           await database.disconnect();
           logger.info('✓ Database connection closed');
 
-          // 3. Exit process
+          // 4. Exit process
           logger.info('✓ Graceful shutdown completed');
           process.exit(0);
         } catch (error) {

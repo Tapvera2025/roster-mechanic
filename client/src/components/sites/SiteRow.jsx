@@ -1,10 +1,17 @@
 import Badge from "../ui/Badge";
 import { MapPin, ChevronDown } from "lucide-react";
 
-export default function SiteRow({ site, onSiteClick }) {
+export default function SiteRow({ site, onSiteClick, onMapClick }) {
   const handleClick = () => {
     if (onSiteClick) {
       onSiteClick(site);
+    }
+  };
+
+  const handleMapClick = (e) => {
+    e.stopPropagation();
+    if (onMapClick) {
+      onMapClick(site);
     }
   };
 
@@ -39,6 +46,7 @@ export default function SiteRow({ site, onSiteClick }) {
       </td>
       <td className="px-2 sm:px-3 py-2 sm:py-3 text-center">
         <button
+          onClick={handleMapClick}
           className="text-blue-600 hover:text-blue-700 transition-colors"
           title="View on Map"
         >

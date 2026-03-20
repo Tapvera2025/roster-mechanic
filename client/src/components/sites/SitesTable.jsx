@@ -1,12 +1,18 @@
-import { ArrowUpDown } from "lucide-react";
 import SiteRow from "./SiteRow";
+import SortableHeader from "../ui/SortableHeader";
+import { useTableSort } from "../../hooks/useTableSort";
 
 export default function SitesTable({
   sites,
   loading,
   showInactive,
   onSiteClick,
+  onMapClick,
 }) {
+  const { sortedData, requestSort, getSortIndicator } = useTableSort(sites, {
+    defaultColumn: 'siteLocationName',
+    defaultDirection: 'asc',
+  });
   // If loading, show spinner
   if (loading) {
     return (
@@ -49,17 +55,45 @@ export default function SitesTable({
                 />
               </th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">
-                <div className="flex items-center gap-1 whitespace-nowrap">
-                  Site/Location Name
-                  <ArrowUpDown className="w-3 h-3" />
-                </div>
+                <SortableHeader
+                  label="Site/Location Name"
+                  sortKey="siteLocationName"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('siteLocationName')}
+                />
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
-                Short Name
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">
+                <SortableHeader
+                  label="Short Name"
+                  sortKey="shortName"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('shortName')}
+                />
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">Client</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">State</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">Status</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">
+                <SortableHeader
+                  label="Client"
+                  sortKey="client"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('client')}
+                />
+              </th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">
+                <SortableHeader
+                  label="State"
+                  sortKey="state"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('state')}
+                />
+              </th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">
+                <SortableHeader
+                  label="Status"
+                  sortKey="status"
+                  onSort={requestSort}
+                  sortDirection={getSortIndicator('status')}
+                />
+              </th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-center whitespace-nowrap">
                 Expiry in
                 <br />
@@ -73,8 +107,13 @@ export default function SitesTable({
           </thead>
 
           <tbody className="divide-y divide-[hsl(var(--color-border))]">
-            {sites.map((site) => (
-              <SiteRow key={site.id} site={site} onSiteClick={onSiteClick} />
+            {sortedData.map((site, index) => (
+              <SiteRow
+                key={site.id || site._id || `site-${index}`}
+                site={site}
+                onSiteClick={onSiteClick}
+                onMapClick={onMapClick}
+              />
             ))}
           </tbody>
         </table>

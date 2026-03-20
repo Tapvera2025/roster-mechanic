@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Clock } from "lucide-react";
+import { X, Clock, AlertCircle } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
@@ -8,7 +8,7 @@ import { Textarea } from "../ui/Textarea";
 import { schedulerApi } from "../../lib/api";
 import toast from "react-hot-toast";
 
-export default function AddShiftModal({
+export default function AddAdhocShiftModal({
   isOpen,
   onClose,
   onSave,
@@ -31,7 +31,6 @@ export default function AddShiftModal({
     status: "SCHEDULED",
     chargedToClient: false,
     specialShift: false,
-    publishAndNotify: false,
     task: "",
     jobRefNo: "",
     notes: "",
@@ -134,14 +133,14 @@ export default function AddShiftModal({
       startTime: startDateTime.toISOString(),
       endTime: endDateTime.toISOString(),
       shiftType: formData.shiftType,
-      status: formData.publishAndNotify ? "SCHEDULED" : formData.status,
+      status: "SCHEDULED",
       notes: formData.notes?.trim() || null,
       breakDuration: formData.breakDuration || 0,
       chargedToClient: formData.chargedToClient || false,
       specialShift: formData.specialShift || false,
-      publishAndNotify: formData.publishAndNotify || false,
       task: formData.task?.trim() || null,
       jobRefNo: formData.jobRefNo?.trim() || null,
+      isAdhoc: true,
     };
 
     onSave(shiftData);
@@ -155,10 +154,10 @@ export default function AddShiftModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-[hsl(var(--color-card))] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--color-border))]">
-          <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))]">
-            Add{" "}
+        {/* Header - Orange for adhoc */}
+        <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--color-border))] bg-gradient-to-r from-orange-500 to-orange-600">
+          <h2 className="text-lg font-semibold text-white">
+            Add Adhoc{" "}
             {selectedEmployee
               ? selectedEmployee.position || "Employee"
               : "Shift"}{" "}
@@ -166,10 +165,24 @@ export default function AddShiftModal({
           </h2>
           <button
             onClick={onClose}
-            className="text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-foreground))] transition-colors"
+            className="text-white hover:text-orange-100 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
+        </div>
+
+        {/* Adhoc Warning Banner */}
+        <div className="bg-orange-50 border-l-4 border-orange-400 p-4 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-orange-800">
+              Adhoc Shift - Flexible Assignment
+            </p>
+            <p className="text-xs text-orange-700 mt-1">
+              This shift allows overlapping assignments and is useful for emergency coverage.
+              The employee will be notified immediately upon creation.
+            </p>
+          </div>
         </div>
 
         {/* Form Content */}
@@ -288,7 +301,7 @@ export default function AddShiftModal({
               </div>
             </div>
 
-            {/* Status */}
+            {/* Status - Always Confirmed for adhoc */}
             <div>
               <Label>Status</Label>
               <div className="mt-2 flex items-center gap-6">
@@ -299,7 +312,7 @@ export default function AddShiftModal({
                     value="SCHEDULED"
                     checked={formData.status === "SCHEDULED"}
                     onChange={(e) => handleChange("status", e.target.value)}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-orange-600"
                   />
                   <span className="text-sm text-[hsl(var(--color-foreground))]">
                     Confirmed
@@ -312,7 +325,7 @@ export default function AddShiftModal({
                     value="tentative"
                     checked={formData.status === "tentative"}
                     onChange={(e) => handleChange("status", e.target.value)}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-orange-600"
                   />
                   <span className="text-sm text-[hsl(var(--color-foreground))]">
                     Tentative
@@ -321,22 +334,8 @@ export default function AddShiftModal({
               </div>
             </div>
 
-            {/* Options Row 1 */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="publishNotify"
-                  checked={formData.publishAndNotify}
-                  onChange={(e) =>
-                    handleChange("publishAndNotify", e.target.checked)
-                  }
-                  className="w-4 h-4 text-blue-600 rounded"
-                />
-                <Label htmlFor="publishNotify" className="ml-2 mb-0">
-                  Publish & Notify
-                </Label>
-              </div>
+            {/* Options Row - Removed Publish & Notify (always true for adhoc) */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center justify-between">
                 <Label className="mb-0">Charged To Client</Label>
                 <button
@@ -426,7 +425,7 @@ export default function AddShiftModal({
                       onClick={() => setActiveTab(tab)}
                       className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                         activeTab === tab
-                          ? "bg-blue-500 text-white"
+                          ? "bg-orange-500 text-white"
                           : "bg-[hsl(var(--color-surface-elevated))] text-[hsl(var(--color-foreground-secondary))] hover:bg-[hsl(var(--color-border))]"
                       }`}
                     >
@@ -450,7 +449,7 @@ export default function AddShiftModal({
                   <Textarea
                     value={formData.notes}
                     onChange={(e) => handleChange("notes", e.target.value)}
-                    placeholder="Add notes about this shift..."
+                    placeholder="Add notes about this adhoc shift..."
                     rows={4}
                   />
                 )}
@@ -483,8 +482,8 @@ export default function AddShiftModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button type="submit" variant="primary">
-              Save
+            <Button type="submit" className="bg-orange-500 hover:bg-orange-600 text-white">
+              Save Adhoc Shift
             </Button>
           </div>
         </form>

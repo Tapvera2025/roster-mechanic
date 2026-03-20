@@ -18,7 +18,7 @@ router.use(auth);
 // Self-service routes (any authenticated user)
 router.get('/me', userController.getCurrentUser);
 router.put('/me', userController.updateProfile);
-router.put('/me/password', changePasswordValidation, validate, (req, res, next) => {
+router.put('/me/password', ...changePasswordValidation, validate, (req, res, next) => {
   // Inject the logged-in user's own id as the route param
   req.params.id = req.user.userId;
   next();
@@ -26,11 +26,11 @@ router.put('/me/password', changePasswordValidation, validate, (req, res, next) 
 
 // User management (ADMIN/MANAGER)
 router.get('/', authorize('ADMIN', 'MANAGER'), userController.getAllUsers);
-router.get('/:id', getUserByIdValidation, validate, userController.getUserById);
-router.post('/', authorize('ADMIN', 'MANAGER'), createUserValidation, validate, userController.createUser);
-router.put('/:id', updateUserValidation, validate, userController.updateUser);
-router.delete('/:id', authorize('ADMIN', 'MANAGER'), deleteUserValidation, validate, userController.deleteUser);
-router.put('/:id/password', changePasswordValidation, validate, userController.changePassword);
-router.put('/:id/link-employee', authorize('ADMIN', 'MANAGER'), linkToEmployeeValidation, validate, userController.linkToEmployee);
+router.get('/:id', ...getUserByIdValidation, validate, userController.getUserById);
+router.post('/', authorize('ADMIN', 'MANAGER'), ...createUserValidation, validate, userController.createUser);
+router.put('/:id', ...updateUserValidation, validate, userController.updateUser);
+router.delete('/:id', authorize('ADMIN', 'MANAGER'), ...deleteUserValidation, validate, userController.deleteUser);
+router.put('/:id/password', ...changePasswordValidation, validate, userController.changePassword);
+router.put('/:id/link-employee', authorize('ADMIN', 'MANAGER'), ...linkToEmployeeValidation, validate, userController.linkToEmployee);
 
 module.exports = router;

@@ -7,6 +7,7 @@ import {
   User,
   Menu,
 } from "lucide-react";
+import NotificationBell from "../notifications/NotificationBell";
 
 export default function Navbar({ onToggleSidebar }) {
   const navigate = useNavigate();
@@ -25,7 +26,12 @@ export default function Navbar({ onToggleSidebar }) {
     localStorage.removeItem("userRole");
     localStorage.removeItem("userName");
     localStorage.removeItem("userEmail");
-    navigate("/login");
+
+    // Also clear auth-storage from zustand persist
+    localStorage.removeItem("auth-storage");
+
+    // Navigate to login and replace history to prevent back button access
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -52,6 +58,8 @@ export default function Navbar({ onToggleSidebar }) {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-4 ml-6">
+            {/* Notification Bell */}
+            <NotificationBell />
 
             {/* User Menu */}
             <div className="relative">

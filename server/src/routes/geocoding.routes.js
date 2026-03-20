@@ -22,10 +22,10 @@ router.get('/search', auth, async (req, res) => {
     const { q: query, countryCode, limit = 5 } = req.query;
 
     // Validation
-    if (!query || query.trim().length < 3) {
+    if (!query || query.trim().length < 1) {
       return res.status(400).json({
         success: false,
-        message: 'Query must be at least 3 characters',
+        message: 'Query must be at least 1 character',
       });
     }
 

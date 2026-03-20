@@ -16,10 +16,10 @@ router.use(auth);
 
 // Clients CRUD routes
 router.get('/', clientController.getAllClients);
-router.get('/:id', getClientByIdValidation, validate, clientController.getClientById);
-router.post('/', authorize('ADMIN', 'MANAGER'), createClientValidation, validate, clientController.createClient);
-router.post('/bulk', authorize('ADMIN', 'MANAGER'), bulkCreateValidation, validate, clientController.bulkCreateClients);
-router.put('/:id', authorize('ADMIN', 'MANAGER'), updateClientValidation, validate, clientController.updateClient);
-router.delete('/:id', authorize('ADMIN', 'MANAGER'), deleteClientValidation, validate, clientController.deleteClient);
+router.get('/:id', ...getClientByIdValidation, validate, clientController.getClientById);
+router.post('/', authorize('ADMIN', 'MANAGER'), ...createClientValidation, validate, clientController.createClient);
+router.post('/bulk', authorize('ADMIN', 'MANAGER'), ...bulkCreateValidation, validate, clientController.bulkCreateClients);
+router.put('/:id', authorize('ADMIN', 'MANAGER'), ...updateClientValidation, validate, clientController.updateClient);
+router.delete('/:id', authorize('ADMIN', 'MANAGER'), ...deleteClientValidation, validate, clientController.deleteClient);
 
 module.exports = router;
