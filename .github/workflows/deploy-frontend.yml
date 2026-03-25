@@ -50,7 +50,7 @@ jobs:
         working-directory: ./client
         run: |
           cat << EOF > .env.production
-          VITE_API_URL=${{ secrets.BACKEND_URL }}
+          VITE_API_URL=${{ secrets.BACKEND_URL }}/api
           VITE_APP_ENV=production
           EOF
 
