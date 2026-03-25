@@ -1,0 +1,126 @@
+# ============================================================
+# GitHub Actions — Frontend Deployment (S3 + CloudFront)
+# ============================================================
+# Triggers : Push to `prod` branch when client/** files change
+# Target   : AWS S3 bucket + CloudFront invalidation
+# Build    : Vite (output → client/dist)
+# ============================================================
+
+name: Deploy Frontend → S3 + CloudFront
+
+on:
+  push:
+    branches:
+      - prod
+    paths:
+      - 'client/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # JOB — Build & Deploy
+  # ──────────────────────────────────────────────────────────
+  deploy:
+    name: Build & Deploy Frontend
+    runs-on: ubuntu-latest
+    environment: production   # maps to GitHub Environments for approval gates
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 1. Set up Node & restore npm cache ──
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      # ── 2. Write the .env file for Vite build ──
+      #       All VITE_ vars are baked into the JS bundle at build time.
+      #       Never put secrets here — only public runtime config.
+      - name: Create .env.production for Vite
+        working-directory: ./client
+        run: |
+          cat << EOF > .env.production
+          VITE_API_URL=${{ secrets.BACKEND_URL }}
+          VITE_APP_ENV=production
+          EOF
+
+      # ── 3. Install dependencies ──
+      - name: Install dependencies
+        working-directory: ./client
+        run: npm ci
+
+      # ── 4. Build the Vite app ──
+      - name: Build Vite app
+        working-directory: ./client
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      # ── 5. Configure AWS credentials ──
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ── 6. Sync dist/ to S3 ──
+      #       --delete removes files in S3 that no longer exist in dist/
+      #       Cache-Control headers optimise CloudFront caching:
+      #         - HTML files: no-cache (always re-validate)
+      #         - Hashed assets: 1 year (Vite adds content hashes)
+      - name: Sync to S3
+        run: |
+          # Upload hashed assets (JS, CSS, images) with long cache
+          aws s3 sync client/dist/ s3://${{ secrets.S3_BUCKET_NAME }}/ \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html" \
+            --exclude "*.json"
+
+          # Upload index.html and JSON manifests with no-cache
+          aws s3 sync client/dist/ s3://${{ secrets.S3_BUCKET_NAME }}/ \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --include "index.html" \
+            --include "*.json"
+
+      # ── 7. Invalidate CloudFront so users get the new index.html ──
+      - name: Invalidate CloudFront cache
+        run: |
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          echo "CloudFront invalidation created: $INVALIDATION_ID"
+
+          # Wait for invalidation to complete (optional — keeps the job honest)
+          echo "Waiting for invalidation to complete..."
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --id $INVALIDATION_ID
+          echo "✅ CloudFront cache invalidated"
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "🚀 Frontend deployed successfully"
+            echo "   Bucket  : ${{ secrets.S3_BUCKET_NAME }}"
+            echo "   CDN     : ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
+            echo "   Branch  : prod"
+            echo "   Commit  : ${{ github.sha }}"
+            echo "   By      : ${{ github.actor }}"
+          else
+            echo "💥 Frontend deployment FAILED — check logs above"
+          fi

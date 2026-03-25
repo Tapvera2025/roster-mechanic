@@ -1,0 +1,191 @@
+# ============================================================
+# GitHub Actions — Backend Deployment (EC2 via SSH + PM2)
+# ============================================================
+# Triggers : Push to `prod` branch when server/** files change
+# Target   : AWS EC2 (Ubuntu + PM2 + Nginx)
+# Method   : SSH into EC2, pull latest code, restart PM2
+# ============================================================
+
+name: Deploy Backend → EC2
+
+on:
+  push:
+    branches:
+      - prod
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-backend.yml'
+
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+  APP_DIR: /var/www/roster-mechanic      # path on EC2 where the repo lives
+  APP_NAME: roster-api                   # PM2 process name (from ecosystem.config.js)
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # JOB 1 — Lint / basic checks (fast feedback)
+  # ──────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Dependency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run tests (non-blocking until tests are written)
+        working-directory: ./server
+        run: npm test --if-present
+        continue-on-error: true
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 2 — Deploy to EC2
+  # ──────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to EC2 Production
+    runs-on: ubuntu-latest
+    needs: lint
+    environment: production   # maps to GitHub Environments for approval gates
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 1. Write the .env.production file from GitHub Secrets ──
+      - name: Build .env.production
+        run: |
+          cat << EOF > .env.production
+          NODE_ENV=production
+          APP_NAME=RosterPro
+          APP_PORT=5000
+          APP_URL=${{ secrets.BACKEND_URL }}
+          CLIENT_URL=${{ secrets.CLIENT_URL }}
+
+          MONGO_URI=${{ secrets.MONGO_URI_PRODUCTION }}
+          MONGO_DB_NAME=roster_prod
+
+          JWT_SECRET=${{ secrets.JWT_SECRET_PRODUCTION }}
+          JWT_EXPIRES_IN=7d
+          JWT_REFRESH_EXPIRES_IN=30d
+          BCRYPT_SALT_ROUNDS=12
+
+          APP_TIMEZONE=Australia/Sydney
+
+          RATE_LIMIT_WINDOW_MS=900000
+          RATE_LIMIT_MAX_REQUESTS=100
+
+          CORS_ORIGIN=${{ secrets.CLIENT_URL }}
+
+          LOG_LEVEL=error
+
+          EMAIL_ENABLED=true
+          EMAIL_FROM=${{ secrets.EMAIL_FROM }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_SES_ACCESS_KEY=${{ secrets.AWS_SES_ACCESS_KEY }}
+          AWS_SES_SECRET_KEY=${{ secrets.AWS_SES_SECRET_KEY }}
+
+          AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+          AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}
+          AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}
+
+          SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+          ENABLE_APM=true
+
+          ENABLE_API_DOCS=false
+          ENABLE_REQUEST_LOGGING=false
+          ENABLE_COMPRESSION=true
+
+          HELMET_CSP_ENABLED=true
+          TRUST_PROXY=true
+          EOF
+
+      # ── 2. Set up SSH agent with your .pem key ──
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # Add EC2 host to known_hosts to avoid interactive prompt
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      # ── 3. Copy the env file to EC2 before pulling code ──
+      - name: Upload .env.production to EC2
+        run: |
+          scp .env.production \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/roster-mechanic/server/.env.production
+
+      # ── 4. SSH in, pull latest code, install deps, reload PM2 ──
+      - name: Deploy on EC2
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+            set -e
+
+            echo "──────────────────────────────────────"
+            echo " Starting backend deployment"
+            echo "──────────────────────────────────────"
+
+            cd ${{ env.APP_DIR }}
+
+            # Pull latest changes from prod branch
+            git fetch origin
+            git checkout prod
+            git reset --hard origin/prod
+
+            cd server
+
+            # Install production dependencies only
+            npm ci --omit=dev
+
+            # Reload PM2 with zero-downtime restart (or start if not running)
+            if pm2 list | grep -q "${{ env.APP_NAME }}"; then
+              pm2 reload ecosystem.config.js --env production --update-env
+            else
+              pm2 start ecosystem.config.js --env production
+            fi
+
+            # Persist PM2 process list across reboots
+            pm2 save
+
+            echo "✅ Deployment complete"
+          ENDSSH
+
+      # ── 5. Quick health check after deploy ──
+      - name: Health check
+        run: |
+          echo "Waiting 15 seconds for server to stabilise..."
+          sleep 15
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.BACKEND_URL }}/health)
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Health check passed (HTTP $STATUS)"
+          else
+            echo "❌ Health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "🚀 Backend deployed successfully to EC2"
+            echo "   Branch  : prod"
+            echo "   Commit  : ${{ github.sha }}"
+            echo "   By      : ${{ github.actor }}"
+          else
+            echo "💥 Backend deployment FAILED — check logs above"
+          fi
