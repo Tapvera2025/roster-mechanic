@@ -89,6 +89,7 @@ jobs:
           RATE_LIMIT_MAX_REQUESTS=100
 
           CORS_ORIGIN=${{ secrets.CLIENT_URL }}
+          CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
 
           LOG_LEVEL=error
 

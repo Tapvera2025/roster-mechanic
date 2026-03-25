@@ -24,9 +24,15 @@ class SocketService {
    * @param {Object} httpServer - HTTP server instance
    */
   initialize(httpServer) {
+    // Build allowed origins list from CORS_ORIGINS env var (comma-separated)
+    // Falls back to CLIENT_URL for backward compatibility
+    const allowedOrigins = process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+      : [config.client.url];
+
     this.io = new Server(httpServer, {
       cors: {
-        origin: config.client.url,
+        origin: allowedOrigins,
         methods: ['GET', 'POST'],
         credentials: true,
       },
