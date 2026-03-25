@@ -152,6 +152,15 @@ jobs:
             # Install production dependencies only
             npm ci --omit=dev
 
+            # Kill any orphan process holding port 5000 that isn't managed
+            # by the current PM2 instance (prevents EADDRINUSE on reload)
+            ORPHAN_PID=$(sudo lsof -t -i :5000 2>/dev/null || true)
+            if [ -n "$ORPHAN_PID" ]; then
+              echo "⚠️  Found orphan process on port 5000 (PID $ORPHAN_PID) — killing it"
+              sudo kill -9 $ORPHAN_PID || true
+              sleep 2
+            fi
+
             # Reload PM2 with zero-downtime restart (or start if not running)
             if pm2 list | grep -q "${{ env.APP_NAME }}"; then
               pm2 reload ecosystem.config.js --env production --update-env
@@ -165,18 +174,38 @@ jobs:
             echo "✅ Deployment complete"
           ENDSSH
 
-      # ── 5. Quick health check after deploy ──
+      # ── 5. Health check with retries ──
+      #       Retries up to 6 times (90 seconds total) to give PM2 cluster
+      #       mode time to fully boot all instances before failing.
       - name: Health check
         run: |
-          echo "Waiting 15 seconds for server to stabilise..."
-          sleep 15
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.BACKEND_URL }}/health)
-          if [ "$STATUS" = "200" ]; then
-            echo "✅ Health check passed (HTTP $STATUS)"
-          else
-            echo "❌ Health check failed (HTTP $STATUS)"
-            exit 1
-          fi
+          echo "Waiting 20 seconds for PM2 cluster to initialise..."
+          sleep 20
+
+          MAX_RETRIES=6
+          RETRY_INTERVAL=15
+          ATTEMPT=1
+
+          while [ $ATTEMPT -le $MAX_RETRIES ]; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 ${{ secrets.BACKEND_URL }}/health)
+            echo "Attempt $ATTEMPT/$MAX_RETRIES — HTTP $STATUS"
+
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Health check passed"
+              exit 0
+            fi
+
+            if [ $ATTEMPT -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_INTERVAL}s..."
+              sleep $RETRY_INTERVAL
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          echo "❌ Health check failed after $MAX_RETRIES attempts (last HTTP $STATUS)"
+          echo "   Tip: SSH into EC2 and run: pm2 logs roster-api --lines 50"
+          exit 1
 
       - name: Deployment summary
         if: always()

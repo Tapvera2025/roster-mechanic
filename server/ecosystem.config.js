@@ -34,7 +34,7 @@ module.exports = {
 
       // Execution mode: 'cluster' or 'fork'
       // Use 'cluster' for production to utilize multiple cores
-      exec_mode: 'cluster',
+      exec_mode: 'fork',
 
       // Watch for file changes (disable in production)
       watch: false,
