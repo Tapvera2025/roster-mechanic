@@ -52,7 +52,7 @@ jobs:
           cat << EOF > .env.production
           VITE_API_URL=${{ secrets.BACKEND_URL }}/api
           VITE_APP_ENV=production
-          VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
           EOF
 
       # ── 3. Install dependencies ──

@@ -102,6 +102,8 @@ jobs:
           AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}
           AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}
 
+          GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+
           SENTRY_DSN=${{ secrets.SENTRY_DSN }}
           ENABLE_APM=true
 
