@@ -23,42 +23,42 @@ export default function EmployeeRow({ emp }) {
       <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-primary))] hover:underline cursor-pointer whitespace-nowrap">
         {emp.firstName}
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap hidden lg:table-cell">
         {emp.middleName}
       </td>
       <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-primary))] hover:underline cursor-pointer whitespace-nowrap">
         {emp.lastName}
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap hidden lg:table-cell">
         {emp.mobile}
       </td>
       <td className="px-2 sm:px-3 py-2 sm:py-3">
         <Badge status={emp.status} />
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-center">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-center hidden xl:table-cell">
         {emp.rosterAccess && (
           <Check className="w-4 h-4 sm:w-5 sm:h-5 text-[hsl(var(--color-primary))] mx-auto" />
         )}
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-center">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-center hidden xl:table-cell">
         {emp.mobileAttendanceAccess && (
           <Check className="w-4 h-4 sm:w-5 sm:h-5 text-[hsl(var(--color-primary))] mx-auto" />
         )}
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap hidden md:table-cell">
         {emp.team}
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap hidden xl:table-cell">
         {emp.employmentType}
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap hidden xl:table-cell">
         {emp.state}
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground))] whitespace-nowrap hidden xl:table-cell">
         {emp.customerRefNo}
       </td>
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-center">
-        <button className="text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-primary))] transition-colors">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-center hidden lg:table-cell">
+        <button className="touch-target text-[hsl(var(--color-foreground-secondary))] hover:text-[hsl(var(--color-primary))] transition-colors">
           <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
         </button>
       </td>

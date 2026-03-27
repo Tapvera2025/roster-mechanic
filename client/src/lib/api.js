@@ -155,7 +155,17 @@ export const clockApi = {
   exportCSV: (params = {}) => api.get('/clock/export', {
     params,
     responseType: 'blob'
-  })
+  }),
+
+  // Approval workflow
+  approveTimeRecord: (timeRecordId) => api.put(`/clock/approve/${timeRecordId}`),
+  rejectTimeRecord: (timeRecordId, reason) => api.put(`/clock/reject/${timeRecordId}`, { reason }),
+  bulkApproveTimeRecords: (timeRecordIds) => api.post('/clock/approve/bulk', { timeRecordIds }),
+  bulkRejectTimeRecords: (timeRecordIds, reason) => api.post('/clock/reject/bulk', { timeRecordIds, reason }),
+
+  // Break management
+  startBreak: (employeeId, breakType, notes) => api.post('/clock/break/start', { employeeId, breakType, notes }),
+  endBreak: (employeeId) => api.post('/clock/break/end', { employeeId }),
 };
 
 // Leave API endpoints

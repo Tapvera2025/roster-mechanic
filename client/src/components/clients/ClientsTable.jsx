@@ -1,5 +1,7 @@
 import { ArrowUpDown } from "lucide-react";
 import ClientRow from "./ClientRow";
+import MobileCard from "../ui/MobileCard";
+import Badge from "../ui/Badge";
 
 export default function ClientsTable({
   clients = [],
@@ -8,9 +10,9 @@ export default function ClientsTable({
 }) {
   return (
     <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg sm:rounded-xl shadow-sm">
-      {/* Scrollable table container */}
-      <div className="overflow-x-auto overflow-y-visible">
-        <table className="w-full text-sm min-w-[900px]">
+      {/* Desktop/Tablet Table View */}
+      <div className="hidden sm:block table-container">
+        <table className="w-full text-sm min-w-[700px]">
           <thead className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))]">
             <tr className="text-[hsl(var(--color-foreground-secondary))] text-xs">
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-center w-10 sm:w-12 sticky left-0 bg-[hsl(var(--color-surface-elevated))] z-[5]">
@@ -31,17 +33,17 @@ export default function ClientsTable({
                 State
               </th>
 
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap hidden md:table-cell">
                 Invoicing Company
               </th>
 
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">Status</th>
 
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap hidden lg:table-cell">
                 Invoice Subject
               </th>
 
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap hidden lg:table-cell">
                 Invoice Template
               </th>
             </tr>
@@ -77,6 +79,38 @@ export default function ClientsTable({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="sm:hidden p-3 space-y-3">
+        {loading ? (
+          <div className="text-center py-8 text-[hsl(var(--color-foreground-muted))]">
+            Loading clients...
+          </div>
+        ) : clients.length === 0 ? (
+          <div className="text-center py-8 text-[hsl(var(--color-foreground-muted))]">
+            No clients found
+          </div>
+        ) : (
+          clients.map((client) => (
+            <MobileCard
+              key={client.id}
+              title={client.clientName}
+              fields={[
+                { label: 'State', value: client.state || 'N/A' },
+                { label: 'Status', value: <Badge status={client.status} /> },
+                { label: 'Invoicing Company', value: client.invoicingCompany || 'N/A' },
+              ]}
+              actions={[
+                {
+                  label: 'View Details',
+                  variant: 'default',
+                  onClick: () => onClientClick && onClientClick(client),
+                },
+              ]}
+            />
+          ))
+        )}
       </div>
 
       {/* Pagination */}

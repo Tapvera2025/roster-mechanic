@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Calendar, MapPin, Image as ImageIcon, Clock, ChevronLeft, ChevronRight, Filter, Loader2, AlertCircle } from 'lucide-react';
 import { clockApi, schedulerApi, shiftApi } from '../../lib/api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
+
+// Get base URL for photo display (strip /api from VITE_API_URL)
+const API_BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 export default function TimeRecordsHistory() {
   const [loading, setLoading] = useState(true);
@@ -34,23 +37,23 @@ export default function TimeRecordsHistory() {
       }
     };
     init();
-  }, []);
+  }, [fetchSites, fetchRecords]);
 
   // Re-fetch when filters or page change (only after employeeId is known)
   useEffect(() => {
     if (employeeId) fetchRecords(employeeId);
-  }, [pagination.page, startDate, endDate, selectedSite]);
+  }, [employeeId, pagination.page, startDate, endDate, selectedSite, fetchRecords]);
 
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     try {
       const response = await schedulerApi.getSites();
       setSites(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch sites:', err);
     }
-  };
+  }, []);
 
-  const fetchRecords = async (empId) => {
+  const fetchRecords = useCallback(async (empId) => {
     const resolvedId = empId || employeeId;
     if (!resolvedId) return;
     try {
@@ -69,7 +72,7 @@ export default function TimeRecordsHistory() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [employeeId, pagination.page, pagination.limit, startDate, endDate, selectedSite]);
 
   const handleClearFilters = () => {
     setStartDate('');
@@ -308,7 +311,7 @@ export default function TimeRecordsHistory() {
           >
             <div className="relative max-w-4xl max-h-full">
               <img
-                src={`http://localhost:5000${selectedPhoto}`}
+                src={`${API_BASE_URL}${selectedPhoto}`}
                 alt="Clock Photo"
                 className="max-w-full max-h-[90vh] rounded-lg"
                 onClick={(e) => e.stopPropagation()}

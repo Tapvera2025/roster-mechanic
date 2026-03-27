@@ -1,6 +1,9 @@
 import SiteRow from "./SiteRow";
 import SortableHeader from "../ui/SortableHeader";
 import { useTableSort } from "../../hooks/useTableSort";
+import MobileCard from "../ui/MobileCard";
+import Badge from "../ui/Badge";
+import { MapPin } from "lucide-react";
 
 export default function SitesTable({
   sites,
@@ -43,9 +46,9 @@ export default function SitesTable({
 
   return (
     <div className="bg-[hsl(var(--color-card))] rounded-lg sm:rounded-xl shadow-sm">
-      {/* Scrollable table container */}
-      <div className="overflow-x-auto overflow-y-visible">
-        <table className="w-full text-sm min-w-[1000px]">
+      {/* Desktop/Tablet Table View */}
+      <div className="hidden sm:block table-container">
+        <table className="w-full text-sm min-w-[700px]">
           <thead className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))]">
             <tr className="text-[hsl(var(--color-foreground-secondary))] text-xs">
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-center w-10 sm:w-12 sticky left-0 bg-[hsl(var(--color-surface-elevated))] z-[5]">
@@ -62,7 +65,7 @@ export default function SitesTable({
                   sortDirection={getSortIndicator('siteLocationName')}
                 />
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left hidden md:table-cell">
                 <SortableHeader
                   label="Short Name"
                   sortKey="shortName"
@@ -70,7 +73,7 @@ export default function SitesTable({
                   sortDirection={getSortIndicator('shortName')}
                 />
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left hidden lg:table-cell">
                 <SortableHeader
                   label="Client"
                   sortKey="client"
@@ -78,7 +81,7 @@ export default function SitesTable({
                   sortDirection={getSortIndicator('client')}
                 />
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left hidden md:table-cell">
                 <SortableHeader
                   label="State"
                   sortKey="state"
@@ -94,12 +97,12 @@ export default function SitesTable({
                   sortDirection={getSortIndicator('status')}
                 />
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center whitespace-nowrap hidden lg:table-cell">
                 Expiry in
                 <br />
                 30 Days
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center w-16"></th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center w-16 hidden md:table-cell"></th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right w-20 sm:w-24 sticky right-0 bg-[hsl(var(--color-surface-elevated))] z-[5]">
                 Actions
               </th>
@@ -117,6 +120,35 @@ export default function SitesTable({
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="sm:hidden p-3 space-y-3">
+        {sortedData.map((site, index) => (
+          <MobileCard
+            key={site.id || site._id || `site-${index}`}
+            title={site.siteLocationName}
+            fields={[
+              { label: 'Short Name', value: site.shortName || 'N/A' },
+              { label: 'State', value: site.state || 'N/A' },
+              { label: 'Status', value: <Badge status={site.status} /> },
+              { label: 'Client', value: site.client || 'N/A' },
+            ]}
+            actions={[
+              {
+                label: 'View Map',
+                variant: 'default',
+                icon: MapPin,
+                onClick: () => onMapClick && onMapClick(site),
+              },
+              {
+                label: 'Details',
+                variant: 'primary',
+                onClick: () => onSiteClick && onSiteClick(site),
+              },
+            ]}
+          />
+        ))}
       </div>
 
       {/* Pagination */}

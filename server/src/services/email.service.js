@@ -222,6 +222,37 @@ class EmailService {
   }
 
   /**
+   * Send time record rejection email
+   * @param {Object} data - Email data
+   * @param {String} data.to - Recipient email
+   * @param {String} data.employeeName - Employee's name
+   * @param {String} data.siteName - Site name
+   * @param {String} data.clockInDate - Clock in date (formatted)
+   * @param {String} data.clockInTime - Clock in time (formatted)
+   * @param {String} data.clockOutTime - Clock out time (formatted)
+   * @param {String} data.rejectionReason - Reason for rejection
+   * @param {String} data.rejectedBy - Name of person who rejected
+   * @returns {Promise<Object>} - Email send result
+   */
+  async sendTimeRecordRejectionEmail({ to, employeeName, siteName, clockInDate, clockInTime, clockOutTime, rejectionReason, rejectedBy }) {
+    const subject = `Time Record Rejected - ${clockInDate}`;
+
+    const html = this.getTimeRecordRejectionTemplate({
+      employeeName,
+      siteName,
+      clockInDate,
+      clockInTime,
+      clockOutTime,
+      rejectionReason,
+      rejectedBy,
+      loginUrl: config.app?.clientUrl || 'http://localhost:5173',
+      appName: config.app?.name || 'RosterMechanic',
+    });
+
+    return this.sendEmail({ to, subject, html });
+  }
+
+  /**
    * Get welcome email HTML template
    */
   getWelcomeEmailTemplate({ name, email, password, role, companyName, loginUrl, appName }) {
@@ -503,6 +534,103 @@ class EmailService {
                   <td style="border-radius: 4px; background-color: #10b981;">
                     <a href="${loginUrl}/user/roster" target="_blank" style="display: inline-block; padding: 14px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold;">
                       View My Roster
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; background-color: #f8fafc; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #999999; font-size: 12px;">
+                This is an automated message from ${appName}. Please do not reply to this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+  }
+
+  /**
+   * Get time record rejection email HTML template
+   */
+  getTimeRecordRejectionTemplate({ employeeName, siteName, clockInDate, clockInTime, clockOutTime, rejectionReason, rejectedBy, loginUrl, appName }) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Record Rejected</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 30px; background-color: #ef4444; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px;">Time Record Rejected</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 20px 0; color: #333333; font-size: 22px;">Hello ${employeeName},</h2>
+
+              <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
+                Your time record has been rejected by ${rejectedBy}. Please review the details below:
+              </p>
+
+              <!-- Time Record Details Box -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+                <tr>
+                  <td style="padding: 25px; background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px;">
+                    <p style="margin: 0 0 12px 0; color: #666666; font-size: 15px;">
+                      <strong style="color: #333333;">Site:</strong> ${siteName}
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #666666; font-size: 15px;">
+                      <strong style="color: #333333;">Date:</strong> ${clockInDate}
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #666666; font-size: 15px;">
+                      <strong style="color: #333333;">Clock In:</strong> ${clockInTime}
+                    </p>
+                    <p style="margin: 0 0 12px 0; color: #666666; font-size: 15px;">
+                      <strong style="color: #333333;">Clock Out:</strong> ${clockOutTime || 'Not clocked out'}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Rejection Reason Box -->
+              <div style="margin: 30px 0; padding: 20px; background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px;">
+                <p style="margin: 0 0 8px 0; color: #991b1b; font-size: 14px; font-weight: bold;">
+                  Rejection Reason:
+                </p>
+                <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                  ${rejectionReason}
+                </p>
+              </div>
+
+              <p style="margin: 30px 0 20px 0; color: #666666; font-size: 15px; line-height: 1.6;">
+                If you believe this rejection was made in error, please contact your manager or supervisor for further clarification.
+              </p>
+
+              <!-- View Records Button -->
+              <table role="presentation" style="margin: 0 auto;">
+                <tr>
+                  <td style="border-radius: 4px; background-color: #2563eb;">
+                    <a href="${loginUrl}/user/attendance" target="_blank" style="display: inline-block; padding: 14px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold;">
+                      View My Time Records
                     </a>
                   </td>
                 </tr>

@@ -27,7 +27,7 @@ export default function ClientRow({ client, onClientClick }) {
         {client.state}
       </td>
 
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap hidden md:table-cell">
         {client.invoicingCompany}
       </td>
 
@@ -35,11 +35,11 @@ export default function ClientRow({ client, onClientClick }) {
         <Badge status={client.status} />
       </td>
 
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap hidden lg:table-cell">
         {client.invoiceSubject}
       </td>
 
-      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap">
+      <td className="px-2 sm:px-3 py-2 sm:py-3 text-[hsl(var(--color-foreground-secondary))] whitespace-nowrap hidden lg:table-cell">
         {client.invoiceTemplate}
       </td>
     </tr>

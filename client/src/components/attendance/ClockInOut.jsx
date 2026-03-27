@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation, Calendar } from 'lucide-react';
+import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation, Calendar, Coffee, Play } from 'lucide-react';
 import { clockApi, shiftApi } from '../../lib/api';
 
 export default function ClockInOut() {
@@ -25,6 +25,9 @@ export default function ClockInOut() {
 
   const [elapsedTime, setElapsedTime] = useState('');
   const [employeeId, setEmployeeId] = useState(null);
+
+  const [breakLoading, setBreakLoading] = useState(false);
+  const [breakType, setBreakType] = useState('BREAK');
 
   useEffect(() => {
     const init = async () => {
@@ -187,6 +190,34 @@ export default function ClockInOut() {
     } finally { setLoading(false); }
   };
 
+  const handleStartBreak = async () => {
+    setError(null); setSuccess(null);
+    try {
+      setBreakLoading(true);
+      const response = await clockApi.startBreak(employeeId, breakType, '');
+      setSuccess(`Break started successfully!`);
+      setClockStatus(response.data.data);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to start break');
+    } finally {
+      setBreakLoading(false);
+    }
+  };
+
+  const handleEndBreak = async () => {
+    setError(null); setSuccess(null);
+    try {
+      setBreakLoading(true);
+      const response = await clockApi.endBreak(employeeId);
+      setSuccess(`Break ended successfully!`);
+      setClockStatus(response.data.data);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to end break');
+    } finally {
+      setBreakLoading(false);
+    }
+  };
+
   const formatShiftTime = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -219,6 +250,9 @@ export default function ClockInOut() {
 
   const isClockedIn = clockStatus !== null;
   const hasShiftsToday = todayShifts.length > 0;
+  const isOnBreak = clockStatus?.breaks && clockStatus.breaks.length > 0 &&
+    clockStatus.breaks[clockStatus.breaks.length - 1]?.startTime &&
+    !clockStatus.breaks[clockStatus.breaks.length - 1]?.endTime;
 
   return (
     <div className="min-h-screen bg-[hsl(var(--color-background))] py-4 px-4 sm:px-6 lg:px-8">
@@ -232,18 +266,86 @@ export default function ClockInOut() {
 
         {/* Currently Clocked In */}
         {isClockedIn && (
-          <div className="border border-green-500/30 bg-green-500/10 rounded-lg p-6 mb-6">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-6 h-6 text-green-500 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))] mb-2">Currently Clocked In</h2>
-                <div className="space-y-1 text-sm text-[hsl(var(--color-foreground-secondary))]">
-                  <p><span className="font-medium text-[hsl(var(--color-foreground))]">Site:</span> {clockStatus.siteId?.siteLocationName || 'N/A'}</p>
-                  <p><span className="font-medium text-[hsl(var(--color-foreground))]">Clock In Time:</span> {new Date(clockStatus.clockInTime).toLocaleString()}</p>
-                  <p><span className="font-medium text-[hsl(var(--color-foreground))]">Elapsed Time:</span> {elapsedTime}</p>
+          <div className="space-y-4 mb-6">
+            <div className="border border-green-500/30 bg-green-500/10 rounded-lg p-6">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-6 h-6 text-green-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))] mb-2">Currently Clocked In</h2>
+                  <div className="space-y-1 text-sm text-[hsl(var(--color-foreground-secondary))]">
+                    <p><span className="font-medium text-[hsl(var(--color-foreground))]">Site:</span> {clockStatus.siteId?.siteLocationName || 'N/A'}</p>
+                    <p><span className="font-medium text-[hsl(var(--color-foreground))]">Clock In Time:</span> {new Date(clockStatus.clockInTime).toLocaleString()}</p>
+                    <p><span className="font-medium text-[hsl(var(--color-foreground))]">Elapsed Time:</span> {elapsedTime}</p>
+                    {clockStatus.totalBreakMinutes > 0 && (
+                      <p><span className="font-medium text-[hsl(var(--color-foreground))]">Total Breaks:</span> {clockStatus.totalBreakMinutes}m ({clockStatus.breaks?.length || 0} break{clockStatus.breaks?.length > 1 ? 's' : ''})</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Break Status */}
+            {isOnBreak ? (
+              <div className="border border-orange-500/30 bg-orange-500/10 rounded-lg p-6">
+                <div className="flex items-start gap-3 mb-4">
+                  <Coffee className="w-6 h-6 text-orange-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-[hsl(var(--color-foreground))] mb-1">On Break</h3>
+                    <p className="text-sm text-[hsl(var(--color-foreground-secondary))]">
+                      Started at {new Date(clockStatus.breaks[clockStatus.breaks.length - 1].startTime).toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleEndBreak}
+                  disabled={breakLoading || loading}
+                  className="w-full py-3 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {breakLoading ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" />Ending Break...</>
+                  ) : (
+                    <><Play className="w-5 h-5" />End Break</>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg p-6">
+                <h3 className="text-sm font-medium text-[hsl(var(--color-foreground))] mb-3">Take a Break</h3>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setBreakType('LUNCH')}
+                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                      breakType === 'LUNCH'
+                        ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary))]/10 text-[hsl(var(--color-foreground))]'
+                        : 'border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground-secondary))] hover:border-[hsl(var(--color-border-strong))]'
+                    }`}
+                  >
+                    Lunch
+                  </button>
+                  <button
+                    onClick={() => setBreakType('BREAK')}
+                    className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                      breakType === 'BREAK'
+                        ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary))]/10 text-[hsl(var(--color-foreground))]'
+                        : 'border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground-secondary))] hover:border-[hsl(var(--color-border-strong))]'
+                    }`}
+                  >
+                    Break
+                  </button>
+                </div>
+                <button
+                  onClick={handleStartBreak}
+                  disabled={breakLoading || loading}
+                  className="w-full py-3 bg-[hsl(var(--color-primary))] text-white rounded-lg font-medium hover:bg-[hsl(var(--color-primary-hover))] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {breakLoading ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" />Starting Break...</>
+                  ) : (
+                    <><Coffee className="w-5 h-5" />Start {breakType === 'LUNCH' ? 'Lunch' : 'Break'}</>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

@@ -277,6 +277,179 @@ const exportCSV = asyncHandler(async (req, res) => {
   res.send(csvContent);
 });
 
+/**
+ * Approve a time record
+ * @route PUT /api/v1/clock/approve/:id
+ */
+const approveTimeRecord = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role,
+  };
+
+  const timeRecord = await clockInOutService.approveTimeRecord(context, id);
+
+  res.status(200).json({
+    success: true,
+    message: 'Time record approved successfully',
+    data: timeRecord,
+  });
+});
+
+/**
+ * Reject a time record
+ * @route PUT /api/v1/clock/reject/:id
+ */
+const rejectTimeRecord = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+
+  if (!reason || reason.trim().length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Rejection reason is required',
+    });
+  }
+
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role,
+  };
+
+  const timeRecord = await clockInOutService.rejectTimeRecord(context, id, reason);
+
+  res.status(200).json({
+    success: true,
+    message: 'Time record rejected successfully',
+    data: timeRecord,
+  });
+});
+
+/**
+ * Bulk approve time records
+ * @route POST /api/v1/clock/approve/bulk
+ */
+const bulkApproveTimeRecords = asyncHandler(async (req, res) => {
+  const { timeRecordIds } = req.body;
+
+  if (!Array.isArray(timeRecordIds) || timeRecordIds.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Time record IDs array is required',
+    });
+  }
+
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role,
+  };
+
+  const result = await clockInOutService.bulkApproveTimeRecords(context, timeRecordIds);
+
+  res.status(200).json({
+    success: true,
+    message: `Bulk approval completed: ${result.approved} approved, ${result.failed} failed`,
+    data: result,
+  });
+});
+
+/**
+ * Bulk reject time records
+ * @route POST /api/v1/clock/reject/bulk
+ */
+const bulkRejectTimeRecords = asyncHandler(async (req, res) => {
+  const { timeRecordIds, reason } = req.body;
+
+  if (!Array.isArray(timeRecordIds) || timeRecordIds.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Time record IDs array is required',
+    });
+  }
+
+  if (!reason || reason.trim().length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Rejection reason is required',
+    });
+  }
+
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role,
+  };
+
+  const result = await clockInOutService.bulkRejectTimeRecords(context, timeRecordIds, reason);
+
+  res.status(200).json({
+    success: true,
+    message: `Bulk rejection completed: ${result.rejected} rejected, ${result.failed} failed`,
+    data: result,
+  });
+});
+
+/**
+ * Start a break
+ * @route POST /api/v1/clock/break/start
+ */
+const startBreak = asyncHandler(async (req, res) => {
+  const { employeeId, breakType, notes } = req.body;
+
+  if (!employeeId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Employee ID is required',
+    });
+  }
+
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+  };
+
+  const timeRecord = await clockInOutService.startBreak(context, employeeId, breakType, notes);
+
+  res.status(200).json({
+    success: true,
+    message: 'Break started successfully',
+    data: timeRecord,
+  });
+});
+
+/**
+ * End a break
+ * @route POST /api/v1/clock/break/end
+ */
+const endBreak = asyncHandler(async (req, res) => {
+  const { employeeId } = req.body;
+
+  if (!employeeId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Employee ID is required',
+    });
+  }
+
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+  };
+
+  const timeRecord = await clockInOutService.endBreak(context, employeeId);
+
+  res.status(200).json({
+    success: true,
+    message: 'Break ended successfully',
+    data: timeRecord,
+  });
+});
+
 module.exports = {
   clockIn,
   clockOut,
@@ -284,4 +457,10 @@ module.exports = {
   getMyHistory,
   getManagerView,
   exportCSV,
+  approveTimeRecord,
+  rejectTimeRecord,
+  bulkApproveTimeRecords,
+  bulkRejectTimeRecords,
+  startBreak,
+  endBreak,
 };

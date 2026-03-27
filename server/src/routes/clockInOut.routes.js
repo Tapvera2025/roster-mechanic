@@ -90,4 +90,68 @@ router.get(
   clockInOutController.exportCSV
 );
 
+/**
+ * Approve Time Record
+ * @route PUT /api/v1/clock/approve/:id
+ * @access Private (ADMIN, MANAGER only)
+ */
+router.put(
+  '/approve/:id',
+  authorize('ADMIN', 'MANAGER'),
+  clockInOutController.approveTimeRecord
+);
+
+/**
+ * Reject Time Record
+ * @route PUT /api/v1/clock/reject/:id
+ * @access Private (ADMIN, MANAGER only)
+ */
+router.put(
+  '/reject/:id',
+  authorize('ADMIN', 'MANAGER'),
+  clockInOutController.rejectTimeRecord
+);
+
+/**
+ * Bulk Approve Time Records
+ * @route POST /api/v1/clock/approve/bulk
+ * @access Private (ADMIN, MANAGER only)
+ */
+router.post(
+  '/approve/bulk',
+  authorize('ADMIN', 'MANAGER'),
+  clockInOutController.bulkApproveTimeRecords
+);
+
+/**
+ * Bulk Reject Time Records
+ * @route POST /api/v1/clock/reject/bulk
+ * @access Private (ADMIN, MANAGER only)
+ */
+router.post(
+  '/reject/bulk',
+  authorize('ADMIN', 'MANAGER'),
+  clockInOutController.bulkRejectTimeRecords
+);
+
+/**
+ * Start Break
+ * @route POST /api/v1/clock/break/start
+ * @access Private (Authenticated employees)
+ */
+router.post(
+  '/break/start',
+  clockInOutController.startBreak
+);
+
+/**
+ * End Break
+ * @route POST /api/v1/clock/break/end
+ * @access Private (Authenticated employees)
+ */
+router.post(
+  '/break/end',
+  clockInOutController.endBreak
+);
+
 module.exports = router;

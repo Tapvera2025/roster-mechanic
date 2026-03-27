@@ -9,7 +9,11 @@ const TimeRecord = require('../models/TimeRecord');
 const Site = require('../models/Site');
 const Employee = require('../models/Employee');
 const Shift = require('../models/Shift');
+const GeofenceViolation = require('../models/GeofenceViolation');
+const User = require('../models/User');
 const mongoose = require('mongoose');
+const { formatDateForCSV, formatTimeForCSV, formatDurationForCSV } = require('../utils/dateFormat');
+const emailService = require('./email.service');
 
 class ClockInOutService {
   /**
@@ -106,12 +110,40 @@ class ClockInOutService {
       throw error;
     }
 
-    // Geofence validation
-    const withinGeofence = this.isWithinGeofence(latitude, longitude, site);
+    // Geofence validation - calculate distance
+    const siteLon = site.location.coordinates[0];
+    const siteLat = site.location.coordinates[1];
+    const geofenceRadius = site.geoFenceRadius || 100;
+    const distance = this.calculateDistance(latitude, longitude, siteLat, siteLon);
+    const withinGeofence = distance <= geofenceRadius;
 
     if (!withinGeofence) {
+      // Log geofence violation for audit trail
+      try {
+        await GeofenceViolation.create({
+          employeeId,
+          siteId,
+          companyId,
+          attemptType: 'CLOCK_IN',
+          attemptLocation: {
+            type: 'Point',
+            coordinates: [longitude, latitude],
+          },
+          siteLocation: {
+            type: 'Point',
+            coordinates: [siteLon, siteLat],
+          },
+          distanceFromSite: Math.round(distance),
+          geofenceRadius,
+          attemptTime: new Date(),
+        });
+      } catch (logError) {
+        // Don't fail clock-in if logging fails, just log the error
+        console.error('Failed to log geofence violation:', logError);
+      }
+
       const error = new Error(
-        `You are outside the geofenced area for ${site.siteLocationName}. Please move closer to the site to clock in.`
+        `You are outside the geofenced area for ${site.siteLocationName}. You are ${Math.round(distance)}m away (limit: ${geofenceRadius}m). Please move closer to the site to clock in.`
       );
       error.statusCode = 403;
       throw error;
@@ -130,48 +162,103 @@ class ClockInOutService {
       throw error;
     }
 
-    // Create time record
-    const timeRecord = await TimeRecord.create({
-      employeeId,
-      siteId,
-      shiftId: shiftId || null,
-      companyId,
-      clockInTime: new Date(),
-      clockInLocation: {
-        type: 'Point',
-        coordinates: [longitude, latitude],
-      },
-      clockInPhotoUrl: photoUrl || null,
-      status: 'CLOCKED_IN',
-      createdBy: userId,
-    });
-
-    // If shift provided, update shift status to IN_PROGRESS
+    // Validate shift assignment if shiftId is provided
     if (shiftId && mongoose.Types.ObjectId.isValid(shiftId)) {
-      await Shift.findOneAndUpdate(
-        {
-          _id: shiftId,
-          companyId,
-        },
-        {
-          status: 'IN_PROGRESS',
-          actualStartTime: new Date(),
-          clockInLocation: {
-            type: 'Point',
-            coordinates: [longitude, latitude],
-          },
-        }
-      );
+      const shift = await Shift.findOne({
+        _id: shiftId,
+        companyId,
+      });
+
+      if (!shift) {
+        const error = new Error('Shift not found or does not belong to your company');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      // Verify the shift is assigned to this employee
+      if (shift.employeeId && shift.employeeId.toString() !== employeeId.toString()) {
+        const error = new Error(
+          'This shift is not assigned to you. Please select the correct shift or contact your manager.'
+        );
+        error.statusCode = 403;
+        throw error;
+      }
+
+      // Verify the shift is in a valid status for clock-in
+      if (shift.status !== 'SCHEDULED' && shift.status !== 'IN_PROGRESS') {
+        const error = new Error(
+          `Cannot clock in to a ${shift.status.toLowerCase()} shift. Please contact your manager.`
+        );
+        error.statusCode = 400;
+        throw error;
+      }
     }
 
-    // Populate and return
-    await timeRecord.populate([
-      { path: 'employeeId', select: 'firstName lastName email' },
-      { path: 'siteId', select: 'siteLocationName shortName' },
-      { path: 'shiftId', select: 'shiftType startTime endTime' },
-    ]);
+    // Start a transaction session for atomic operations
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    return timeRecord;
+    try {
+      // Create time record within transaction
+      const [timeRecord] = await TimeRecord.create(
+        [
+          {
+            employeeId,
+            siteId,
+            shiftId: shiftId || null,
+            companyId,
+            clockInTime: new Date(),
+            clockInLocation: {
+              type: 'Point',
+              coordinates: [longitude, latitude],
+            },
+            clockInDistance: Math.round(distance), // Store distance for display
+            clockInPhotoUrl: photoUrl || null,
+            status: 'CLOCKED_IN',
+            createdBy: userId,
+          },
+        ],
+        { session }
+      );
+
+      // If shift provided, update shift status to IN_PROGRESS within transaction
+      if (shiftId && mongoose.Types.ObjectId.isValid(shiftId)) {
+        await Shift.findOneAndUpdate(
+          {
+            _id: shiftId,
+            companyId,
+          },
+          {
+            status: 'IN_PROGRESS',
+            actualStartTime: new Date(),
+            clockInLocation: {
+              type: 'Point',
+              coordinates: [longitude, latitude],
+            },
+          },
+          { session }
+        );
+      }
+
+      // Commit transaction if all operations succeed
+      await session.commitTransaction();
+
+      // Populate and return
+      await timeRecord.populate([
+        { path: 'employeeId', select: 'firstName lastName email' },
+        { path: 'siteId', select: 'siteLocationName shortName' },
+        { path: 'shiftId', select: 'shiftType startTime endTime' },
+      ]);
+
+      return timeRecord;
+    } catch (error) {
+      // Abort transaction on any error
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      // Always end the session
+      session.endSession();
+    }
   }
 
   /**
@@ -207,60 +294,106 @@ class ClockInOutService {
     // Get site for geofence validation
     const site = timeRecord.siteId;
 
-    // Geofence validation
-    const withinGeofence = this.isWithinGeofence(latitude, longitude, site);
+    // Geofence validation - calculate distance
+    const siteLon = site.location.coordinates[0];
+    const siteLat = site.location.coordinates[1];
+    const geofenceRadius = site.geoFenceRadius || 100;
+    const distance = this.calculateDistance(latitude, longitude, siteLat, siteLon);
+    const withinGeofence = distance <= geofenceRadius;
 
     if (!withinGeofence) {
+      // Log geofence violation for audit trail
+      try {
+        await GeofenceViolation.create({
+          employeeId: timeRecord.employeeId,
+          siteId: site._id,
+          companyId,
+          attemptType: 'CLOCK_OUT',
+          attemptLocation: {
+            type: 'Point',
+            coordinates: [longitude, latitude],
+          },
+          siteLocation: {
+            type: 'Point',
+            coordinates: [siteLon, siteLat],
+          },
+          distanceFromSite: Math.round(distance),
+          geofenceRadius,
+          attemptTime: new Date(),
+        });
+      } catch (logError) {
+        // Don't fail clock-out if logging fails, just log the error
+        console.error('Failed to log geofence violation:', logError);
+      }
+
       const error = new Error(
-        `You are outside the geofenced area for ${site.siteLocationName}. Please move closer to the site to clock out.`
+        `You are outside the geofenced area for ${site.siteLocationName}. You are ${Math.round(distance)}m away (limit: ${geofenceRadius}m). Please move closer to the site to clock out.`
       );
       error.statusCode = 403;
       throw error;
     }
 
-    // Update time record
-    const clockOutTime = new Date();
-    timeRecord.clockOutTime = clockOutTime;
-    timeRecord.clockOutLocation = {
-      type: 'Point',
-      coordinates: [longitude, latitude],
-    };
-    timeRecord.clockOutPhotoUrl = photoUrl || null;
-    timeRecord.status = 'CLOCKED_OUT';
-    timeRecord.updatedBy = userId;
+    // Start a transaction session for atomic operations
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Calculate total hours (pre-save hook will do this, but we can also do it here)
-    const diff = clockOutTime - timeRecord.clockInTime;
-    timeRecord.totalHours = Math.round((diff / (1000 * 60 * 60)) * 100) / 100;
+    try {
+      // Update time record within transaction
+      const clockOutTime = new Date();
+      timeRecord.clockOutTime = clockOutTime;
+      timeRecord.clockOutLocation = {
+        type: 'Point',
+        coordinates: [longitude, latitude],
+      };
+      timeRecord.clockOutDistance = Math.round(distance); // Store distance for display
+      timeRecord.clockOutPhotoUrl = photoUrl || null;
+      timeRecord.status = 'CLOCKED_OUT';
+      timeRecord.updatedBy = userId;
 
-    await timeRecord.save();
+      // Calculate total hours (pre-save hook will do this, but we can also do it here)
+      const diff = clockOutTime - timeRecord.clockInTime;
+      timeRecord.totalHours = Math.round((diff / (1000 * 60 * 60)) * 100) / 100;
 
-    // If shift exists, update shift status to COMPLETED
-    if (timeRecord.shiftId) {
-      await Shift.findOneAndUpdate(
-        {
-          _id: timeRecord.shiftId,
-          companyId,
-        },
-        {
-          status: 'COMPLETED',
-          actualEndTime: clockOutTime,
-          clockOutLocation: {
-            type: 'Point',
-            coordinates: [longitude, latitude],
+      await timeRecord.save({ session });
+
+      // If shift exists, update shift status to COMPLETED within transaction
+      if (timeRecord.shiftId) {
+        await Shift.findOneAndUpdate(
+          {
+            _id: timeRecord.shiftId,
+            companyId,
           },
-        }
-      );
+          {
+            status: 'COMPLETED',
+            actualEndTime: clockOutTime,
+            clockOutLocation: {
+              type: 'Point',
+              coordinates: [longitude, latitude],
+            },
+          },
+          { session }
+        );
+      }
+
+      // Commit transaction if all operations succeed
+      await session.commitTransaction();
+
+      // Populate and return
+      await timeRecord.populate([
+        { path: 'employeeId', select: 'firstName lastName email' },
+        { path: 'siteId', select: 'siteLocationName shortName' },
+        { path: 'shiftId', select: 'shiftType startTime endTime' },
+      ]);
+
+      return timeRecord;
+    } catch (error) {
+      // Abort transaction on any error
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      // Always end the session
+      session.endSession();
     }
-
-    // Populate and return
-    await timeRecord.populate([
-      { path: 'employeeId', select: 'firstName lastName email' },
-      { path: 'siteId', select: 'siteLocationName shortName' },
-      { path: 'shiftId', select: 'shiftType startTime endTime' },
-    ]);
-
-    return timeRecord;
   }
 
   /**
@@ -356,7 +489,7 @@ class ClockInOutService {
   /**
    * Get time records for manager view (all employees)
    * @param {Object} context - { companyId, role }
-   * @param {Object} filters - { startDate, endDate, siteId, employeeId, page, limit }
+   * @param {Object} filters - { startDate, endDate, siteId, employeeId, approvalStatus, page, limit }
    * @returns {Promise<Object>} - { records, pagination }
    */
   async getManagerView(context, filters = {}) {
@@ -369,7 +502,7 @@ class ClockInOutService {
       throw error;
     }
 
-    const { startDate, endDate, siteId, employeeId, page = 1, limit = 50 } = filters;
+    const { startDate, endDate, siteId, employeeId, approvalStatus, page = 1, limit = 50 } = filters;
 
     // Build query
     const query = { companyId };
@@ -391,6 +524,11 @@ class ClockInOutService {
       query.employeeId = employeeId;
     }
 
+    // Approval status filter
+    if (approvalStatus && ['PENDING', 'APPROVED', 'REJECTED', 'VOID'].includes(approvalStatus)) {
+      query.approvalStatus = approvalStatus;
+    }
+
     // Pagination
     const skip = (page - 1) * limit;
 
@@ -398,7 +536,7 @@ class ClockInOutService {
     const [records, total] = await Promise.all([
       TimeRecord.find(query)
         .populate('employeeId', 'firstName lastName email position')
-        .populate('siteId', 'siteLocationName shortName')
+        .populate('siteId', 'siteLocationName shortName geoFenceRadius')
         .populate('shiftId', 'shiftType')
         .sort({ clockInTime: -1 })
         .skip(skip)
@@ -470,7 +608,11 @@ class ClockInOutService {
       'Clock Out Date',
       'Clock Out Time',
       'Total Hours',
+      'Break Time (minutes)',
+      'Worked Hours',
+      'Number of Breaks',
       'Status',
+      'Approval Status',
     ];
 
     const rows = records.map((record) => {
@@ -480,20 +622,17 @@ class ClockInOutService {
       const employeeEmail = record.employeeId?.email || 'N/A';
       const siteName = record.siteId?.siteLocationName || 'N/A';
 
-      const clockInDate = record.clockInTime
-        ? new Date(record.clockInTime).toLocaleDateString()
-        : 'N/A';
-      const clockInTime = record.clockInTime
-        ? new Date(record.clockInTime).toLocaleTimeString()
-        : 'N/A';
-      const clockOutDate = record.clockOutTime
-        ? new Date(record.clockOutTime).toLocaleDateString()
-        : 'N/A';
-      const clockOutTime = record.clockOutTime
-        ? new Date(record.clockOutTime).toLocaleTimeString()
-        : 'N/A';
-      const totalHours = record.totalHours || '0';
+      // Use standardized date/time formatting for CSV (ISO format for Excel compatibility)
+      const clockInDate = record.clockInTime ? formatDateForCSV(record.clockInTime) : '';
+      const clockInTime = record.clockInTime ? formatTimeForCSV(record.clockInTime) : '';
+      const clockOutDate = record.clockOutTime ? formatDateForCSV(record.clockOutTime) : '';
+      const clockOutTime = record.clockOutTime ? formatTimeForCSV(record.clockOutTime) : '';
+      const totalHours = record.totalHours ? formatDurationForCSV(record.totalHours) : '0.00';
+      const breakMinutes = record.totalBreakMinutes || 0;
+      const workedHours = record.totalHours ? formatDurationForCSV(Math.max(0, record.totalHours - (breakMinutes / 60))) : '0.00';
+      const numberOfBreaks = record.breaks ? record.breaks.length : 0;
       const status = record.status;
+      const approvalStatus = record.approvalStatus || 'PENDING';
 
       return [
         employeeName,
@@ -504,7 +643,11 @@ class ClockInOutService {
         clockOutDate,
         clockOutTime,
         totalHours,
+        breakMinutes,
+        workedHours,
+        numberOfBreaks,
         status,
+        approvalStatus,
       ];
     });
 
@@ -515,6 +658,354 @@ class ClockInOutService {
     ].join('\n');
 
     return csvContent;
+  }
+
+  /**
+   * Approve a time record
+   * @param {Object} context - { companyId, userId, role }
+   * @param {String} timeRecordId - TimeRecord ID to approve
+   * @returns {Promise<Object>} - Updated TimeRecord
+   */
+  async approveTimeRecord(context, timeRecordId) {
+    const { companyId, userId, role } = context;
+
+    // Check authorization - only managers and admins can approve
+    if (!['ADMIN', 'MANAGER'].includes(role)) {
+      const error = new Error('Unauthorized. Manager or Admin role required.');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(timeRecordId)) {
+      const error = new Error('Invalid time record ID');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Find time record
+    const timeRecord = await TimeRecord.findOne({
+      _id: timeRecordId,
+      companyId,
+    });
+
+    if (!timeRecord) {
+      const error = new Error('Time record not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Update approval status
+    timeRecord.approvalStatus = 'APPROVED';
+    timeRecord.approvedBy = userId;
+    timeRecord.approvedAt = new Date();
+    timeRecord.rejectionReason = null; // Clear any previous rejection reason
+
+    await timeRecord.save();
+
+    // Populate and return
+    await timeRecord.populate([
+      { path: 'employeeId', select: 'firstName lastName email' },
+      { path: 'siteId', select: 'siteLocationName shortName' },
+      { path: 'approvedBy', select: 'firstName lastName email' },
+    ]);
+
+    return timeRecord;
+  }
+
+  /**
+   * Reject a time record
+   * @param {Object} context - { companyId, userId, role }
+   * @param {String} timeRecordId - TimeRecord ID to reject
+   * @param {String} reason - Rejection reason
+   * @returns {Promise<Object>} - Updated TimeRecord
+   */
+  async rejectTimeRecord(context, timeRecordId, reason) {
+    const { companyId, userId, role } = context;
+
+    // Check authorization - only managers and admins can reject
+    if (!['ADMIN', 'MANAGER'].includes(role)) {
+      const error = new Error('Unauthorized. Manager or Admin role required.');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(timeRecordId)) {
+      const error = new Error('Invalid time record ID');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Validate reason
+    if (!reason || reason.trim().length === 0) {
+      const error = new Error('Rejection reason is required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Find time record
+    const timeRecord = await TimeRecord.findOne({
+      _id: timeRecordId,
+      companyId,
+    });
+
+    if (!timeRecord) {
+      const error = new Error('Time record not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Update approval status
+    timeRecord.approvalStatus = 'REJECTED';
+    timeRecord.approvedBy = userId;
+    timeRecord.approvedAt = new Date();
+    timeRecord.rejectionReason = reason.trim();
+
+    await timeRecord.save();
+
+    // Populate and return
+    await timeRecord.populate([
+      { path: 'employeeId', select: 'firstName lastName email' },
+      { path: 'siteId', select: 'siteLocationName shortName' },
+      { path: 'approvedBy', select: 'firstName lastName email' },
+    ]);
+
+    // Send rejection email notification to employee
+    try {
+      const employee = timeRecord.employeeId;
+      const site = timeRecord.siteId;
+      const approver = timeRecord.approvedBy;
+
+      if (employee && employee.email) {
+        // Format date and time for email
+        const clockInDate = timeRecord.clockInTime
+          ? new Date(timeRecord.clockInTime).toLocaleDateString('en-AU', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
+          : 'N/A';
+
+        const clockInTime = timeRecord.clockInTime
+          ? new Date(timeRecord.clockInTime).toLocaleTimeString('en-AU', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : 'N/A';
+
+        const clockOutTime = timeRecord.clockOutTime
+          ? new Date(timeRecord.clockOutTime).toLocaleTimeString('en-AU', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : 'Not clocked out';
+
+        await emailService.sendTimeRecordRejectionEmail({
+          to: employee.email,
+          employeeName: `${employee.firstName} ${employee.lastName}`,
+          siteName: site?.siteLocationName || 'N/A',
+          clockInDate,
+          clockInTime,
+          clockOutTime,
+          rejectionReason: reason.trim(),
+          rejectedBy: approver ? `${approver.firstName} ${approver.lastName}` : 'Manager',
+        });
+
+        console.log(`Rejection email sent to ${employee.email} for time record ${timeRecordId}`);
+      }
+    } catch (emailError) {
+      // Log error but don't fail the rejection if email fails
+      console.error('Failed to send rejection email:', emailError);
+    }
+
+    return timeRecord;
+  }
+
+  /**
+   * Bulk approve time records
+   * @param {Object} context - { companyId, userId, role }
+   * @param {Array<String>} timeRecordIds - Array of TimeRecord IDs to approve
+   * @returns {Promise<Object>} - { approved: count, failed: count }
+   */
+  async bulkApproveTimeRecords(context, timeRecordIds) {
+    const { companyId, userId, role } = context;
+
+    // Check authorization
+    if (!['ADMIN', 'MANAGER'].includes(role)) {
+      const error = new Error('Unauthorized. Manager or Admin role required.');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    let approved = 0;
+    let failed = 0;
+
+    for (const timeRecordId of timeRecordIds) {
+      try {
+        await this.approveTimeRecord(context, timeRecordId);
+        approved++;
+      } catch (error) {
+        failed++;
+        console.error(`Failed to approve time record ${timeRecordId}:`, error.message);
+      }
+    }
+
+    return { approved, failed, total: timeRecordIds.length };
+  }
+
+  /**
+   * Bulk reject time records
+   * @param {Object} context - { companyId, userId, role }
+   * @param {Array<String>} timeRecordIds - Array of TimeRecord IDs to reject
+   * @param {String} reason - Rejection reason
+   * @returns {Promise<Object>} - { rejected: count, failed: count, emailsSent: count }
+   */
+  async bulkRejectTimeRecords(context, timeRecordIds, reason) {
+    const { companyId, userId, role } = context;
+
+    // Check authorization
+    if (!['ADMIN', 'MANAGER'].includes(role)) {
+      const error = new Error('Unauthorized. Manager or Admin role required.');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    // Validate reason
+    if (!reason || reason.trim().length === 0) {
+      const error = new Error('Rejection reason is required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    let rejected = 0;
+    let failed = 0;
+    let emailsSent = 0;
+
+    for (const timeRecordId of timeRecordIds) {
+      try {
+        // Note: rejectTimeRecord now sends emails automatically
+        await this.rejectTimeRecord(context, timeRecordId, reason);
+        rejected++;
+        emailsSent++; // Email is sent in rejectTimeRecord
+      } catch (error) {
+        failed++;
+        console.error(`Failed to reject time record ${timeRecordId}:`, error.message);
+      }
+    }
+
+    return { rejected, failed, total: timeRecordIds.length, emailsSent };
+  }
+
+  /**
+   * Start a break for an active time record
+   * @param {Object} context - { companyId, userId }
+   * @param {String} employeeId - Employee ID
+   * @param {String} breakType - Type of break (LUNCH, BREAK, OTHER)
+   * @param {String} notes - Optional notes
+   * @returns {Promise<Object>} - Updated TimeRecord
+   */
+  async startBreak(context, employeeId, breakType = 'BREAK', notes = '') {
+    const { companyId } = context;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      const error = new Error('Invalid employee ID');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Find active clock-in record
+    const timeRecord = await TimeRecord.findOne({
+      employeeId,
+      companyId,
+      status: 'CLOCKED_IN',
+    }).populate('employeeId siteId');
+
+    if (!timeRecord) {
+      const error = new Error('No active clock-in found. Please clock in first.');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Check if already on break
+    const lastBreak = timeRecord.breaks && timeRecord.breaks.length > 0
+      ? timeRecord.breaks[timeRecord.breaks.length - 1]
+      : null;
+
+    if (lastBreak && lastBreak.startTime && !lastBreak.endTime) {
+      const error = new Error('You are already on a break. Please end the current break first.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    // Add new break
+    timeRecord.breaks.push({
+      startTime: new Date(),
+      breakType: breakType || 'BREAK',
+      notes: notes || '',
+    });
+
+    await timeRecord.save();
+
+    await timeRecord.populate([
+      { path: 'employeeId', select: 'firstName lastName email' },
+      { path: 'siteId', select: 'siteLocationName shortName' },
+    ]);
+
+    return timeRecord;
+  }
+
+  /**
+   * End a break for an active time record
+   * @param {Object} context - { companyId, userId }
+   * @param {String} employeeId - Employee ID
+   * @returns {Promise<Object>} - Updated TimeRecord
+   */
+  async endBreak(context, employeeId) {
+    const { companyId } = context;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      const error = new Error('Invalid employee ID');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Find active clock-in record
+    const timeRecord = await TimeRecord.findOne({
+      employeeId,
+      companyId,
+      status: 'CLOCKED_IN',
+    }).populate('employeeId siteId');
+
+    if (!timeRecord) {
+      const error = new Error('No active clock-in found.');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Check if on break
+    const lastBreak = timeRecord.breaks && timeRecord.breaks.length > 0
+      ? timeRecord.breaks[timeRecord.breaks.length - 1]
+      : null;
+
+    if (!lastBreak || !lastBreak.startTime || lastBreak.endTime) {
+      const error = new Error('You are not currently on a break.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    // End the break
+    lastBreak.endTime = new Date();
+    await timeRecord.save();
+
+    await timeRecord.populate([
+      { path: 'employeeId', select: 'firstName lastName email' },
+      { path: 'siteId', select: 'siteLocationName shortName' },
+    ]);
+
+    return timeRecord;
   }
 }
 

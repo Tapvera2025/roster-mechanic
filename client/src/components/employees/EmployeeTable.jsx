@@ -1,8 +1,10 @@
 // components/employees/EmployeeTable.jsx
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, User } from "lucide-react";
 import { useMemo } from "react";
 import employees from "../../data/employees";
 import EmployeeRow from "./EmployeeRow";
+import MobileCard from "../ui/MobileCard";
+import Badge from "../ui/Badge";
 
 export default function EmployeeTable({ showInactive }) {
   // Filter employees based on inactive toggle
@@ -15,8 +17,8 @@ export default function EmployeeTable({ showInactive }) {
 
   return (
     <div className="bg-[hsl(var(--color-card))] rounded-lg sm:rounded-xl shadow-sm">
-      {/* Scrollable table container */}
-      <div className="overflow-x-auto overflow-y-visible">
+      {/* Desktop/Tablet Table View */}
+      <div className="hidden sm:block table-container">
         <table className="w-full text-sm min-w-[1200px]">
           <thead className="bg-[hsl(var(--color-card))] border-b border-[hsl(var(--color-card))]">
             <tr className="text-[hsl(var(--color-foreground-secondary))] text-xs">
@@ -38,29 +40,29 @@ export default function EmployeeTable({ showInactive }) {
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
                 First Name
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap hidden lg:table-cell">
                 Middle Name
               </th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
                 Last Name
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">Mobile</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left hidden lg:table-cell">Mobile</th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">Status</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center whitespace-nowrap hidden xl:table-cell">
                 Roster Access
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center whitespace-nowrap hidden xl:table-cell">
                 Mobile Attendance
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">Team</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left hidden md:table-cell">Team</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap hidden xl:table-cell">
                 Employment Type
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left">State</th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap">
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left hidden xl:table-cell">State</th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-left whitespace-nowrap hidden xl:table-cell">
                 Customer Ref-No
               </th>
-              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center w-10 sm:w-12"></th>
+              <th className="px-2 sm:px-3 py-2 sm:py-3 text-center w-10 sm:w-12 hidden lg:table-cell"></th>
               <th className="px-2 sm:px-3 py-2 sm:py-3 text-right w-20 sm:w-24 sticky right-0 bg-[hsl(var(--color-surface-elevated))] z-[5]">
                 Actions
               </th>
@@ -73,6 +75,52 @@ export default function EmployeeTable({ showInactive }) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="sm:hidden p-3 space-y-3">
+        {filteredEmployees.length === 0 ? (
+          <div className="text-center py-8 text-[hsl(var(--color-foreground-muted))]">
+            No employees found
+          </div>
+        ) : (
+          filteredEmployees.map((emp) => (
+            <MobileCard
+              key={emp.id}
+              title={
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[hsl(var(--color-border))] flex items-center justify-center flex-shrink-0">
+                    <User className="w-6 h-6 text-[hsl(var(--color-foreground-secondary))]" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-[hsl(var(--color-primary))]">
+                      {emp.firstName} {emp.lastName}
+                    </div>
+                    <div className="text-xs text-[hsl(var(--color-foreground-muted))]">
+                      {emp.empNo}
+                    </div>
+                  </div>
+                </div>
+              }
+              fields={[
+                { label: 'Mobile', value: emp.mobile || 'N/A' },
+                { label: 'Status', value: <Badge status={emp.status} /> },
+                { label: 'Team', value: emp.team || 'N/A' },
+                { label: 'Employment Type', value: emp.employmentType || 'N/A' },
+                { label: 'State', value: emp.state || 'N/A' },
+              ]}
+              actions={[
+                {
+                  label: 'View Details',
+                  variant: 'primary',
+                  onClick: () => {
+                    // Handle view details
+                  },
+                },
+              ]}
+            />
+          ))
+        )}
       </div>
 
       {/* Scroll indicator for mobile */}

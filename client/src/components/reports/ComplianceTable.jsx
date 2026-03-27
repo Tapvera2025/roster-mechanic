@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import SortableHeader from "../ui/SortableHeader";
 import { useTableSort } from "../../hooks/useTableSort";
 import complianceData from "../../data/complianceData";
+import MobileCard from "../ui/MobileCard";
 
 export default function ComplianceTable({ filters }) {
   const [currentPage, setCurrentPage] = useState(1);

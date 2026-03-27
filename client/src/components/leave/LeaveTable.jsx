@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, X, Ban, ChevronDown, ChevronUp } from "lucide-react";
 import toast from "react-hot-toast";
 import { leaveApi } from "../../lib/api";
+import MobileCard from "../ui/MobileCard";
 
 const TYPE_LABELS = {
   annual: "Annual Leave",
@@ -59,7 +60,8 @@ export default function LeaveTable({ leaveRequests, onRefresh }) {
 
   return (
     <div className="bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] rounded-lg overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
+      {/* Desktop/Tablet Table View */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full min-w-[600px]">
           <thead className="bg-[hsl(var(--color-surface-elevated))] border-b border-[hsl(var(--color-border))]">
             <tr>
@@ -236,6 +238,105 @@ export default function LeaveTable({ leaveRequests, onRefresh }) {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="sm:hidden p-3 space-y-3">
+        {leaveRequests && leaveRequests.length > 0 ? (
+          leaveRequests.map((req) => {
+            const id = req._id;
+            const isActioning = actioningId === id;
+            const isExpanded = expandedNote === id;
+            const employee = req.employeeId;
+            const employeeName = employee
+              ? `${employee.firstName} ${employee.lastName}`
+              : "—";
+
+            return (
+              <div key={id} className="mobile-card">
+                <MobileCard
+                  title={employeeName}
+                  fields={[
+                    { label: 'Type', value: TYPE_LABELS[req.leaveType] || req.leaveType },
+                    { label: 'Start', value: fmt(req.startDate) },
+                    { label: 'End', value: fmt(req.endDate) },
+                    { label: 'Days', value: req.periodDays ?? "—" },
+                    {
+                      label: 'Status',
+                      value: (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_STYLES[req.status] || "bg-gray-100 text-gray-600"}`}>
+                          {req.status}
+                        </span>
+                      )
+                    },
+                    ...(req.notes ? [{ label: 'Notes', value: req.notes }] : []),
+                  ]}
+                  actions={
+                    req.status === "pending"
+                      ? [
+                          {
+                            label: 'Approve',
+                            variant: 'success',
+                            icon: Check,
+                            onClick: () => handleAction(id, "approve"),
+                            disabled: isActioning,
+                          },
+                          {
+                            label: 'Decline',
+                            variant: 'danger',
+                            icon: X,
+                            onClick: () => toggleNote(id),
+                            disabled: isActioning,
+                          },
+                        ]
+                      : req.status === "approved"
+                      ? [
+                          {
+                            label: 'Cancel',
+                            variant: 'default',
+                            icon: Ban,
+                            onClick: () => handleAction(id, "cancel"),
+                            disabled: isActioning,
+                          },
+                        ]
+                      : []
+                  }
+                />
+                {/* Inline decline note */}
+                {isExpanded && req.status === "pending" && (
+                  <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                    <input
+                      type="text"
+                      value={noteInput}
+                      onChange={(e) => setNoteInput(e.target.value)}
+                      placeholder="Reason for declining (required)..."
+                      className="w-full text-sm border border-red-300 rounded px-3 py-2 mb-2 bg-white focus:outline-none focus:ring-1 focus:ring-red-400"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAction(id, "decline")}
+                        disabled={isActioning}
+                        className="touch-target flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded disabled:opacity-50 transition-colors"
+                      >
+                        Confirm Decline
+                      </button>
+                      <button
+                        onClick={() => toggleNote(null)}
+                        className="touch-target flex-1 px-3 py-2 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center py-8 text-[hsl(var(--color-foreground-secondary))]">
+            No leave requests found
+          </div>
+        )}
       </div>
     </div>
   );

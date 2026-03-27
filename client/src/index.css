@@ -338,3 +338,354 @@ body {
 button, a, input, textarea, select {
   touch-action: manipulation;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE ENHANCEMENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Horizontal scroll table wrapper ────────────────────────────────────── */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Fade shadow indicating scrollable content */
+  background:
+    linear-gradient(to right, hsl(var(--color-card)) 30%, transparent) center left,
+    linear-gradient(to left,  hsl(var(--color-card)) 30%, transparent) center right,
+    radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.3), transparent) center left,
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.3), transparent) center right;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/* ── Range slider custom styles ────────────────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: hsl(var(--color-muted));
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: hsl(var(--color-primary));
+  box-shadow: 0 0 0 4px hsl(var(--color-primary) / 0.2);
+  transition: box-shadow 150ms;
+  cursor: grab;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 6px hsl(var(--color-primary) / 0.3);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  box-shadow: 0 0 0 8px hsl(var(--color-primary) / 0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: hsl(var(--color-primary));
+  box-shadow: 0 0 0 4px hsl(var(--color-primary) / 0.2);
+  cursor: grab;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  box-shadow: 0 0 0 6px hsl(var(--color-primary) / 0.3);
+}
+
+input[type="range"]::-moz-range-thumb:active {
+  cursor: grabbing;
+}
+
+input[type="range"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Bottom-sheet modal ────────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  [data-modal-mobile="bottom-sheet"] {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top-left-radius: 1rem !important;
+    border-top-right-radius: 1rem !important;
+    max-height: 90dvh !important;
+    overflow-y: auto;
+    animation: slide-up-bottom-sheet 250ms ease-out;
+  }
+
+  @keyframes slide-up-bottom-sheet {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  /* Drag handle for bottom sheets */
+  .bottom-sheet-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 9999px;
+    background: hsl(var(--color-muted-foreground));
+    margin: 0.75rem auto 0.5rem;
+  }
+}
+
+/* ── Sidebar overlay ────────────────────────────────────────────────────── */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 30;
+  backdrop-filter: blur(2px);
+  animation: fade-in 200ms ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Mobile card list ────────────────────────────────────────────────────── */
+.mobile-card {
+  background: hsl(var(--color-card));
+  border: 1px solid hsl(var(--color-border));
+  border-radius: 0.75rem;
+  padding: 1rem;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.mobile-card:active {
+  transform: scale(0.98);
+  background: hsl(var(--color-surface-elevated));
+}
+
+.mobile-card-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--color-foreground));
+}
+
+.mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+  padding: 0.375rem 0;
+  border-bottom: 1px solid hsl(var(--color-border) / 0.5);
+  gap: 1rem;
+}
+
+.mobile-card-row:last-child {
+  border-bottom: none;
+}
+
+.mobile-card-label {
+  color: hsl(var(--color-muted-foreground));
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.mobile-card-value {
+  color: hsl(var(--color-foreground));
+  text-align: right;
+  word-break: break-word;
+}
+
+.mobile-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid hsl(var(--color-border));
+}
+
+/* ── Day pill strip (Scheduler) ────────────────────────────────────────── */
+.day-pill-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.5rem 1rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.day-pill-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.day-pill {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 150ms ease;
+  border: 1px solid hsl(var(--color-border));
+  background: hsl(var(--color-muted));
+  color: hsl(var(--color-foreground-secondary));
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-pill.active {
+  background: hsl(var(--color-primary));
+  color: hsl(var(--color-primary-foreground));
+  border-color: hsl(var(--color-primary));
+  font-weight: 600;
+}
+
+.day-pill:hover:not(.active) {
+  background: hsl(var(--color-surface-elevated));
+  border-color: hsl(var(--color-border-strong));
+}
+
+/* ── Collapsible widget ────────────────────────────────────────────────── */
+.widget-body {
+  overflow: hidden;
+  transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.widget-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.widget-body.expanded {
+  max-height: 600px;
+  opacity: 1;
+}
+
+/* ── Collapsible sections ────────────────────────────────────────────────── */
+details summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details[open] summary .chevron {
+  transform: rotate(180deg);
+}
+
+.chevron {
+  transition: transform 200ms ease;
+}
+
+/* ── Touch targets (minimum 44x44px) ────────────────────────────────────── */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Responsive utilities ────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Hide on mobile */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Stack on mobile */
+  .stack-mobile {
+    flex-direction: column !important;
+  }
+
+  /* Full width on mobile */
+  .full-mobile {
+    width: 100% !important;
+  }
+
+  /* Smaller text on mobile */
+  .text-sm-mobile {
+    font-size: 0.875rem !important;
+  }
+
+  /* Reduced padding on mobile */
+  .p-reduce-mobile {
+    padding: 0.75rem !important;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Hide on desktop */
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* ── Loading skeleton ────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--color-muted)) 0%,
+    hsl(var(--color-surface-elevated)) 50%,
+    hsl(var(--color-muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 0.375rem;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ── Horizontal scroll indicator ──────────────────────────────────────────── */
+.scroll-indicator {
+  position: relative;
+}
+
+.scroll-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to left, hsl(var(--color-card)), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.scroll-indicator.has-scroll::after {
+  opacity: 1;
+}
