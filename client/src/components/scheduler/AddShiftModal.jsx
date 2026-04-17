@@ -7,6 +7,7 @@ import { Label } from "../ui/Label";
 import { Textarea } from "../ui/Textarea";
 import { schedulerApi } from "../../lib/api";
 import toast from "react-hot-toast";
+import { parseTime12Hour, getHour12, getMinute, getTimePeriod } from "../../utils/timeFormatter";
 
 export default function AddShiftModal({
   isOpen,
@@ -24,8 +25,12 @@ export default function AddShiftModal({
     employeeId: selectedEmployeeId || "",
     siteId: selectedSite || "",
     date: selectedDate || new Date().toISOString().split("T")[0],
-    startTime: "06:00",
-    endTime: "14:00",
+    startHour: "06",
+    startMinute: "00",
+    startPeriod: "AM",
+    endHour: "02",
+    endMinute: "00",
+    endPeriod: "PM",
     breakDuration: 30,
     shiftType: "REGULAR",
     status: "SCHEDULED",
@@ -47,6 +52,12 @@ export default function AddShiftModal({
         employeeId: selectedEmployeeId || "",
         siteId: selectedSite || "",
         date: selectedDate || new Date().toISOString().split("T")[0],
+        startHour: "06",
+        startMinute: "00",
+        startPeriod: "AM",
+        endHour: "02",
+        endMinute: "00",
+        endPeriod: "PM",
       }));
     }
   }, [isOpen, selectedEmployeeId, selectedSite, selectedDate]);
@@ -86,12 +97,27 @@ export default function AddShiftModal({
 
   // Calculate shift duration
   const calculateDuration = () => {
-    if (!formData.startTime || !formData.endTime) return "0.00";
+    if (!formData.startHour || !formData.endHour) return "0.00";
 
-    const [startHour, startMin] = formData.startTime.split(":").map(Number);
-    const [endHour, endMin] = formData.endTime.split(":").map(Number);
+    // Convert to 24-hour format
+    let startHour24 = parseInt(formData.startHour);
+    if (formData.startPeriod === 'AM' && startHour24 === 12) {
+      startHour24 = 0;
+    } else if (formData.startPeriod === 'PM' && startHour24 !== 12) {
+      startHour24 += 12;
+    }
 
-    let totalMinutes = endHour * 60 + endMin - (startHour * 60 + startMin);
+    let endHour24 = parseInt(formData.endHour);
+    if (formData.endPeriod === 'AM' && endHour24 === 12) {
+      endHour24 = 0;
+    } else if (formData.endPeriod === 'PM' && endHour24 !== 12) {
+      endHour24 += 12;
+    }
+
+    const startMin = parseInt(formData.startMinute);
+    const endMin = parseInt(formData.endMinute);
+
+    let totalMinutes = endHour24 * 60 + endMin - (startHour24 * 60 + startMin);
     if (totalMinutes < 0) totalMinutes += 24 * 60; // Handle overnight shifts
 
     totalMinutes -= formData.breakDuration || 0;
@@ -118,21 +144,31 @@ export default function AddShiftModal({
       return;
     }
 
-    if (!formData.date || !formData.startTime || !formData.endTime) {
+    if (!formData.date || !formData.startHour || !formData.endHour) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    // Create ISO datetime strings
-    const startDateTime = new Date(`${formData.date}T${formData.startTime}:00`);
-    const endDateTime = new Date(`${formData.date}T${formData.endTime}:00`);
+    // Create ISO datetime strings using parseTime12Hour
+    const startDateTime = parseTime12Hour(
+      formData.startHour,
+      formData.startMinute,
+      formData.startPeriod,
+      formData.date
+    );
+    const endDateTime = parseTime12Hour(
+      formData.endHour,
+      formData.endMinute,
+      formData.endPeriod,
+      formData.date
+    );
 
     const shiftData = {
       employeeId: formData.employeeId || null,
       siteId: formData.siteId,
       date: formData.date,
-      startTime: startDateTime.toISOString(),
-      endTime: endDateTime.toISOString(),
+      startTime: startDateTime,
+      endTime: endDateTime,
       shiftType: formData.shiftType,
       status: formData.publishAndNotify ? "SCHEDULED" : formData.status,
       notes: formData.notes?.trim() || null,
@@ -242,48 +278,149 @@ export default function AddShiftModal({
             </div>
 
             {/* Time and Break */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4">
+              {/* Start Time */}
               <div>
-                <Label>Start</Label>
-                <Input
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => handleChange("startTime", e.target.value)}
-                  className="mt-1"
-                  required
-                />
+                <Label>Start Time</Label>
+                <div className="mt-1 flex gap-2 items-center">
+                  <Select
+                    value={formData.startHour}
+                    onChange={(e) => handleChange("startHour", e.target.value)}
+                    className="w-20"
+                    required
+                  >
+                    {[...Array(12)].map((_, i) => {
+                      const hour = String(i + 1).padStart(2, '0');
+                      return (
+                        <option key={hour} value={hour}>
+                          {hour}
+                        </option>
+                      );
+                    })}
+                  </Select>
+                  <span className="text-[hsl(var(--color-foreground))]">:</span>
+                  <Select
+                    value={formData.startMinute}
+                    onChange={(e) => handleChange("startMinute", e.target.value)}
+                    className="w-20"
+                    required
+                  >
+                    {['00', '15', '30', '45'].map(min => (
+                      <option key={min} value={min}>
+                        {min}
+                      </option>
+                    ))}
+                  </Select>
+                  <div className="flex border border-[hsl(var(--color-border))] rounded-md overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => handleChange("startPeriod", "AM")}
+                      className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        formData.startPeriod === 'AM'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-[hsl(var(--color-card))] text-[hsl(var(--color-foreground-secondary))] hover:bg-[hsl(var(--color-surface-elevated))]'
+                      }`}
+                    >
+                      AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleChange("startPeriod", "PM")}
+                      className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        formData.startPeriod === 'PM'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-[hsl(var(--color-card))] text-[hsl(var(--color-foreground-secondary))] hover:bg-[hsl(var(--color-surface-elevated))]'
+                      }`}
+                    >
+                      PM
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              {/* End Time */}
               <div>
-                <Label>End</Label>
-                <Input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => handleChange("endTime", e.target.value)}
-                  className="mt-1"
-                  required
-                />
+                <Label>End Time</Label>
+                <div className="mt-1 flex gap-2 items-center">
+                  <Select
+                    value={formData.endHour}
+                    onChange={(e) => handleChange("endHour", e.target.value)}
+                    className="w-20"
+                    required
+                  >
+                    {[...Array(12)].map((_, i) => {
+                      const hour = String(i + 1).padStart(2, '0');
+                      return (
+                        <option key={hour} value={hour}>
+                          {hour}
+                        </option>
+                      );
+                    })}
+                  </Select>
+                  <span className="text-[hsl(var(--color-foreground))]">:</span>
+                  <Select
+                    value={formData.endMinute}
+                    onChange={(e) => handleChange("endMinute", e.target.value)}
+                    className="w-20"
+                    required
+                  >
+                    {['00', '15', '30', '45'].map(min => (
+                      <option key={min} value={min}>
+                        {min}
+                      </option>
+                    ))}
+                  </Select>
+                  <div className="flex border border-[hsl(var(--color-border))] rounded-md overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => handleChange("endPeriod", "AM")}
+                      className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        formData.endPeriod === 'AM'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-[hsl(var(--color-card))] text-[hsl(var(--color-foreground-secondary))] hover:bg-[hsl(var(--color-surface-elevated))]'
+                      }`}
+                    >
+                      AM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleChange("endPeriod", "PM")}
+                      className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        formData.endPeriod === 'PM'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-[hsl(var(--color-card))] text-[hsl(var(--color-foreground-secondary))] hover:bg-[hsl(var(--color-surface-elevated))]'
+                      }`}
+                    >
+                      PM
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div>
-                <Label>Break (mins)</Label>
-                <Input
-                  type="number"
-                  value={formData.breakDuration}
-                  onChange={(e) =>
-                    handleChange("breakDuration", parseInt(e.target.value) || 0)
-                  }
-                  className="mt-1"
-                  min="0"
-                />
-              </div>
-              <div>
-                <Label>Duration</Label>
-                <div className="mt-1 flex items-center gap-2 px-3 py-2 border border-[hsl(var(--color-border))] rounded-md bg-[hsl(var(--color-surface-elevated))]">
-                  <span className="font-medium text-[hsl(var(--color-foreground))]">
-                    {duration}
-                  </span>
-                  <span className="text-sm text-[hsl(var(--color-foreground-secondary))]">
-                    Hrs
-                  </span>
+
+              {/* Break and Duration */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Break (mins)</Label>
+                  <Input
+                    type="number"
+                    value={formData.breakDuration}
+                    onChange={(e) =>
+                      handleChange("breakDuration", parseInt(e.target.value) || 0)
+                    }
+                    className="mt-1"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <Label>Duration</Label>
+                  <div className="mt-1 flex items-center gap-2 px-3 py-2 border border-[hsl(var(--color-border))] rounded-md bg-[hsl(var(--color-surface-elevated))]">
+                    <span className="font-medium text-[hsl(var(--color-foreground))]">
+                      {duration}
+                    </span>
+                    <span className="text-sm text-[hsl(var(--color-foreground-secondary))]">
+                      Hrs
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

@@ -29,6 +29,7 @@ import { schedulerApi, weatherApi, shiftApi } from "../lib/api";
 import AddShiftModal from "../components/scheduler/AddShiftModal";
 import AddAdhocShiftModal from "../components/scheduler/AddAdhocShiftModal";
 import ViewDeletedShiftsModal from "../components/scheduler/ViewDeletedShiftsModal";
+import { formatTime12Hour } from "../utils/timeFormatter";
 
 export default function Scheduler() {
   const [selectedSite, setSelectedSite] = useState("");
@@ -456,14 +457,9 @@ export default function Scheduler() {
     });
   };
 
-  // Format time from ISO string to HH:MM
+  // Format time from ISO string to 12-hour format (hh:mm AM/PM)
   const formatTime = (isoString) => {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
+    return formatTime12Hour(isoString);
   };
 
   // Calculate shift duration in hours and minutes
