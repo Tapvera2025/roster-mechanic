@@ -156,12 +156,19 @@ export default function AddShiftModal({
       formData.startPeriod,
       formData.date
     );
-    const endDateTime = parseTime12Hour(
+    let endDateTime = parseTime12Hour(
       formData.endHour,
       formData.endMinute,
       formData.endPeriod,
       formData.date
     );
+
+    // Handle overnight shifts: if end time is before or equal to start time, add 1 day
+    if (new Date(endDateTime) <= new Date(startDateTime)) {
+      const endDate = new Date(endDateTime);
+      endDate.setDate(endDate.getDate() + 1);
+      endDateTime = endDate.toISOString();
+    }
 
     const shiftData = {
       employeeId: formData.employeeId || null,
