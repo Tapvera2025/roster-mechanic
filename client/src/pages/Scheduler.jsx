@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback } from "../components/ui/Avatar";
 import { schedulerApi, weatherApi, shiftApi } from "../lib/api";
 import AddShiftModal from "../components/scheduler/AddShiftModal";
 import AddAdhocShiftModal from "../components/scheduler/AddAdhocShiftModal";
+import EditShiftModal from "../components/scheduler/EditShiftModal";
 import ViewDeletedShiftsModal from "../components/scheduler/ViewDeletedShiftsModal";
 import { formatTime12Hour } from "../utils/timeFormatter";
 
@@ -56,6 +57,7 @@ export default function Scheduler() {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdhocModalOpen, setIsAdhocModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [modalData, setModalData] = useState({
     employeeId: null,
     date: null,
@@ -64,6 +66,7 @@ export default function Scheduler() {
     employeeId: null,
     date: null,
   });
+  const [selectedShift, setSelectedShift] = useState(null);
 
   // Hover state
   const [hoveredCell, setHoveredCell] = useState(null);
@@ -429,6 +432,78 @@ export default function Scheduler() {
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to create adhoc shift");
+    }
+  };
+
+  // Handle opening edit shift modal
+  const handleEditShift = (shift) => {
+    setSelectedShift(shift);
+    setIsEditModalOpen(true);
+  };
+
+  // Handle updating a shift
+  const handleUpdateShift = async (shiftData) => {
+    try {
+      await shiftApi.update(selectedShift.id, shiftData);
+      toast.success("Shift updated successfully");
+      setIsEditModalOpen(false);
+      setSelectedShift(null);
+
+      // Refresh shifts
+      if (selectedSite) {
+        const numDays =
+          viewMode === "week"
+            ? 7
+            : viewMode === "2weeks"
+              ? 14
+              : viewMode === "3weeks"
+                ? 21
+                : 28;
+        const endDate = new Date(currentStartDate);
+        endDate.setDate(endDate.getDate() + numDays - 1);
+
+        const shiftsResponse = await schedulerApi.getSiteShifts(
+          selectedSite,
+          toLocalDateStr(currentStartDate),
+          toLocalDateStr(endDate),
+        );
+        setShifts(shiftsResponse.data.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update shift");
+    }
+  };
+
+  // Handle deleting a shift
+  const handleDeleteShift = async () => {
+    try {
+      await shiftApi.delete(selectedShift.id);
+      toast.success("Shift deleted successfully");
+      setIsEditModalOpen(false);
+      setSelectedShift(null);
+
+      // Refresh shifts
+      if (selectedSite) {
+        const numDays =
+          viewMode === "week"
+            ? 7
+            : viewMode === "2weeks"
+              ? 14
+              : viewMode === "3weeks"
+                ? 21
+                : 28;
+        const endDate = new Date(currentStartDate);
+        endDate.setDate(endDate.getDate() + numDays - 1);
+
+        const shiftsResponse = await schedulerApi.getSiteShifts(
+          selectedSite,
+          toLocalDateStr(currentStartDate),
+          toLocalDateStr(endDate),
+        );
+        setShifts(shiftsResponse.data.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete shift");
     }
   };
 
@@ -959,7 +1034,8 @@ export default function Scheduler() {
                                 return (
                                   <div
                                     key={shift.id}
-                                    className={`border rounded overflow-hidden text-xs ${
+                                    onClick={() => handleEditShift(shift)}
+                                    className={`border rounded overflow-hidden text-xs cursor-pointer hover:shadow-md transition-shadow ${
                                       shift.isAdhoc
                                         ? "border-orange-400 bg-orange-50"
                                         : "border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))]"
@@ -1056,7 +1132,8 @@ export default function Scheduler() {
                             return (
                               <div
                                 key={shift.id}
-                                className={`border rounded overflow-hidden text-xs ${
+                                onClick={() => handleEditShift(shift)}
+                                className={`border rounded overflow-hidden text-xs cursor-pointer hover:shadow-md transition-shadow ${
                                   shift.isAdhoc
                                     ? "border-orange-400 bg-orange-50"
                                     : "border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))]"
@@ -1165,7 +1242,8 @@ export default function Scheduler() {
                               return (
                                 <div
                                   key={shift.id}
-                                  className={`border rounded overflow-hidden text-xs ${
+                                  onClick={() => handleEditShift(shift)}
+                                  className={`border rounded overflow-hidden text-xs cursor-pointer hover:shadow-md transition-shadow ${
                                     shift.isAdhoc
                                       ? "border-orange-400 bg-orange-50"
                                       : "border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))]"
@@ -1290,7 +1368,8 @@ export default function Scheduler() {
                                     return (
                                       <div
                                         key={shift.id}
-                                        className={`border rounded overflow-hidden text-xs ${
+                                        onClick={() => handleEditShift(shift)}
+                                        className={`border rounded overflow-hidden text-xs cursor-pointer hover:shadow-md transition-shadow ${
                                           shift.isAdhoc
                                             ? "border-orange-400 bg-orange-50"
                                             : "border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))]"
@@ -1390,6 +1469,19 @@ export default function Scheduler() {
         selectedSite={selectedSite}
         selectedDate={adhocModalData.date}
         selectedEmployeeId={adhocModalData.employeeId}
+      />
+
+      {/* Edit Shift Modal */}
+      <EditShiftModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedShift(null);
+        }}
+        onSave={handleUpdateShift}
+        onDelete={handleDeleteShift}
+        shift={selectedShift}
+        sites={sites}
       />
 
       {/* View Deleted Shifts Modal */}
