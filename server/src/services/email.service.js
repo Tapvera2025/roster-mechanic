@@ -137,7 +137,7 @@ class EmailService {
       password,
       role,
       companyName,
-      loginUrl: config.app?.clientUrl || 'https://www.rostermechanic.com.au',
+      loginUrl: 'https://www.rostermechanic.com.au',
       appName: config.app?.name || 'RosterMechanic',
     });
 
@@ -155,7 +155,7 @@ class EmailService {
    */
   async sendPasswordResetEmail({ to, name, resetToken, expiresIn = 60 }) {
     const subject = 'Password Reset Request';
-    const resetUrl = `${config.app?.clientUrl || 'https://www.rostermechanic.com.au'}/reset-password?token=${resetToken}`;
+    const resetUrl = `https://www.rostermechanic.com.au/reset-password?token=${resetToken}`;
 
     const html = this.getPasswordResetTemplate({
       name,
@@ -214,7 +214,7 @@ class EmailService {
       shiftType,
       notes,
       isAdhoc,
-      loginUrl: config.app?.clientUrl || 'https://www.rostermechanic.com.au',
+      loginUrl: 'https://www.rostermechanic.com.au',
       appName: config.app?.name || 'RosterMechanic',
     });
 
@@ -245,7 +245,7 @@ class EmailService {
       clockOutTime,
       rejectionReason,
       rejectedBy,
-      loginUrl: config.app?.clientUrl || 'https://www.rostermechanic.com.au',
+      loginUrl: 'https://www.rostermechanic.com.au',
       appName: config.app?.name || 'RosterMechanic',
     });
 
@@ -737,7 +737,7 @@ class EmailService {
               This adhoc shift has been automatically recorded. No approval action is required.
             </p>
 
-            <a href="${process.env.CLIENT_URL || ''}/admin/time-attendance"
+            <a href="https://www.rostermechanic.com.au/admin/time-attendance"
                style="display:inline-block;padding:12px 28px;background:#f59e0b;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">
               View in Time Attendance →
             </a>
