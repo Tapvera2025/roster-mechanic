@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Clock, Users, FileText, MapPin, Upload, Plus, Mail, Printer, Download, RotateCw, Settings2, Loader2, Calendar, User as UserIcon, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Clock, Users, FileText, MapPin, Upload, Plus, Mail, Printer, Download, RotateCw, Settings2, Loader2, Calendar, User as UserIcon, ChevronLeft, ChevronRight, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import AttendanceFilters from "../components/attendance/AttendanceFilters";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Select";
@@ -141,6 +141,14 @@ export default function TimeAttendance() {
   useSocketEvent('clock-out', useCallback((data) => {
     console.log('Clock-out event received on dashboard, refreshing records:', data);
     fetchRecords();
+  }, [fetchRecords]));
+
+  // Real-time: adhoc shift started — refresh table so the new record appears
+  useSocketEvent('clock-in', useCallback((data) => {
+    if (data?.isAdhoc) {
+      console.log('Adhoc shift started:', data);
+      fetchRecords();
+    }
   }, [fetchRecords]));
 
   // Calculate stats from records
@@ -416,14 +424,33 @@ export default function TimeAttendance() {
                       </tr>
                     ) : (
                       sortedRecords.map((record) => (
-                        <tr key={record._id} className="hover:bg-[hsl(var(--color-surface-elevated))] transition-colors">
+                        <tr
+                          key={record._id}
+                          className={`hover:bg-[hsl(var(--color-surface-elevated))] transition-colors ${record.shiftId?.isAdhoc ? 'border-l-2 border-amber-400' : ''}`}
+                        >
                           <td className="px-4 py-3">
                             <input type="checkbox" className="rounded border-[hsl(var(--color-border))]" />
                           </td>
                           <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
-                            <div className="flex items-center gap-2">
-                              <UserIcon className="w-4 h-4 text-[hsl(var(--color-foreground-muted))]" />
-                              {record.employeeId?.firstName} {record.employeeId?.lastName}
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <UserIcon className="w-4 h-4 text-[hsl(var(--color-foreground-muted))] shrink-0" />
+                                <span>{record.employeeId?.firstName} {record.employeeId?.lastName}</span>
+                                {record.shiftId?.isAdhoc && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide bg-amber-100 text-amber-700 border border-amber-300 shrink-0">
+                                    <AlertTriangle className="w-2.5 h-2.5" />
+                                    ADHOC
+                                  </span>
+                                )}
+                              </div>
+                              {record.shiftId?.isAdhoc && record.shiftId?.adhocReason && (
+                                <p
+                                  className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 max-w-[220px] truncate"
+                                  title={record.shiftId.adhocReason}
+                                >
+                                  {record.shiftId.adhocReason}
+                                </p>
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
@@ -578,20 +605,36 @@ export default function TimeAttendance() {
                   return activeRecords.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {activeRecords.map((record) => (
-                        <div key={record._id} className="bg-[hsl(var(--color-surface-elevated))] p-4 rounded-lg border border-[hsl(var(--color-border))]">
+                        <div
+                          key={record._id}
+                          className={`bg-[hsl(var(--color-surface-elevated))] p-4 rounded-lg border ${record.shiftId?.isAdhoc ? 'border-amber-400' : 'border-[hsl(var(--color-border))]'}`}
+                        >
                           <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                              <Clock className="w-5 h-5 text-green-400" />
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${record.shiftId?.isAdhoc ? 'bg-amber-500/20' : 'bg-green-500/20'}`}>
+                              <Clock className={`w-5 h-5 ${record.shiftId?.isAdhoc ? 'text-amber-400' : 'text-green-400'}`} />
                             </div>
-                            <div className="flex-1">
-                              <div className="font-semibold text-[hsl(var(--color-foreground))]">
-                                {record.employeeId?.firstName} {record.employeeId?.lastName}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-[hsl(var(--color-foreground))]">
+                                  {record.employeeId?.firstName} {record.employeeId?.lastName}
+                                </span>
+                                {record.shiftId?.isAdhoc && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide bg-amber-100 text-amber-700 border border-amber-300 shrink-0">
+                                    <AlertTriangle className="w-2.5 h-2.5" />
+                                    ADHOC
+                                  </span>
+                                )}
                               </div>
                               <div className="text-xs text-[hsl(var(--color-foreground-secondary))]">
-                                Active
+                                {record.shiftId?.isAdhoc ? 'Adhoc shift' : 'Active'}
                               </div>
                             </div>
                           </div>
+                          {record.shiftId?.isAdhoc && record.shiftId?.adhocReason && (
+                            <div className="mb-3 px-2 py-1.5 rounded bg-amber-50 border border-amber-200 text-xs text-amber-700 truncate" title={record.shiftId.adhocReason}>
+                              {record.shiftId.adhocReason}
+                            </div>
+                          )}
                           <div className="space-y-2 text-sm">
                             <div className="flex items-center gap-2 text-[hsl(var(--color-foreground-secondary))]">
                               <MapPin className="w-4 h-4" />

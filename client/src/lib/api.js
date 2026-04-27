@@ -166,6 +166,24 @@ export const clockApi = {
   // Break management
   startBreak: (employeeId, breakType, notes) => api.post('/clock/break/start', { employeeId, breakType, notes }),
   endBreak: (employeeId) => api.post('/clock/break/end', { employeeId }),
+
+  /**
+   * Clock in for employee-initiated adhoc shift.
+   * Site is automatically detected by the backend from GPS coordinates.
+   */
+  clockInAdhoc: (employeeId, latitude, longitude, adhocReason, position = null, photo = null) => {
+    const formData = new FormData();
+    formData.append('employeeId', employeeId);
+    formData.append('latitude', latitude);
+    formData.append('longitude', longitude);
+    formData.append('adhocReason', adhocReason);
+    if (position) formData.append('position', position);
+    if (photo) formData.append('photo', photo);
+
+    return api.post('/clock/adhoc', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 // Leave API endpoints

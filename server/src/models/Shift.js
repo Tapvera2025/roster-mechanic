@@ -70,6 +70,33 @@ const shiftSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Adhoc shift metadata (required when isAdhoc = true)
+    adhocReason: {
+      type: String,
+      required: function () {
+        return this.isAdhoc === true;
+      },
+      trim: true,
+      minlength: [10, 'Adhoc reason must be at least 10 characters'],
+      maxlength: [500, 'Adhoc reason cannot exceed 500 characters'],
+    },
+
+    adhocInitiatedBy: {
+      type: String,
+      enum: {
+        values: ['EMPLOYEE', 'ADMIN', 'MANAGER'],
+        message: '{VALUE} is not a valid initiator type',
+      },
+      required: function () {
+        return this.isAdhoc === true;
+      },
+    },
+
+    adhocCreatedAt: {
+      type: Date,
+      default: null,
+    },
+
     notes: {
       type: String,
       maxlength: [1000, 'Notes cannot exceed 1000 characters'],

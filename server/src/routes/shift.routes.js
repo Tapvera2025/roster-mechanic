@@ -3,7 +3,33 @@ const router = express.Router();
 const { auth } = require('../middleware/auth');
 const Shift = require('../models/Shift');
 const Employee = require('../models/Employee');
+const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
+
+/**
+ * Helper: find an employee record for a logged-in user.
+ * First tries by userId (fast path), then falls back to matching by email
+ * (handles employees created before their User account was linked).
+ */
+async function findEmployeeForUser(userId, companyId) {
+  // Fast path: employee linked directly to user account
+  let employee = await Employee.findOne({ userId, companyId, isActive: true }).lean();
+  if (employee) return employee;
+
+  // Fallback: look up User by id, then find Employee by matching email
+  const user = await User.findById(userId).select('email').lean();
+  if (!user?.email) return null;
+
+  employee = await Employee.findOne({ email: user.email, companyId, isActive: true }).lean();
+
+  // If found via email, opportunistically link userId so the fast path works next time
+  if (employee && !employee.userId) {
+    await Employee.findByIdAndUpdate(employee._id, { userId });
+    employee.userId = userId; // reflect in returned object
+  }
+
+  return employee;
+}
 
 // All routes require authentication
 router.use(auth);
@@ -15,14 +41,10 @@ router.use(auth);
 router.get('/my-employee', asyncHandler(async (req, res) => {
   const { userId, companyId } = req.user;
 
-  const employee = await Employee.findOne({
-    userId: userId,
-    companyId: companyId,
-    isActive: true
-  }).lean();
+  const employee = await findEmployeeForUser(userId, companyId);
 
   if (!employee) {
-    const error = new Error('No employee record found for this user');
+    const error = new Error('No employee record found for this user. Please ask your manager to link your account.');
     error.statusCode = 404;
     throw error;
   }
@@ -47,15 +69,11 @@ router.get('/my-shifts', asyncHandler(async (req, res) => {
     throw error;
   }
 
-  // Find the employee record linked to this user
-  const employee = await Employee.findOne({
-    userId: userId,
-    companyId: companyId,
-    isActive: true
-  });
+  // Find the employee record linked to this user (with email fallback)
+  const employee = await findEmployeeForUser(userId, companyId);
 
   if (!employee) {
-    const error = new Error('No employee record found for this user');
+    const error = new Error('No employee record found for this user. Please ask your manager to link your account.');
     error.statusCode = 404;
     throw error;
   }

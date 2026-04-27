@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation, Calendar, Coffee, Play } from 'lucide-react';
+import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation, Calendar, Coffee, Play, AlertTriangle } from 'lucide-react';
 import { clockApi, shiftApi } from '../../lib/api';
+import AdhocShiftModal from '../employee/AdhocShiftModal';
 
 export default function ClockInOut() {
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,9 @@ export default function ClockInOut() {
 
   const [breakLoading, setBreakLoading] = useState(false);
   const [breakType, setBreakType] = useState('BREAK');
+
+  const [showAdhocModal, setShowAdhocModal] = useState(false);
+  const [adhocLoading, setAdhocLoading] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -218,6 +222,25 @@ export default function ClockInOut() {
     }
   };
 
+  const handleAdhocShiftSubmit = async ({ latitude, longitude, adhocReason, position, photo }) => {
+    setError(null); setSuccess(null);
+    try {
+      setAdhocLoading(true);
+      const response = await clockApi.clockInAdhoc(
+        employeeId, latitude, longitude, adhocReason, position, photo
+      );
+      const { detectedSite } = response.data.data;
+      setSuccess(`Adhoc shift started at ${detectedSite?.name || 'your site'}!`);
+      setShowAdhocModal(false);
+      setTimeout(() => { fetchCurrentStatus(); fetchTodayShifts(); }, 1000);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to start adhoc shift');
+      setShowAdhocModal(false);
+    } finally {
+      setAdhocLoading(false);
+    }
+  };
+
   const formatShiftTime = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -349,18 +372,29 @@ export default function ClockInOut() {
           </div>
         )}
 
-        {/* No Shifts */}
+        {/* No Shifts — show adhoc option */}
         {!isClockedIn && !hasShiftsToday && (
           <div className="border border-[hsl(var(--color-border))] bg-[hsl(var(--color-surface-elevated))] rounded-lg p-6 mb-6">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 mb-4">
               <AlertCircle className="w-6 h-6 text-[hsl(var(--color-primary))] mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))] mb-2">No Shifts Scheduled Today</h2>
+                <h2 className="text-lg font-semibold text-[hsl(var(--color-foreground))] mb-1">No Shifts Scheduled Today</h2>
                 <p className="text-sm text-[hsl(var(--color-foreground-secondary))]">
-                  You don't have any scheduled shifts for today. Please contact your manager if you believe this is an error.
+                  You don't have any scheduled shifts for today. If you need to start an unscheduled shift, use the button below.
                 </p>
               </div>
             </div>
+            <button
+              onClick={() => setShowAdhocModal(true)}
+              disabled={adhocLoading}
+              className="w-full py-3 rounded-lg border-2 border-amber-400 bg-amber-50 text-amber-700 font-semibold hover:bg-amber-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {adhocLoading ? (
+                <><Loader2 className="w-5 h-5 animate-spin" />Starting Adhoc Shift...</>
+              ) : (
+                <><AlertTriangle className="w-5 h-5" />Start Adhoc Shift</>
+              )}
+            </button>
           </div>
         )}
 
@@ -545,19 +579,29 @@ export default function ClockInOut() {
             </div>
 
             {/* Action Button */}
-            <div className="pt-4">
+            <div className="pt-4 space-y-3">
               {!isClockedIn ? (
-                <button
-                  onClick={handleClockIn}
-                  disabled={loading || !location || !selectedShift || !hasShiftsToday}
-                  className="w-full py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                >
-                  {loading ? (
-                    <><Loader2 className="w-6 h-6 animate-spin" />Clocking In...</>
-                  ) : (
-                    <><Clock className="w-6 h-6" />Clock In</>
-                  )}
-                </button>
+                <>
+                  <button
+                    onClick={handleClockIn}
+                    disabled={loading || !location || !selectedShift || !hasShiftsToday}
+                    className="w-full py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-6 h-6 animate-spin" />Clocking In...</>
+                    ) : (
+                      <><Clock className="w-6 h-6" />Clock In</>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowAdhocModal(true)}
+                    disabled={adhocLoading || loading}
+                    className="w-full py-3 rounded-lg border-2 border-amber-400 bg-amber-50 text-amber-700 font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <AlertTriangle className="w-5 h-5" />
+                    Start Adhoc Shift Instead
+                  </button>
+                </>
               ) : (
                 <button
                   onClick={handleClockOut}
@@ -582,10 +626,10 @@ export default function ClockInOut() {
             <div className="text-sm text-[hsl(var(--color-foreground-secondary))]">
               <p className="font-medium text-[hsl(var(--color-foreground))] mb-1">Important:</p>
               <ul className="list-disc list-inside space-y-1">
-                <li>You can only clock in for scheduled shifts</li>
-                <li>You must be within the site's geofenced area</li>
+                <li>You must be within the site's geofenced area to clock in</li>
                 <li>Enable location permissions when prompted</li>
                 <li>Photo verification is optional but recommended</li>
+                <li>Use <strong>Start Adhoc Shift</strong> if you're working outside your scheduled hours</li>
               </ul>
             </div>
           </div>
@@ -659,6 +703,14 @@ export default function ClockInOut() {
         )}
 
       </div>
+
+      {/* Adhoc Shift Modal */}
+      <AdhocShiftModal
+        isOpen={showAdhocModal}
+        onClose={() => setShowAdhocModal(false)}
+        onSubmit={handleAdhocShiftSubmit}
+        isSubmitting={adhocLoading}
+      />
     </div>
   );
 }

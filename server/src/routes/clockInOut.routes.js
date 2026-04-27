@@ -17,6 +17,7 @@ const {
   getHistoryValidation,
   getManagerViewValidation,
   exportCSVValidation,
+  clockInAdhocValidation,
 } = require('../validators/clockInOut.validator');
 
 // All routes require authentication
@@ -152,6 +153,21 @@ router.post(
 router.post(
   '/break/end',
   clockInOutController.endBreak
+);
+
+/**
+ * Adhoc Shift Clock-In (Employee-Initiated)
+ * Site is automatically detected from GPS coordinates
+ * @route POST /api/v1/clock/adhoc
+ * @access Private (Authenticated employees)
+ */
+router.post(
+  '/adhoc',
+  uploadSinglePhoto,
+  handleUploadError,
+  ...clockInAdhocValidation,
+  validate,
+  clockInOutController.clockInAdhoc
 );
 
 module.exports = router;

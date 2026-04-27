@@ -450,6 +450,90 @@ const endBreak = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Clock in for an employee-initiated adhoc shift
+ * Site is automatically detected from GPS location
+ * @route POST /api/v1/clock/adhoc
+ */
+const clockInAdhoc = asyncHandler(async (req, res) => {
+  let { employeeId, latitude, longitude, adhocReason, position } = req.body;
+
+  // Treat missing, 'null', 'undefined', or non-ObjectId strings as "not provided"
+  // and always resolve from the authenticated JWT instead.
+  const mongoose = require('mongoose');
+  if (!employeeId || !mongoose.Types.ObjectId.isValid(employeeId)) {
+    const Employee = require('../models/Employee');
+    const User = require('../models/User');
+    const { userId, companyId } = req.user;
+
+    let emp = await Employee.findOne({ userId, companyId, isActive: true }).select('_id').lean();
+    if (!emp) {
+      const user = await User.findById(userId).select('email').lean();
+      if (user?.email) {
+        emp = await Employee.findOne({ email: user.email, companyId, isActive: true }).select('_id').lean();
+        if (emp) {
+          // Opportunistically link the userId
+          await Employee.findByIdAndUpdate(emp._id, { userId });
+        }
+      }
+    }
+
+    if (!emp) {
+      return res.status(404).json({
+        success: false,
+        message: 'No employee record found for your account. Please contact your manager.',
+      });
+    }
+    employeeId = emp._id.toString();
+  }
+
+  // Get photo URL if file was uploaded
+  const photo = req.file ? getPhotoUrl(req.file.filename) : null;
+
+  const location = {
+    type: 'Point',
+    coordinates: [parseFloat(longitude), parseFloat(latitude)],
+  };
+
+  const context = {
+    companyId: req.user.companyId,
+    userId: req.user.userId,
+    role: req.user.role,
+  };
+
+  const result = await clockInOutService.clockInAdhoc(context, {
+    employeeId,
+    location,
+    adhocReason,
+    position: position || null,
+    photo,
+  });
+
+  // Broadcast real-time event to managers
+  try {
+    socketService.notifyClockIn({
+      companyId: req.user.companyId,
+      employee: { id: employeeId },
+      site: { id: result.detectedSite.id, name: result.detectedSite.name },
+      timestamp: result.timeRecord.clockInTime,
+      isAdhoc: true,
+      adhocReason,
+      location: {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+      },
+    });
+  } catch (err) {
+    console.error('Failed to send adhoc clock-in socket notification:', err);
+  }
+
+  res.status(201).json({
+    success: true,
+    message: 'Adhoc shift started successfully',
+    data: result,
+  });
+});
+
 module.exports = {
   clockIn,
   clockOut,
@@ -463,4 +547,5 @@ module.exports = {
   bulkRejectTimeRecords,
   startBreak,
   endBreak,
+  clockInAdhoc,
 };

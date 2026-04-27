@@ -8,6 +8,7 @@
 const TimeRecord = require('../models/TimeRecord');
 const Site = require('../models/Site');
 const Employee = require('../models/Employee');
+const EmployeeSite = require('../models/EmployeeSite');
 const Shift = require('../models/Shift');
 const GeofenceViolation = require('../models/GeofenceViolation');
 const User = require('../models/User');
@@ -467,7 +468,7 @@ class ClockInOutService {
       TimeRecord.find(query)
         .populate('employeeId', 'firstName lastName email')
         .populate('siteId', 'siteLocationName shortName')
-        .populate('shiftId', 'shiftType')
+        .populate('shiftId', 'shiftType isAdhoc adhocReason adhocInitiatedBy adhocCreatedAt')
         .sort({ clockInTime: -1 })
         .skip(skip)
         .limit(limit)
@@ -537,7 +538,7 @@ class ClockInOutService {
       TimeRecord.find(query)
         .populate('employeeId', 'firstName lastName email position')
         .populate('siteId', 'siteLocationName shortName geoFenceRadius')
-        .populate('shiftId', 'shiftType')
+        .populate('shiftId', 'shiftType isAdhoc adhocReason adhocInitiatedBy adhocCreatedAt')
         .sort({ clockInTime: -1 })
         .skip(skip)
         .limit(limit)
@@ -1006,6 +1007,193 @@ class ClockInOutService {
     ]);
 
     return timeRecord;
+  }
+  /**
+   * Clock in for an employee-initiated adhoc shift
+   * Automatically detects the nearest assigned site within geofence radius
+   * @param {Object} context - { companyId, userId }
+   * @param {Object} data - { employeeId, location, adhocReason, position, photo }
+   * @returns {Promise<Object>} - { shift, timeRecord, detectedSite, message }
+   */
+  async clockInAdhoc(context, data) {
+    const { companyId, userId } = context;
+    const { employeeId, location, adhocReason, position, photo } = data;
+
+    // 1. Validate adhoc reason up front (before hitting the DB)
+    if (!adhocReason || adhocReason.trim().length < 10) {
+      const error = new Error('Adhoc reason must be at least 10 characters');
+      error.statusCode = 400;
+      throw error;
+    }
+    if (adhocReason.trim().length > 500) {
+      const error = new Error('Adhoc reason cannot exceed 500 characters');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // 2. Validate employee
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      const error = new Error('Invalid employee ID');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const employee = await Employee.findOne({ _id: employeeId, companyId, isActive: true });
+    if (!employee) {
+      const error = new Error('Employee not found or inactive');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // 3. Check for existing active clock-in
+    const existingClockIn = await TimeRecord.findOne({ employeeId, companyId, status: 'CLOCKED_IN' });
+    if (existingClockIn) {
+      const error = new Error('Employee already has an active clock-in. Please clock out first.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    // 4. Auto-detect site based on GPS location
+    // Get the employee's active site assignments
+    const siteAssignments = await EmployeeSite.find({ employeeId, isActive: true }).lean();
+    if (siteAssignments.length === 0) {
+      const error = new Error('Employee is not assigned to any active sites');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const siteIds = siteAssignments.map((a) => a.siteId);
+    const assignedSites = await Site.find({ _id: { $in: siteIds }, status: 'ACTIVE', companyId }).lean();
+
+    if (assignedSites.length === 0) {
+      const error = new Error('No active sites found for this employee');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Calculate distance to each assigned site using Haversine
+    const empLat = location.coordinates[1]; // GeoJSON: [lng, lat]
+    const empLon = location.coordinates[0];
+
+    const sitesWithDistance = assignedSites.map((site) => {
+      const siteLat = site.location.coordinates[1];
+      const siteLon = site.location.coordinates[0];
+      const distance = this.calculateDistance(empLat, empLon, siteLat, siteLon);
+      return { site, distance };
+    });
+
+    // Find sites within geofence radius
+    const sitesInRange = sitesWithDistance.filter(
+      ({ distance, site }) => distance <= (site.geoFenceRadius || 100)
+    );
+
+    if (sitesInRange.length === 0) {
+      // Log geofence violation for audit trail
+      try {
+        await GeofenceViolation.create({
+          employeeId,
+          companyId,
+          attemptType: 'ADHOC_CLOCK_IN',
+          attemptLocation: location,
+          distanceFromSite: Math.round(sitesWithDistance.sort((a, b) => a.distance - b.distance)[0]?.distance || 0),
+          geofenceRadius: assignedSites[0]?.geoFenceRadius || 100,
+          attemptTime: new Date(),
+        });
+      } catch (logErr) {
+        console.error('Failed to log adhoc geofence violation:', logErr);
+      }
+      const error = new Error(
+        'You are not within range of any assigned site. Please move closer to your work site.'
+      );
+      error.statusCode = 403;
+      throw error;
+    }
+
+    // Pick the closest site if multiple are in range
+    const { site, distance } = sitesInRange.sort((a, b) => a.distance - b.distance)[0];
+    const siteId = site._id;
+
+    // 5. Atomic transaction: create shift + time record together
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const now = new Date();
+
+      // Create adhoc shift
+      const [adhocShift] = await Shift.create(
+        [
+          {
+            employeeId,
+            siteId,
+            companyId,
+            date: now,
+            startTime: now,
+            endTime: null,
+            isAdhoc: true,
+            adhocReason: adhocReason.trim(),
+            adhocInitiatedBy: 'EMPLOYEE',
+            adhocCreatedAt: now,
+            status: 'IN_PROGRESS',
+            shiftType: 'REGULAR',
+            position: position || employee.position || null,
+            actualStartTime: now,
+            clockInLocation: location,
+          },
+        ],
+        { session }
+      );
+
+      // Create time record linked to the adhoc shift
+      const [timeRecord] = await TimeRecord.create(
+        [
+          {
+            employeeId,
+            shiftId: adhocShift._id,
+            siteId,
+            companyId,
+            clockInTime: now,
+            clockInLocation: location,
+            clockInDistance: Math.round(distance),
+            clockInPhotoUrl: photo || null,
+            status: 'CLOCKED_IN',
+            createdBy: userId,
+          },
+        ],
+        { session }
+      );
+
+      await session.commitTransaction();
+
+      // 6. Send manager email notification (non-blocking)
+      try {
+        await emailService.notifyAdhocShiftCreated({
+          employee,
+          site,
+          shift: adhocShift,
+          reason: adhocReason.trim(),
+          companyId,
+        });
+      } catch (emailErr) {
+        console.error('Failed to send adhoc shift email notification:', emailErr);
+      }
+
+      return {
+        shift: adhocShift,
+        timeRecord,
+        detectedSite: {
+          id: site._id,
+          name: site.siteLocationName,
+          distance: Math.round(distance),
+        },
+        message: 'Adhoc shift started successfully',
+      };
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   }
 }
 
