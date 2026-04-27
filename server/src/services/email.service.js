@@ -137,7 +137,7 @@ class EmailService {
       password,
       role,
       companyName,
-      loginUrl: config.app?.clientUrl || 'http://localhost:5173',
+      loginUrl: config.app?.clientUrl || 'https://www.rostermechanic.com.au',
       appName: config.app?.name || 'RosterMechanic',
     });
 
@@ -155,7 +155,7 @@ class EmailService {
    */
   async sendPasswordResetEmail({ to, name, resetToken, expiresIn = 60 }) {
     const subject = 'Password Reset Request';
-    const resetUrl = `${config.app?.clientUrl || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+    const resetUrl = `${config.app?.clientUrl || 'https://www.rostermechanic.com.au'}/reset-password?token=${resetToken}`;
 
     const html = this.getPasswordResetTemplate({
       name,
@@ -214,7 +214,7 @@ class EmailService {
       shiftType,
       notes,
       isAdhoc,
-      loginUrl: config.app?.clientUrl || 'http://localhost:5173',
+      loginUrl: config.app?.clientUrl || 'https://www.rostermechanic.com.au',
       appName: config.app?.name || 'RosterMechanic',
     });
 
@@ -245,7 +245,7 @@ class EmailService {
       clockOutTime,
       rejectionReason,
       rejectedBy,
-      loginUrl: config.app?.clientUrl || 'http://localhost:5173',
+      loginUrl: config.app?.clientUrl || 'https://www.rostermechanic.com.au',
       appName: config.app?.name || 'RosterMechanic',
     });
 
