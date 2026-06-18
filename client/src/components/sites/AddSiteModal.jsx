@@ -237,6 +237,14 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
         status: formData.status === "Active" ? "ACTIVE" : "INACTIVE",
       };
 
+      // Remove empty string fields that would fail backend validation
+      if (!payload.client || payload.client.trim() === "") {
+        delete payload.client;
+      }
+      if (!payload.alertRecipient || payload.alertRecipient.trim() === "") {
+        delete payload.alertRecipient;
+      }
+
       let response;
       if (site) {
         // Update existing site
