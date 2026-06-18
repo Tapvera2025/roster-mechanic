@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X, MapPin, Maximize2, Navigation, Loader2 } from "lucide-react";
 import { Select } from "../ui/Select";
 import { Input } from "../ui/Input";
@@ -45,7 +45,7 @@ export default function MapModal({
   const radiusMeters = geoFenceRadius * 1000;
 
   // Helper function to map full state name to abbreviation
-  const mapStateToCode = (stateName) => {
+  const mapStateToCode = useCallback((stateName) => {
     if (!stateName) return "";
     const state = AUSTRALIAN_STATES.find(
       (s) => s.name.toLowerCase() === stateName.toLowerCase()
@@ -55,10 +55,10 @@ export default function MapModal({
       (s) => s.code.toLowerCase() === stateName.toLowerCase()
     );
     return stateByCode ? stateByCode.code : stateName;
-  };
+  }, []);
 
   // Reverse geocode coordinates to get address
-  const reverseGeocode = async (lat, lng) => {
+  const reverseGeocode = useCallback(async (lat, lng) => {
     if (!geocoderRef.current) return;
 
     setGeocoding(true);
@@ -123,7 +123,7 @@ export default function MapModal({
     } finally {
       setGeocoding(false);
     }
-  };
+  }, [mapStateToCode]);
 
   // Get user's live location
   const handleLiveLocation = () => {
@@ -270,7 +270,7 @@ export default function MapModal({
       if (marker) marker.setMap(null);
       if (circle) circle.setMap(null);
     };
-  }, [mapReady]);
+  }, [coords.lat, coords.lng, mapReady, mapView, radiusMeters, reverseGeocode]);
 
   // Update map type when mapView changes
   useEffect(() => {
@@ -307,7 +307,7 @@ export default function MapModal({
         googleMapRef.current.setCenter(coords);
       }, 100);
     }
-  }, [isFullscreen]);
+  }, [coords, isFullscreen]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-0 sm:p-4">

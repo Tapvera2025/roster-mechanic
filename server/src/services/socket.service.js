@@ -12,6 +12,7 @@ const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const logger = require('../utils/logger');
+const Employee = require('../models/Employee');
 
 class SocketService {
   constructor() {
@@ -51,9 +52,27 @@ class SocketService {
 
         // Verify JWT token
         const decoded = jwt.verify(token, config.auth.jwtSecret);
-        socket.userId = decoded.id;
-        socket.userRole = decoded.role;
-        socket.companyId = decoded.companyId;
+        const userId = decoded.userId || decoded.id;
+
+        if (!userId) {
+          return next(new Error('Authentication token missing user id'));
+        }
+
+        socket.userId = userId.toString();
+        socket.userRole = decoded.role?.toUpperCase();
+        socket.companyId = decoded.companyId?.toString();
+
+        if (socket.companyId) {
+          const employee = await Employee.findOne({
+            userId: socket.userId,
+            companyId: socket.companyId,
+            isActive: true,
+          })
+            .select('_id')
+            .lean();
+
+          socket.employeeId = employee?._id?.toString();
+        }
 
         logger.info('Socket authenticated', {
           userId: socket.userId,
@@ -94,8 +113,13 @@ class SocketService {
       socket.join(`company:${companyId}`);
     }
 
+    // Join employee-specific room for shift notifications addressed by employeeId
+    if (socket.employeeId) {
+      socket.join(`employee:${socket.employeeId}`);
+    }
+
     // Join role-based rooms
-    if (userRole === 'admin' || userRole === 'manager') {
+    if (userRole === 'ADMIN' || userRole === 'MANAGER') {
       socket.join(`managers:${companyId}`);
     }
 
@@ -136,6 +160,28 @@ class SocketService {
     // Example: Handle custom events
     socket.on('ping', () => {
       socket.emit('pong', { timestamp: new Date() });
+    });
+  }
+
+  getId(value) {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    if (value._id) return value._id.toString();
+    if (value.id) return value.id.toString();
+    if (value.employeeId) return this.getId(value.employeeId);
+    if (value.userId) return this.getId(value.userId);
+    if (typeof value.toString === 'function') return value.toString();
+    return null;
+  }
+
+  notifyAssignedUsers(assignedTo, eventName, notification) {
+    if (!Array.isArray(assignedTo)) return;
+
+    const recipientIds = [...new Set(assignedTo.map((recipient) => this.getId(recipient)).filter(Boolean))];
+
+    recipientIds.forEach((recipientId) => {
+      this.io.to(`user:${recipientId}`).emit(eventName, notification);
+      this.io.to(`employee:${recipientId}`).emit(eventName, notification);
     });
   }
 
@@ -227,12 +273,8 @@ class SocketService {
       timestamp: new Date(),
     };
 
-    // Notify assigned employees
-    if (Array.isArray(assignedTo)) {
-      assignedTo.forEach((employeeId) => {
-        this.io.to(`user:${employeeId}`).emit('shift-created', notification);
-      });
-    }
+    // Notify assigned employees/users
+    this.notifyAssignedUsers(assignedTo, 'shift-created', notification);
 
     // Notify all managers
     this.io.to(`managers:${companyId}`).emit('shift-created', notification);
@@ -259,12 +301,8 @@ class SocketService {
       timestamp: new Date(),
     };
 
-    // Notify assigned employees
-    if (Array.isArray(assignedTo)) {
-      assignedTo.forEach((employeeId) => {
-        this.io.to(`user:${employeeId}`).emit('shift-updated', notification);
-      });
-    }
+    // Notify assigned employees/users
+    this.notifyAssignedUsers(assignedTo, 'shift-updated', notification);
 
     // Notify all managers
     this.io.to(`managers:${companyId}`).emit('shift-updated', notification);
@@ -291,12 +329,8 @@ class SocketService {
       timestamp: new Date(),
     };
 
-    // Notify assigned employees
-    if (Array.isArray(assignedTo)) {
-      assignedTo.forEach((employeeId) => {
-        this.io.to(`user:${employeeId}`).emit('shift-deleted', notification);
-      });
-    }
+    // Notify assigned employees/users
+    this.notifyAssignedUsers(assignedTo, 'shift-deleted', notification);
 
     // Notify all managers
     this.io.to(`managers:${companyId}`).emit('shift-deleted', notification);

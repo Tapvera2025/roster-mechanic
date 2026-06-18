@@ -20,7 +20,7 @@ export default function SiteActivities() {
   const [dateRange, setDateRange] = useState("current_month");
   const [searchQuery, setSearchQuery] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [activities, setActivities] = useState([]); // Data will be fetched from API
+  const [activities] = useState([]); // Data will be fetched from API
 
   const tabs = [
     { id: "daily", label: "Daily Activity Report", icon: FileText },
@@ -170,22 +170,47 @@ export default function SiteActivities() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colSpan={columns.length} className="px-4 py-16 text-center">
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <FileText className="w-12 h-12 text-purple-300" />
-                    <div>
-                      <p className="text-base font-medium text-[hsl(var(--color-foreground))] mb-1">
-                        We couldn't find any DAR records.
-                      </p>
-                      <p className="text-sm text-[hsl(var(--color-foreground-secondary))]">
-                        No Daily Attendance Records (DAR) were found for this
-                        timeframe. Try searching for a different date range
-                      </p>
+              {sortedActivities.length > 0 ? (
+                sortedActivities.slice(0, itemsPerPage).map((activity) => (
+                  <tr key={activity.id || `${activity.date}-${activity.report}`}>
+                    <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
+                      {activity.day || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
+                      {activity.date || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
+                      {activity.site || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
+                      {activity.report || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
+                      {activity.reportedBy || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[hsl(var(--color-foreground))]">
+                      {activity.attachments || "-"}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={columns.length} className="px-4 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <FileText className="w-12 h-12 text-purple-300" />
+                      <div>
+                        <p className="text-base font-medium text-[hsl(var(--color-foreground))] mb-1">
+                          We couldn't find any DAR records.
+                        </p>
+                        <p className="text-sm text-[hsl(var(--color-foreground-secondary))]">
+                          No Daily Attendance Records (DAR) were found for this
+                          timeframe. Try searching for a different date range
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

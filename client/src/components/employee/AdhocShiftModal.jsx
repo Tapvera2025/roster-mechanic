@@ -7,7 +7,7 @@
  * Site detection always happens server-side via the submitted coordinates.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { AlertTriangle, CheckCircle, MapPin, Loader2, X, Camera, Navigation } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -28,23 +28,7 @@ export default function AdhocShiftModal({ isOpen, onClose, onSubmit, isSubmittin
 
   const photoInputRef = useRef(null);
 
-  // Reset + auto-request GPS whenever modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setAdhocReason('');
-      setPosition('');
-      setPhoto(null);
-      setGpsLocation(null);
-      setGpsError(null);
-      setShowManual(false);
-      setManualLat('');
-      setManualLng('');
-      setManualError('');
-      getGPSLocation();
-    }
-  }, [isOpen]);
-
-  const getGPSLocation = () => {
+  const getGPSLocation = useCallback(() => {
     console.log('🔍 [Adhoc Modal] getGPSLocation called - requesting GPS location...');
     setGpsLoading(true);
     setGpsError(null);
@@ -115,7 +99,23 @@ export default function AdhocShiftModal({ isOpen, onClose, onSubmit, isSubmittin
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
-  };
+  }, []);
+
+  // Reset + auto-request GPS whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setAdhocReason('');
+      setPosition('');
+      setPhoto(null);
+      setGpsLocation(null);
+      setGpsError(null);
+      setShowManual(false);
+      setManualLat('');
+      setManualLng('');
+      setManualError('');
+      getGPSLocation();
+    }
+  }, [isOpen, getGPSLocation]);
 
   const applyManualCoords = () => {
     const lat = parseFloat(manualLat);

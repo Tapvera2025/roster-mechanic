@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { User, Mail, Shield, LogOut, Edit2, X, Check, Calendar, KeyRound } from "lucide-react";
 import { userApi } from "../lib/api";
 import toast from "react-hot-toast";
+import { useAuthStore } from "../store/authStore";
 
 export default function Profile() {
   const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -76,11 +78,7 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userEmail");
+    logout();
     toast.success("Logged out successfully");
     navigate("/login");
   };

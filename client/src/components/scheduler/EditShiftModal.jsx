@@ -5,7 +5,7 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Label } from "../ui/Label";
 import { Textarea } from "../ui/Textarea";
-import { schedulerApi, shiftApi } from "../../lib/api";
+import { schedulerApi } from "../../lib/api";
 import toast from "react-hot-toast";
 import { parseTime12Hour, getHour12, getMinute, getTimePeriod } from "../../utils/timeFormatter";
 

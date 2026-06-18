@@ -1,8 +1,7 @@
 import { Search, ChevronDown } from "lucide-react";
-import { useState } from "react"; // kept for searchField state
 
 export default function ClientFilters({ showInactive, setShowInactive }) {
-  const [searchField, setSearchField] = useState("Client Name");
+  const searchField = "Client Name";
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">

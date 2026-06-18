@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../store/authStore';
 
 const SocketContext = createContext(null);
 
@@ -10,95 +11,13 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
   const [connected, setConnected] = useState(false);
   const [notifications, setNotifications] = useState([]);
-
-  // Initialize socket connection
-  useEffect(() => {
-    // Get auth token from localStorage
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      console.log('No token found, skipping socket connection');
-      return;
-    }
-
-    console.log('Initializing socket connection to:', SOCKET_URL);
-
-    // Create socket connection
-    const socketInstance = io(SOCKET_URL, {
-      auth: {
-        token,
-      },
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-    });
-
-    // Connection event handlers
-    socketInstance.on('connect', () => {
-      console.log('✓ Socket connected:', socketInstance.id);
-      setConnected(true);
-    });
-
-    socketInstance.on('connected', (data) => {
-      console.log('✓ Socket authenticated:', data);
-    });
-
-    socketInstance.on('disconnect', (reason) => {
-      console.log('✗ Socket disconnected:', reason);
-      setConnected(false);
-    });
-
-    socketInstance.on('connect_error', (error) => {
-      console.error('✗ Socket connection error:', error.message);
-      setConnected(false);
-    });
-
-    // Listen for all notification types
-    socketInstance.on('notification', (notification) => {
-      handleNotification(notification);
-    });
-
-    // Clock in/out events
-    socketInstance.on('clock-in', (data) => {
-      handleNotification(data);
-    });
-
-    socketInstance.on('clock-out', (data) => {
-      handleNotification(data);
-    });
-
-    // Shift events
-    socketInstance.on('shift-created', (data) => {
-      handleNotification(data);
-    });
-
-    socketInstance.on('shift-updated', (data) => {
-      handleNotification(data);
-    });
-
-    socketInstance.on('shift-deleted', (data) => {
-      handleNotification(data);
-    });
-
-    // Roster events
-    socketInstance.on('roster-updated', (data) => {
-      handleNotification(data);
-    });
-
-    setSocket(socketInstance);
-
-    // Cleanup on unmount
-    return () => {
-      console.log('Disconnecting socket');
-      socketInstance.disconnect();
-    };
-  }, []);
+  const storeToken = useAuthStore((state) => state.token);
+  const token = storeToken || localStorage.getItem('token');
 
   // Handle incoming notifications
   const handleNotification = useCallback((notification) => {
-    console.log('📬 Notification received:', notification);
+    console.log('Notification received:', notification);
 
-    // Add to notifications list
     setNotifications((prev) => [
       {
         id: Date.now(),
@@ -108,7 +27,6 @@ export function SocketProvider({ children }) {
       ...prev,
     ]);
 
-    // Show toast notification
     const toastOptions = {
       duration: 4000,
       position: 'top-right',
@@ -116,27 +34,81 @@ export function SocketProvider({ children }) {
 
     switch (notification.type) {
       case 'CLOCK_IN':
-        toast.success(notification.message, toastOptions);
-        break;
       case 'CLOCK_OUT':
         toast.success(notification.message, toastOptions);
-        break;
-      case 'SHIFT_CREATED':
-        toast.info(notification.message, toastOptions);
-        break;
-      case 'SHIFT_UPDATED':
-        toast(notification.message, toastOptions);
         break;
       case 'SHIFT_DELETED':
         toast.error(notification.message, toastOptions);
         break;
+      case 'SHIFT_CREATED':
+      case 'SHIFT_UPDATED':
       case 'ROSTER_UPDATED':
-        toast.info(notification.message, toastOptions);
-        break;
       default:
         toast(notification.message, toastOptions);
     }
   }, []);
+
+  // Initialize or tear down the socket whenever auth changes.
+  useEffect(() => {
+    if (!token) {
+      setConnected(false);
+      setSocket((currentSocket) => {
+        if (currentSocket) {
+          currentSocket.disconnect();
+        }
+        return null;
+      });
+      return undefined;
+    }
+
+    console.log('Initializing socket connection to:', SOCKET_URL);
+
+    const socketInstance = io(SOCKET_URL, {
+      auth: {
+        token,
+      },
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+    });
+
+    socketInstance.on('connect', () => {
+      console.log('Socket connected:', socketInstance.id);
+      setConnected(true);
+    });
+
+    socketInstance.on('connected', (data) => {
+      console.log('Socket authenticated:', data);
+    });
+
+    socketInstance.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      setConnected(false);
+    });
+
+    socketInstance.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+      setConnected(false);
+    });
+
+    socketInstance.on('notification', handleNotification);
+    socketInstance.on('clock-in', handleNotification);
+    socketInstance.on('clock-out', handleNotification);
+    socketInstance.on('shift-created', handleNotification);
+    socketInstance.on('shift-updated', handleNotification);
+    socketInstance.on('shift-deleted', handleNotification);
+    socketInstance.on('roster-updated', handleNotification);
+
+    setSocket(socketInstance);
+
+    return () => {
+      console.log('Disconnecting socket');
+      socketInstance.removeAllListeners();
+      socketInstance.disconnect();
+      setConnected(false);
+      setSocket(null);
+    };
+  }, [token, handleNotification]);
 
   // Mark notification as read
   const markAsRead = useCallback((id) => {

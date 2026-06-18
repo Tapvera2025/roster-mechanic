@@ -169,7 +169,7 @@ export default function AddMultipleSitesModal({ onClose, onSuccess }) {
         status: "ACTIVE",
       }));
 
-      const response = await siteApi.bulkCreate(payload);
+      await siteApi.bulkCreate(payload);
 
       onClose();
       if (onSuccess) onSuccess();

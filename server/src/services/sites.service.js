@@ -58,7 +58,7 @@ class SitesService {
     const skip = (page - 1) * limit;
     const sortOrder = order === 'desc' ? -1 : 1;
 
-    const [sites, total] = await Promise.all([
+    const [sitesRaw, total] = await Promise.all([
       Site.find(query)
         .sort({ [sortBy]: sortOrder })
         .skip(skip)
@@ -66,6 +66,12 @@ class SitesService {
         .lean(),
       Site.countDocuments(query),
     ]);
+
+    const sites = sitesRaw.map(site => ({
+      ...site,
+      latitude: site.location?.coordinates?.[1] ?? null,
+      longitude: site.location?.coordinates?.[0] ?? null,
+    }));
 
     return {
       sites,
@@ -103,6 +109,9 @@ class SitesService {
       error.statusCode = 404;
       throw error;
     }
+
+    site.latitude = site.location?.coordinates?.[1] ?? null;
+    site.longitude = site.location?.coordinates?.[0] ?? null;
 
     return site;
   }

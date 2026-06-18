@@ -1,8 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Calendar, Clock, MapPin, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import toast from "react-hot-toast";
 import { shiftApi } from "../lib/api";
+
+// Calculate week range - starts from current date, shows next 7 days
+const getWeekRange = (date) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  return { start, end };
+};
 
 export default function MyShifts() {
   const [shifts, setShifts] = useState([]);
@@ -11,15 +20,6 @@ export default function MyShifts() {
 
   // Get user info from localStorage
   const userName = localStorage.getItem('userName') || 'Employee';
-
-  // Calculate week range - starts from current date, shows next 7 days
-  const getWeekRange = (date) => {
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0); // Start from the given date
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6); // Next 7 days
-    return { start, end };
-  };
 
   const { start: weekStart, end: weekEnd } = getWeekRange(currentDate);
 
@@ -43,12 +43,13 @@ export default function MyShifts() {
   };
 
   // Fetch shifts
-  const fetchMyShifts = async () => {
+  const fetchMyShifts = useCallback(async () => {
+    const { start, end } = getWeekRange(currentDate);
     try {
       setLoading(true);
       const response = await shiftApi.getMyShifts(
-        weekStart.toISOString().split('T')[0],
-        weekEnd.toISOString().split('T')[0]
+        start.toISOString().split('T')[0],
+        end.toISOString().split('T')[0]
       );
       setShifts(response.data.data || []);
     } catch (err) {
@@ -57,11 +58,11 @@ export default function MyShifts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentDate]);
 
   useEffect(() => {
     fetchMyShifts();
-  }, [currentDate]);
+  }, [fetchMyShifts]);
 
   const handlePreviousWeek = () => {
     const newDate = new Date(currentDate);

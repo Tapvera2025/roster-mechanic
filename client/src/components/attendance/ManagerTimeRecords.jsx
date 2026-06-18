@@ -45,29 +45,23 @@ export default function ManagerTimeRecords() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    fetchSites();
-    fetchEmployees();
-    fetchRecords();
-  }, [pagination.page, startDate, endDate, selectedSite, selectedEmployee, approvalStatusFilter]);
-
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     try {
       const response = await schedulerApi.getSites();
       setSites(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch sites:', err);
     }
-  };
+  }, []);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       const response = await employeeApi.getAll();
       setEmployees(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch employees:', err);
     }
-  };
+  }, []);
 
   const fetchRecords = useCallback(async () => {
     try {
@@ -88,7 +82,7 @@ export default function ManagerTimeRecords() {
       const response = await clockApi.getRecords(params);
 
       setRecords(response.data.data || []);
-      setPagination(response.data.pagination || pagination);
+      setPagination((prev) => response.data.pagination || prev);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load time records');
       console.error('Failed to fetch records:', err);
@@ -96,6 +90,15 @@ export default function ManagerTimeRecords() {
       setLoading(false);
     }
   }, [pagination.page, pagination.limit, startDate, endDate, selectedSite, selectedEmployee, approvalStatusFilter]);
+
+  useEffect(() => {
+    fetchSites();
+    fetchEmployees();
+  }, [fetchSites, fetchEmployees]);
+
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
 
   // Real-time updates: Listen for clock-in/out events and refresh table
   useSocketEvent('clock-in', useCallback((data) => {

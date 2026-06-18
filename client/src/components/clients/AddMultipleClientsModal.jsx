@@ -63,14 +63,6 @@ export default function AddMultipleClientsModal({ onClose, onSuccess }) {
     );
   };
 
-  const handleCheckboxChange = (id) => {
-    setClients(
-      clients.map((client) =>
-        client.id === id ? { ...client, checked: !client.checked } : client
-      )
-    );
-  };
-
   const handleSave = async () => {
     try {
       setSubmitting(true);

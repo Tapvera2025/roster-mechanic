@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, Calendar, MapPin, User, Clock, Trash2, RotateCcw } from "lucide-react";
 import { shiftApi } from "../../lib/api";
 import toast from "react-hot-toast";
@@ -8,11 +8,7 @@ export default function ViewDeletedShiftsModal({ onClose, siteId }) {
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState(null);
 
-  useEffect(() => {
-    fetchDeletedShifts();
-  }, [siteId]);
-
-  const fetchDeletedShifts = async () => {
+  const fetchDeletedShifts = useCallback(async () => {
     try {
       setLoading(true);
       const response = await shiftApi.getDeleted(siteId);
@@ -23,7 +19,11 @@ export default function ViewDeletedShiftsModal({ onClose, siteId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [siteId]);
+
+  useEffect(() => {
+    fetchDeletedShifts();
+  }, [fetchDeletedShifts]);
 
   const handleRestore = async (shiftId) => {
     try {

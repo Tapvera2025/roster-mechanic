@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Building2,
   Plus,
@@ -34,15 +34,13 @@ export default function Clients() {
   // API state
   const [clients, setClients] = useState(staticClients); // Start with static data
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentLimit, setCurrentLimit] = useState(25);
 
   // Fetch clients function
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       const response = await clientApi.getAll({
         page: currentPage,
         limit: currentLimit,
@@ -62,7 +60,6 @@ export default function Clients() {
       }
     } catch (err) {
       console.error("Failed to fetch clients:", err);
-      setError(err.response?.data?.message || "Failed to fetch clients");
       // Keep static data on error - don't show error toast if we have data
       if (clients.length === 0) {
         toast.error("Using local data - API not available");
@@ -70,12 +67,12 @@ export default function Clients() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [clients.length, currentLimit, currentPage, showInactive]);
 
   // Re-fetch whenever filter or page changes
   useEffect(() => {
     fetchClients();
-  }, [showInactive, currentPage, currentLimit]);
+  }, [fetchClients]);
 
   // Handle refresh button
   const handleRefresh = () => {
@@ -209,10 +206,17 @@ export default function Clients() {
               Columns
               <ChevronDown className="w-4 h-4" />
             </button>
-            <select className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md text-sm cursor-pointer">
-              <option>25</option>
-              <option>50</option>
-              <option>100</option>
+            <select
+              value={currentLimit}
+              onChange={(e) => {
+                setCurrentLimit(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-3 sm:px-4 py-2 bg-[hsl(var(--color-card))] border border-[hsl(var(--color-border))] text-[hsl(var(--color-foreground))] rounded-md text-sm cursor-pointer"
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
             </select>
           </div>
         </div>

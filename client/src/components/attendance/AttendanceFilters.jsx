@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
@@ -7,18 +7,18 @@ import { schedulerApi } from "../../lib/api";
 export default function AttendanceFilters({ filters, setFilters, onSearch }) {
   const [sites, setSites] = useState([]);
 
-  useEffect(() => {
-    fetchSites();
-  }, []);
-
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     try {
       const response = await schedulerApi.getSites();
       setSites(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch sites:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSites();
+  }, [fetchSites]);
 
   const handleClearFilters = () => {
     setFilters({

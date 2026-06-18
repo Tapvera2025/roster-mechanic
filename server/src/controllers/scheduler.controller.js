@@ -2,6 +2,47 @@ const schedulerService = require('../services/scheduler.service');
 const socketService = require('../services/socket.service');
 const asyncHandler = require('../utils/asyncHandler');
 
+const getDocumentId = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (value._id) return value._id.toString();
+  if (value.id) return value.id.toString();
+  if (typeof value.toString === 'function') return value.toString();
+  return null;
+};
+
+const getShiftAssignees = (shift) => {
+  const assignees = [];
+
+  if (shift.employeeId) {
+    assignees.push(shift.employeeId);
+  }
+
+  if (Array.isArray(shift.employees)) {
+    assignees.push(...shift.employees);
+  }
+
+  return [...new Set(assignees.map(getDocumentId).filter(Boolean))];
+};
+
+const getShiftSite = (shift) => {
+  const site = shift.site || shift.siteId;
+  if (!site) return null;
+
+  return {
+    id: getDocumentId(site),
+    name: site.name || site.siteLocationName || site.shortName || 'Site',
+  };
+};
+
+const buildShiftSocketPayload = (shift, companyId) => ({
+  ...shift,
+  id: getDocumentId(shift) || shift.id,
+  companyId,
+  assignedTo: getShiftAssignees(shift),
+  site: getShiftSite(shift),
+});
+
 /**
  * Get active sites for scheduler dropdown
  * @route GET /api/scheduler/sites
@@ -109,13 +150,7 @@ const createShift = asyncHandler(async (req, res) => {
 
   // Send real-time notification
   try {
-    socketService.notifyShiftCreated({
-      id: shift._id,
-      companyId: req.user.companyId,
-      assignedTo: shift.employees || [],
-      site: shift.site,
-      ...shift.toObject(),
-    });
+    socketService.notifyShiftCreated(buildShiftSocketPayload(shift, req.user.companyId));
   } catch (error) {
     console.error('Failed to send shift created notification:', error);
   }
@@ -142,13 +177,7 @@ const createAdhocShift = asyncHandler(async (req, res) => {
 
   // Send real-time notification
   try {
-    socketService.notifyShiftCreated({
-      id: shift._id,
-      companyId: req.user.companyId,
-      assignedTo: shift.employees || [],
-      site: shift.site,
-      ...shift.toObject(),
-    });
+    socketService.notifyShiftCreated(buildShiftSocketPayload(shift, req.user.companyId));
   } catch (error) {
     console.error('Failed to send adhoc shift created notification:', error);
   }
@@ -177,13 +206,7 @@ const updateShift = asyncHandler(async (req, res) => {
 
   // Send real-time notification
   try {
-    socketService.notifyShiftUpdated({
-      id: shift._id,
-      companyId: req.user.companyId,
-      assignedTo: shift.employees || [],
-      site: shift.site,
-      ...shift.toObject(),
-    });
+    socketService.notifyShiftUpdated(buildShiftSocketPayload(shift, req.user.companyId));
   } catch (error) {
     console.error('Failed to send shift updated notification:', error);
   }
@@ -266,15 +289,7 @@ const restoreShift = asyncHandler(async (req, res) => {
 
   // Send real-time notification
   try {
-    socketService.notifyShiftCreated({
-      id: shift._id,
-      companyId: req.user.companyId,
-      assignedTo: shift.employees || [],
-      site: shift.siteId,
-      date: shift.date,
-      startTime: shift.startTime,
-      endTime: shift.endTime,
-    });
+    socketService.notifyShiftCreated(buildShiftSocketPayload(shift, req.user.companyId));
   } catch (error) {
     console.error('Failed to send shift restored notification:', error);
   }

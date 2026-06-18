@@ -22,28 +22,6 @@ export default function TimeRecordsHistory() {
   // Fetched on mount from the employee record linked to logged-in user
   const [employeeId, setEmployeeId] = useState(null);
 
-  // On mount: fetch employee record, then load sites + records
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const res = await shiftApi.getMyEmployee();
-        const id = res.data.data._id?.toString() || res.data.data.id;
-        setEmployeeId(id);
-        fetchSites();
-        fetchRecords(id);
-      } catch (err) {
-        setError('Could not load your employee profile. Please contact your manager.');
-        setLoading(false);
-      }
-    };
-    init();
-  }, [fetchSites, fetchRecords]);
-
-  // Re-fetch when filters or page change (only after employeeId is known)
-  useEffect(() => {
-    if (employeeId) fetchRecords(employeeId);
-  }, [employeeId, pagination.page, startDate, endDate, selectedSite, fetchRecords]);
-
   const fetchSites = useCallback(async () => {
     try {
       const response = await schedulerApi.getSites();
@@ -65,7 +43,7 @@ export default function TimeRecordsHistory() {
       if (selectedSite) params.siteId = selectedSite;
       const response = await clockApi.getMyHistory(resolvedId, params);
       setRecords(response.data.data || []);
-      setPagination(response.data.pagination || pagination);
+      setPagination((prev) => response.data.pagination || prev);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load time records');
       console.error('Failed to fetch records:', err);
@@ -73,6 +51,27 @@ export default function TimeRecordsHistory() {
       setLoading(false);
     }
   }, [employeeId, pagination.page, pagination.limit, startDate, endDate, selectedSite]);
+
+  // On mount: fetch employee record and filter options.
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const res = await shiftApi.getMyEmployee();
+        const id = res.data.data._id?.toString() || res.data.data.id;
+        setEmployeeId(id);
+        fetchSites();
+      } catch (err) {
+        setError('Could not load your employee profile. Please contact your manager.');
+        setLoading(false);
+      }
+    };
+    init();
+  }, [fetchSites]);
+
+  // Re-fetch when filters or page change (only after employeeId is known)
+  useEffect(() => {
+    if (employeeId) fetchRecords(employeeId);
+  }, [employeeId, fetchRecords]);
 
   const handleClearFilters = () => {
     setStartDate('');

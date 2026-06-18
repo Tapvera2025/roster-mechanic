@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Users, Plus, Link2, ChevronDown, Settings, Maximize, Minimize, RotateCw, Trash2, Edit } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -37,7 +37,7 @@ export default function Employees() {
   });
 
   // Fetch employees
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       setLoading(true);
       const response = await employeeApi.getAll({
@@ -56,11 +56,11 @@ export default function Employees() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, showInactive, pagination.page, pagination.limit]);
 
   useEffect(() => {
     fetchEmployees();
-  }, [search, showInactive, pagination.page]);
+  }, [fetchEmployees]);
 
   const handleAddNew = () => {
     setEditingEmployee(null);

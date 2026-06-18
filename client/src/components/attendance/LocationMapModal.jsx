@@ -18,39 +18,18 @@ export default function LocationMapModal({ onClose, timeRecord }) {
   const geofenceRadius = (timeRecord.siteId?.geoFenceRadius || 100); // in meters
   const clockInDistance = timeRecord.clockInDistance;
   const clockOutDistance = timeRecord.clockOutDistance;
-
-  // Validate we have required data
-  if (!siteLocation || !clockInLocation) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Location Map</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <p className="text-gray-600">Location data not available for this time record.</p>
-          <button
-            onClick={onClose}
-            className="mt-4 w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const siteLat = siteLocation[1];
-  const siteLng = siteLocation[0];
-  const clockInLat = clockInLocation[1];
-  const clockInLng = clockInLocation[0];
-  const clockOutLat = clockOutLocation ? clockOutLocation[1] : null;
-  const clockOutLng = clockOutLocation ? clockOutLocation[0] : null;
+  const hasLocationData = Boolean(siteLocation && clockInLocation);
+  const siteLat = siteLocation?.[1] ?? 0;
+  const siteLng = siteLocation?.[0] ?? 0;
+  const clockInLat = clockInLocation?.[1] ?? 0;
+  const clockInLng = clockInLocation?.[0] ?? 0;
+  const clockOutLat = clockOutLocation?.[1] ?? null;
+  const clockOutLng = clockOutLocation?.[0] ?? null;
 
   // Load Google Maps script
   useEffect(() => {
+    if (!hasLocationData) return;
+
     const loadGoogleMaps = () => {
       if (window.google && window.google.maps) {
         setMapReady(true);
@@ -76,11 +55,11 @@ export default function LocationMapModal({ onClose, timeRecord }) {
     };
 
     loadGoogleMaps();
-  }, []);
+  }, [hasLocationData]);
 
   // Initialize map
   useEffect(() => {
-    if (!mapReady || !mapRef.current || googleMapRef.current) return;
+    if (!hasLocationData || !mapReady || !mapRef.current || googleMapRef.current) return;
 
     const map = new window.google.maps.Map(mapRef.current, {
       center: { lat: siteLat, lng: siteLng },
@@ -193,7 +172,7 @@ export default function LocationMapModal({ onClose, timeRecord }) {
     }, 100);
 
     googleMapRef.current = map;
-  }, [mapReady, siteLat, siteLng, clockInLat, clockInLng, clockOutLat, clockOutLng, geofenceRadius, clockInDistance, clockOutDistance]);
+  }, [hasLocationData, mapReady, mapView, siteLat, siteLng, clockInLat, clockInLng, clockOutLat, clockOutLng, geofenceRadius, clockInDistance, clockOutDistance]);
 
   // Update map type when view changes
   useEffect(() => {
@@ -201,6 +180,29 @@ export default function LocationMapModal({ onClose, timeRecord }) {
       googleMapRef.current.setMapTypeId(mapView);
     }
   }, [mapView]);
+
+  // Validate we have required data
+  if (!hasLocationData) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Location Map</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-gray-600">Location data not available for this time record.</p>
+          <button
+            onClick={onClose}
+            className="mt-4 w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">

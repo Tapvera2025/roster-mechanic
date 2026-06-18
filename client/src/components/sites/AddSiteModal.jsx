@@ -41,7 +41,6 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
 
   // API state
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({});
   const [clients, setClients] = useState(staticClients);
 
   // Map / geocoding state
@@ -221,7 +220,6 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
   const handleSave = async () => {
     try {
       setSubmitting(true);
-      setErrors({});
 
       // Build request payload from formData
       const payload = {
@@ -261,10 +259,6 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
       onClose();
       if (onSuccess) onSuccess();
     } catch (err) {
-      const apiErrors = err.response?.data?.errors;
-      if (apiErrors) {
-        setErrors(apiErrors);
-      }
       toast.error(
         err.response?.data?.message ||
           `Failed to ${site ? "update" : "create"} site`,

@@ -2,7 +2,7 @@ import * as React from "react";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-const Dialog = ({ children, open, onOpenChange }) => {
+const Dialog = ({ children, open }) => {
   return open ? <>{children}</> : null;
 };
 

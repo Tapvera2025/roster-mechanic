@@ -1,8 +1,7 @@
 import { Search, ChevronDown } from "lucide-react";
-import { useState } from "react";
 
 export default function EmployeeFilters({ showInactive, setShowInactive }) {
-  const [searchField, setSearchField] = useState("Name");
+  const searchField = "Name";
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">

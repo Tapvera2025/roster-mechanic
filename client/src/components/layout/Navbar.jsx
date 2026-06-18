@@ -8,10 +8,12 @@ import {
   Menu,
 } from "lucide-react";
 import NotificationBell from "../notifications/NotificationBell";
+import { useAuthStore } from "../../store/authStore";
 
 export default function Navbar({ onToggleSidebar }) {
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const logout = useAuthStore((state) => state.logout);
 
   // Get user info from localStorage
   const userName = localStorage.getItem("userName") || "User";
@@ -20,15 +22,7 @@ export default function Navbar({ onToggleSidebar }) {
   const userInitials = userName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
 
   const handleLogout = () => {
-    // Clear all authentication data
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userEmail");
-
-    // Also clear auth-storage from zustand persist
-    localStorage.removeItem("auth-storage");
+    logout();
 
     // Navigate to login and replace history to prevent back button access
     navigate("/login", { replace: true });

@@ -341,18 +341,6 @@ export default function Scheduler() {
     setIsModalOpen(true);
   };
 
-  // Handle opening add adhoc shift modal
-  const handleAddAdhocShift = (employeeId, dateIndex) => {
-    const targetDate = new Date(currentStartDate);
-    targetDate.setDate(targetDate.getDate() + dateIndex);
-
-    setAdhocModalData({
-      employeeId: employeeId,
-      date: toLocalDateStr(targetDate),
-    });
-    setIsAdhocModalOpen(true);
-  };
-
   // Handle saving a shift
   const handleSaveShift = async (shiftData) => {
     try {
@@ -565,14 +553,6 @@ export default function Scheduler() {
     { label: "Warnings", value: "0", color: "bg-orange-500" },
   ];
 
-  // Get view mode label for select
-  const getViewModeLabel = () => {
-    if (viewMode === "week") return "Week";
-    if (viewMode === "2weeks") return "2 Weeks";
-    if (viewMode === "3weeks") return "3 Weeks";
-    return "4 Weeks";
-  };
-
   // Get weather icon based on weather condition
   const getWeatherIcon = (weather) => {
     if (!weather) return null;
@@ -608,7 +588,7 @@ export default function Scheduler() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[hsl(var(--color-card))]">
+    <div className="flex flex-col h-screen bg-[hsl(var(--color-card))]" aria-busy={loading}>
       {/* Top Toolbar - Mobile Responsive */}
       <div className="border-b border-[hsl(var(--color-border))] bg-[hsl(var(--color-card))]">
         {/* Row 1: Site Selector & View Types (Always visible) */}

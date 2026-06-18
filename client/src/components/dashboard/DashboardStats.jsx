@@ -5,19 +5,16 @@ import { dashboardApi } from "../../lib/api";
 export default function DashboardStats({ date = "Today" }) {
   const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        setError(null);
         const res = await dashboardApi.getStats();
         console.log('Dashboard stats response:', res.data);
         setStatsData(res.data.data);
       } catch (err) {
         console.error('Failed to fetch dashboard stats:', err);
-        setError(err.message || 'Failed to load stats');
         setStatsData(null);
       } finally {
         setLoading(false);

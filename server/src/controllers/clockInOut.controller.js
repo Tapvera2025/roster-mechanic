@@ -10,6 +10,23 @@ const asyncHandler = require('../utils/asyncHandler');
 const { validationResult } = require('express-validator');
 const { getPhotoUrl } = require('../config/upload');
 
+const getDocumentId = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (value._id) return value._id.toString();
+  if (value.id) return value.id.toString();
+  if (typeof value.toString === 'function') return value.toString();
+  return null;
+};
+
+const getEmployeeName = (employee) => {
+  if (!employee) return 'Employee';
+  if (employee.name) return employee.name;
+  return [employee.firstName, employee.lastName].filter(Boolean).join(' ') || 'Employee';
+};
+
+const getSiteName = (site) => site?.siteLocationName || site?.shortName || site?.name || 'Site';
+
 /**
  * Clock in an employee
  * @route POST /api/v1/clock/in
@@ -46,17 +63,20 @@ const clockIn = asyncHandler(async (req, res) => {
 
   // Send real-time notification to managers
   try {
+    const employee = timeRecord.employeeId;
+    const site = timeRecord.siteId;
+
     socketService.notifyClockIn({
       companyId: req.user.companyId,
       employee: {
-        id: timeRecord.employee?._id || employeeId,
-        name: timeRecord.employee?.name || 'Employee',
+        id: getDocumentId(employee) || employeeId,
+        name: getEmployeeName(employee),
       },
       site: {
-        id: timeRecord.site?._id || siteId,
-        name: timeRecord.site?.siteLocationName || 'Site',
+        id: getDocumentId(site) || siteId,
+        name: getSiteName(site),
       },
-      timestamp: timeRecord.clockIn,
+      timestamp: timeRecord.clockInTime,
       location: {
         latitude: timeRecord.clockInLocation?.coordinates?.[1],
         longitude: timeRecord.clockInLocation?.coordinates?.[0],
@@ -108,22 +128,24 @@ const clockOut = asyncHandler(async (req, res) => {
 
   // Send real-time notification to managers
   try {
+    const employee = timeRecord.employeeId;
+    const site = timeRecord.siteId;
     // Calculate duration in minutes
-    const duration = timeRecord.clockOut && timeRecord.clockIn
-      ? Math.round((new Date(timeRecord.clockOut) - new Date(timeRecord.clockIn)) / 60000)
+    const duration = timeRecord.clockOutTime && timeRecord.clockInTime
+      ? Math.round((new Date(timeRecord.clockOutTime) - new Date(timeRecord.clockInTime)) / 60000)
       : null;
 
     socketService.notifyClockOut({
       companyId: req.user.companyId,
       employee: {
-        id: timeRecord.employee?._id || employeeId,
-        name: timeRecord.employee?.name || 'Employee',
+        id: getDocumentId(employee) || employeeId,
+        name: getEmployeeName(employee),
       },
       site: {
-        id: timeRecord.site?._id,
-        name: timeRecord.site?.siteLocationName || 'Site',
+        id: getDocumentId(site),
+        name: getSiteName(site),
       },
-      timestamp: timeRecord.clockOut,
+      timestamp: timeRecord.clockOutTime,
       duration,
       location: {
         latitude: timeRecord.clockOutLocation?.coordinates?.[1],
@@ -513,7 +535,10 @@ const clockInAdhoc = asyncHandler(async (req, res) => {
   try {
     socketService.notifyClockIn({
       companyId: req.user.companyId,
-      employee: { id: employeeId },
+      employee: {
+        id: employeeId,
+        name: getEmployeeName(result.timeRecord?.employeeId),
+      },
       site: { id: result.detectedSite.id, name: result.detectedSite.name },
       timestamp: result.timeRecord.clockInTime,
       isAdhoc: true,

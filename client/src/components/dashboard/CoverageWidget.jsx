@@ -1,5 +1,40 @@
 import { Card } from "../ui/Card";
 
+const CircularProgress = ({ percentage, size = 120 }) => {
+  const radius = (size - 10) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#e5e7eb"
+          strokeWidth="8"
+          fill="none"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#3b82f6"
+          strokeWidth="8"
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-2xl font-bold text-[hsl(var(--color-foreground))]">{percentage}%</span>
+      </div>
+    </div>
+  );
+};
+
 export default function CoverageWidget() {
   const coverageData = {
     percentage: 0,
@@ -21,41 +56,6 @@ export default function CoverageWidget() {
     differenceHRS: "0.00 HRS",
     differenceShifts: "0 Shifts",
     differencePercentage: "0%",
-  };
-
-  const CircularProgress = ({ percentage, size = 120 }) => {
-    const radius = (size - 10) / 2;
-    const circumference = radius * 2 * Math.PI;
-    const offset = circumference - (percentage / 100) * circumference;
-
-    return (
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="transform -rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="#e5e7eb"
-            strokeWidth="8"
-            fill="none"
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="#3b82f6"
-            strokeWidth="8"
-            fill="none"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold text-[hsl(var(--color-foreground))]">{percentage}%</span>
-        </div>
-      </div>
-    );
   };
 
   return (

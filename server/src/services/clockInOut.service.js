@@ -18,6 +18,45 @@ const emailService = require('./email.service');
 
 class ClockInOutService {
   /**
+   * Normalize a site's GeoJSON coordinates into { latitude, longitude }.
+   * GeoJSON stores coordinates as [longitude, latitude], but this also
+   * tolerates older/bad records saved as [latitude, longitude].
+   */
+  getSiteCoordinates(site) {
+    const coordinates = site?.location?.coordinates;
+
+    if (!Array.isArray(coordinates) || coordinates.length < 2) {
+      const error = new Error(
+        `Site geofence location is not configured for ${site?.siteLocationName || 'this site'}. Please ask your manager to update the site map coordinates.`
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const first = Number(coordinates[0]);
+    const second = Number(coordinates[1]);
+
+    const isLatitude = (value) => Number.isFinite(value) && value >= -90 && value <= 90;
+    const isLongitude = (value) => Number.isFinite(value) && value >= -180 && value <= 180;
+
+    // Correct GeoJSON order: [longitude, latitude]
+    if (isLongitude(first) && isLatitude(second)) {
+      return { longitude: first, latitude: second };
+    }
+
+    // Backward compatibility for records accidentally saved as [latitude, longitude].
+    if (isLatitude(first) && isLongitude(second)) {
+      return { longitude: second, latitude: first };
+    }
+
+    const error = new Error(
+      `Site geofence coordinates are invalid for ${site?.siteLocationName || 'this site'}. Please ask your manager to update the site map coordinates.`
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  /**
    * Calculate distance between two coordinates using Haversine formula
    * @param {Number} lat1 - Latitude of point 1
    * @param {Number} lon1 - Longitude of point 1
@@ -49,12 +88,7 @@ class ClockInOutService {
    * @returns {Boolean} - True if within geofence
    */
   isWithinGeofence(employeeLat, employeeLon, site) {
-    if (!site.location || !site.location.coordinates) {
-      return false;
-    }
-
-    const siteLon = site.location.coordinates[0];
-    const siteLat = site.location.coordinates[1];
+    const { latitude: siteLat, longitude: siteLon } = this.getSiteCoordinates(site);
     const radius = site.geoFenceRadius || 100; // Default 100m
 
     const distance = this.calculateDistance(employeeLat, employeeLon, siteLat, siteLon);
@@ -85,6 +119,12 @@ class ClockInOutService {
       throw error;
     }
 
+    if (shiftId && !mongoose.Types.ObjectId.isValid(shiftId)) {
+      const error = new Error('Invalid shift ID');
+      error.statusCode = 400;
+      throw error;
+    }
+
     // Verify employee exists and belongs to company
     const employee = await Employee.findOne({
       _id: employeeId,
@@ -98,9 +138,46 @@ class ClockInOutService {
       throw error;
     }
 
+    let effectiveSiteId = siteId;
+    let shift = null;
+
+    // Validate shift assignment first and use the shift's site as the source of truth.
+    if (shiftId) {
+      shift = await Shift.findOne({
+        _id: shiftId,
+        companyId,
+      });
+
+      if (!shift) {
+        const error = new Error('Shift not found or does not belong to your company');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      if (shift.employeeId && shift.employeeId.toString() !== employeeId.toString()) {
+        const error = new Error(
+          'This shift is not assigned to you. Please select the correct shift or contact your manager.'
+        );
+        error.statusCode = 403;
+        throw error;
+      }
+
+      if (shift.status !== 'SCHEDULED' && shift.status !== 'IN_PROGRESS') {
+        const error = new Error(
+          `Cannot clock in to a ${shift.status.toLowerCase()} shift. Please contact your manager.`
+        );
+        error.statusCode = 400;
+        throw error;
+      }
+
+      if (shift.siteId) {
+        effectiveSiteId = shift.siteId.toString();
+      }
+    }
+
     // Verify site exists and belongs to company
     const site = await Site.findOne({
-      _id: siteId,
+      _id: effectiveSiteId,
       companyId,
       status: 'ACTIVE',
     });
@@ -112,8 +189,7 @@ class ClockInOutService {
     }
 
     // Geofence validation - calculate distance
-    const siteLon = site.location.coordinates[0];
-    const siteLat = site.location.coordinates[1];
+    const { latitude: siteLat, longitude: siteLon } = this.getSiteCoordinates(site);
     const geofenceRadius = site.geoFenceRadius || 100;
     const distance = this.calculateDistance(latitude, longitude, siteLat, siteLon);
     const withinGeofence = distance <= geofenceRadius;
@@ -123,7 +199,7 @@ class ClockInOutService {
       try {
         await GeofenceViolation.create({
           employeeId,
-          siteId,
+          siteId: effectiveSiteId,
           companyId,
           attemptType: 'CLOCK_IN',
           attemptLocation: {
@@ -163,38 +239,6 @@ class ClockInOutService {
       throw error;
     }
 
-    // Validate shift assignment if shiftId is provided
-    if (shiftId && mongoose.Types.ObjectId.isValid(shiftId)) {
-      const shift = await Shift.findOne({
-        _id: shiftId,
-        companyId,
-      });
-
-      if (!shift) {
-        const error = new Error('Shift not found or does not belong to your company');
-        error.statusCode = 404;
-        throw error;
-      }
-
-      // Verify the shift is assigned to this employee
-      if (shift.employeeId && shift.employeeId.toString() !== employeeId.toString()) {
-        const error = new Error(
-          'This shift is not assigned to you. Please select the correct shift or contact your manager.'
-        );
-        error.statusCode = 403;
-        throw error;
-      }
-
-      // Verify the shift is in a valid status for clock-in
-      if (shift.status !== 'SCHEDULED' && shift.status !== 'IN_PROGRESS') {
-        const error = new Error(
-          `Cannot clock in to a ${shift.status.toLowerCase()} shift. Please contact your manager.`
-        );
-        error.statusCode = 400;
-        throw error;
-      }
-    }
-
     // Start a transaction session for atomic operations
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -205,7 +249,7 @@ class ClockInOutService {
         [
           {
             employeeId,
-            siteId,
+            siteId: effectiveSiteId,
             shiftId: shiftId || null,
             companyId,
             clockInTime: new Date(),
@@ -223,7 +267,7 @@ class ClockInOutService {
       );
 
       // If shift provided, update shift status to IN_PROGRESS within transaction
-      if (shiftId && mongoose.Types.ObjectId.isValid(shiftId)) {
+      if (shiftId) {
         await Shift.findOneAndUpdate(
           {
             _id: shiftId,
@@ -296,8 +340,7 @@ class ClockInOutService {
     const site = timeRecord.siteId;
 
     // Geofence validation - calculate distance
-    const siteLon = site.location.coordinates[0];
-    const siteLat = site.location.coordinates[1];
+    const { latitude: siteLat, longitude: siteLon } = this.getSiteCoordinates(site);
     const geofenceRadius = site.geoFenceRadius || 100;
     const distance = this.calculateDistance(latitude, longitude, siteLat, siteLon);
     const withinGeofence = distance <= geofenceRadius;
@@ -359,19 +402,32 @@ class ClockInOutService {
 
       // If shift exists, update shift status to COMPLETED within transaction
       if (timeRecord.shiftId) {
+        const shift = await Shift.findOne({
+          _id: timeRecord.shiftId,
+          companyId,
+        })
+          .select('isAdhoc endTime')
+          .session(session);
+
+        const shiftUpdate = {
+          status: 'COMPLETED',
+          actualEndTime: clockOutTime,
+          clockOutLocation: {
+            type: 'Point',
+            coordinates: [longitude, latitude],
+          },
+        };
+
+        if (shift?.isAdhoc && !shift.endTime) {
+          shiftUpdate.endTime = clockOutTime;
+        }
+
         await Shift.findOneAndUpdate(
           {
             _id: timeRecord.shiftId,
             companyId,
           },
-          {
-            status: 'COMPLETED',
-            actualEndTime: clockOutTime,
-            clockOutLocation: {
-              type: 'Point',
-              coordinates: [longitude, latitude],
-            },
-          },
+          shiftUpdate,
           { session }
         );
       }
@@ -1055,7 +1111,7 @@ class ClockInOutService {
 
     // 4. Auto-detect site based on GPS location
     // Get the employee's active site assignments
-    const siteAssignments = await EmployeeSite.find({ employeeId, isActive: true }).lean();
+    const siteAssignments = await EmployeeSite.find({ employeeId, companyId, isActive: true }).lean();
     if (siteAssignments.length === 0) {
       const error = new Error('Employee is not assigned to any active sites');
       error.statusCode = 400;
@@ -1076,10 +1132,9 @@ class ClockInOutService {
     const empLon = location.coordinates[0];
 
     const sitesWithDistance = assignedSites.map((site) => {
-      const siteLat = site.location.coordinates[1];
-      const siteLon = site.location.coordinates[0];
+      const { latitude: siteLat, longitude: siteLon } = this.getSiteCoordinates(site);
       const distance = this.calculateDistance(empLat, empLon, siteLat, siteLon);
-      return { site, distance };
+      return { site, siteLat, siteLon, distance };
     });
 
     // Find sites within geofence radius
@@ -1088,15 +1143,24 @@ class ClockInOutService {
     );
 
     if (sitesInRange.length === 0) {
+      const closestSite = [...sitesWithDistance].sort((a, b) => a.distance - b.distance)[0];
+
       // Log geofence violation for audit trail
       try {
         await GeofenceViolation.create({
           employeeId,
           companyId,
-          attemptType: 'ADHOC_CLOCK_IN',
+          siteId: closestSite?.site?._id,
+          attemptType: 'CLOCK_IN',
           attemptLocation: location,
-          distanceFromSite: Math.round(sitesWithDistance.sort((a, b) => a.distance - b.distance)[0]?.distance || 0),
-          geofenceRadius: assignedSites[0]?.geoFenceRadius || 100,
+          siteLocation: closestSite
+            ? {
+                type: 'Point',
+                coordinates: [closestSite.siteLon, closestSite.siteLat],
+              }
+            : undefined,
+          distanceFromSite: Math.round(closestSite?.distance || 0),
+          geofenceRadius: closestSite?.site?.geoFenceRadius || 100,
           attemptTime: new Date(),
         });
       } catch (logErr) {

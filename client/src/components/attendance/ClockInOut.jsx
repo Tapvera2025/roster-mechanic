@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Camera, Clock, CheckCircle, XCircle, Loader2, AlertCircle, Navigation, Calendar, Coffee, Play, AlertTriangle } from 'lucide-react';
 import { clockApi, shiftApi } from '../../lib/api';
 import AdhocShiftModal from '../employee/AdhocShiftModal';
@@ -26,6 +26,7 @@ export default function ClockInOut() {
 
   const [elapsedTime, setElapsedTime] = useState('');
   const [employeeId, setEmployeeId] = useState(null);
+  const employeeIdRef = useRef(null);
 
   const [breakLoading, setBreakLoading] = useState(false);
   const [breakType, setBreakType] = useState('BREAK');
@@ -33,41 +34,8 @@ export default function ClockInOut() {
   const [showAdhocModal, setShowAdhocModal] = useState(false);
   const [adhocLoading, setAdhocLoading] = useState(false);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const res = await shiftApi.getMyEmployee();
-        const id = res.data.data._id?.toString() || res.data.data.id;
-        setEmployeeId(id);
-        fetchCurrentStatus(id);
-        fetchTodayShifts();
-        fetchUpcomingShifts();
-      } catch (err) {
-        setError('Could not load your employee profile. Please contact your manager.');
-        setStatusLoading(false);
-        setShiftsLoading(false);
-      }
-    };
-    init();
-  }, []);
-
-  useEffect(() => {
-    if (clockStatus?.clockInTime) {
-      const interval = setInterval(() => {
-        const clockInTime = new Date(clockStatus.clockInTime);
-        const now = new Date();
-        const diff = now - clockInTime;
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setElapsedTime(`${hours}h ${minutes}m ${seconds}s`);
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [clockStatus]);
-
-  const fetchCurrentStatus = async (id) => {
-    const resolvedId = id || employeeId;
+  const fetchCurrentStatus = useCallback(async (id) => {
+    const resolvedId = id || employeeIdRef.current;
     if (!resolvedId) return;
     try {
       setStatusLoading(true);
@@ -78,9 +46,9 @@ export default function ClockInOut() {
     } finally {
       setStatusLoading(false);
     }
-  };
+  }, []);
 
-  const fetchTodayShifts = async () => {
+  const fetchTodayShifts = useCallback(async () => {
     try {
       setShiftsLoading(true);
       const today = new Date().toISOString().split('T')[0];
@@ -95,9 +63,9 @@ export default function ClockInOut() {
     } finally {
       setShiftsLoading(false);
     }
-  };
+  }, []);
 
-  const fetchUpcomingShifts = async () => {
+  const fetchUpcomingShifts = useCallback(async () => {
     try {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -114,7 +82,41 @@ export default function ClockInOut() {
     } catch (err) {
       console.error('Failed to fetch upcoming shifts:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const res = await shiftApi.getMyEmployee();
+        const id = res.data.data._id?.toString() || res.data.data.id;
+        employeeIdRef.current = id;
+        setEmployeeId(id);
+        fetchCurrentStatus(id);
+        fetchTodayShifts();
+        fetchUpcomingShifts();
+      } catch (err) {
+        setError('Could not load your employee profile. Please contact your manager.');
+        setStatusLoading(false);
+        setShiftsLoading(false);
+      }
+    };
+    init();
+  }, [fetchCurrentStatus, fetchTodayShifts, fetchUpcomingShifts]);
+
+  useEffect(() => {
+    if (clockStatus?.clockInTime) {
+      const interval = setInterval(() => {
+        const clockInTime = new Date(clockStatus.clockInTime);
+        const now = new Date();
+        const diff = now - clockInTime;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setElapsedTime(`${hours}h ${minutes}m ${seconds}s`);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [clockStatus]);
 
   const getCurrentLocation = () => {
     setLocationLoading(true);

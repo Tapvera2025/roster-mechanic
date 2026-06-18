@@ -6,7 +6,7 @@ import { Select } from "../ui/Select";
 import { Label } from "../ui/Label";
 import { LocationAutocomplete } from "../ui/LocationAutocomplete";
 import toast from "react-hot-toast";
-import { siteApi, employeeApi } from "../../lib/api";
+import { siteApi } from "../../lib/api";
 import { AUSTRALIAN_STATES } from "../../constants/locations";
 
 export default function AddEmployeeModal({

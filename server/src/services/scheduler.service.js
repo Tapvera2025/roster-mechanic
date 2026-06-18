@@ -747,6 +747,16 @@ class SchedulerService {
       throw error;
     }
 
+    await shift.populate('siteId', 'siteLocationName shortName');
+
+    const assignedTo = [
+      shift.employeeId,
+      ...(Array.isArray(shift.employees) ? shift.employees : []),
+    ]
+      .filter(Boolean)
+      .map((id) => id.toString());
+    const siteName = shift.siteId?.siteLocationName || shift.siteId?.shortName || 'a site';
+
     // Set deletedBy before soft delete
     shift.deletedBy = userId;
 
@@ -758,7 +768,7 @@ class SchedulerService {
       await shift.save();
     }
 
-    return { success: true, message: 'Shift deleted successfully' };
+    return { success: true, message: 'Shift deleted successfully', assignedTo, siteName };
   }
 
   /**

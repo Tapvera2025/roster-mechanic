@@ -7,7 +7,7 @@ import { Label } from "../ui/Label";
 import { Textarea } from "../ui/Textarea";
 import { schedulerApi } from "../../lib/api";
 import toast from "react-hot-toast";
-import { parseTime12Hour, getHour12, getMinute, getTimePeriod } from "../../utils/timeFormatter";
+import { parseTime12Hour } from "../../utils/timeFormatter";
 
 export default function AddAdhocShiftModal({
   isOpen,

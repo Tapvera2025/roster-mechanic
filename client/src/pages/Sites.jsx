@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   MapPin,
   Plus,
@@ -32,7 +32,6 @@ export default function Sites() {
   // API state
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 25,
@@ -41,10 +40,9 @@ export default function Sites() {
   });
 
   // Fetch sites function
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       const response = await siteApi.getAll({
         status: showInactive ? undefined : "ACTIVE",
         page: pagination.page,
@@ -53,17 +51,16 @@ export default function Sites() {
       setSites(response.data.data.sites);
       setPagination(response.data.data.pagination);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch sites");
       toast.error("Failed to load sites");
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.limit, pagination.page, showInactive]);
 
   // Fetch sites on mount and when filters change
   useEffect(() => {
     fetchSites();
-  }, [showInactive, pagination.page, pagination.limit]);
+  }, [fetchSites]);
 
   // Handle refresh button
   const handleRefresh = () => {
@@ -216,7 +213,6 @@ export default function Sites() {
         <SitesTable
           sites={sites}
           loading={loading}
-          showInactive={showInactive}
           onSiteClick={handleSiteClick}
           onMapClick={handleMapClick}
         />

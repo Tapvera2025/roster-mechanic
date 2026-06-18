@@ -40,7 +40,16 @@ const shiftSchema = new mongoose.Schema(
 
     endTime: {
       type: Date,
-      required: [true, 'End time is required'],
+      required: [
+        function () {
+          return !(
+            this.isAdhoc === true &&
+            this.status === 'IN_PROGRESS' &&
+            this.adhocInitiatedBy === 'EMPLOYEE'
+          );
+        },
+        'End time is required',
+      ],
     },
 
     shiftType: {
@@ -190,7 +199,7 @@ shiftSchema.methods.toCompanyTimezone = function (timezone) {
   return {
     date: DateTime.fromJSDate(this.date).setZone(timezone).toISO(),
     startTime: DateTime.fromJSDate(this.startTime).setZone(timezone).toISO(),
-    endTime: DateTime.fromJSDate(this.endTime).setZone(timezone).toISO(),
+    endTime: this.endTime ? DateTime.fromJSDate(this.endTime).setZone(timezone).toISO() : null,
   };
 };
 
@@ -219,7 +228,7 @@ shiftSchema.index({ 'clockInLocation': '2dsphere' });
 
 // Validation: endTime must be after startTime
 shiftSchema.pre('save', async function () {
-  if (this.endTime <= this.startTime) {
+  if (this.endTime && this.startTime && this.endTime <= this.startTime) {
     throw new Error('End time must be after start time');
   }
 });

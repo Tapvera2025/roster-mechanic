@@ -1,16 +1,8 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ChevronDown, X } from "lucide-react";
 import complianceData from "../../data/complianceData";
 
 export default function ComplianceFilters({ filters, setFilters }) {
-  const [expandedSections, setExpandedSections] = useState({
-    status: true,
-    licenseType: true,
-    state: true,
-    deptWorkGroup: true,
-    expiresWithin: true,
-  });
-
   // Get unique employees from compliance data
   const uniqueEmployees = useMemo(() => {
     const empMap = new Map();

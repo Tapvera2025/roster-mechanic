@@ -8,7 +8,6 @@ import { MapPin } from "lucide-react";
 export default function SitesTable({
   sites,
   loading,
-  showInactive,
   onSiteClick,
   onMapClick,
 }) {

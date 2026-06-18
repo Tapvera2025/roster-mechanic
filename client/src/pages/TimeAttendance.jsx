@@ -4,7 +4,7 @@ import AttendanceFilters from "../components/attendance/AttendanceFilters";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Select";
 import SortableHeader from "../components/ui/SortableHeader";
-import { clockApi, schedulerApi, employeeApi } from "../lib/api";
+import { clockApi } from "../lib/api";
 import { useTableSort } from "../hooks/useTableSort";
 import { useSocketEvent } from "../contexts/SocketContext";
 
@@ -24,8 +24,6 @@ export default function TimeAttendance() {
   const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, pages: 0 });
-  const [sites, setSites] = useState([]);
-  const [employees, setEmployees] = useState([]);
 
   const tabs = [
     { id: "timecard", label: "Time Card", icon: Clock },
@@ -50,30 +48,6 @@ export default function TimeAttendance() {
     defaultColumn: 'clockInTime',
     defaultDirection: 'desc',
   });
-
-  // Fetch initial data
-  useEffect(() => {
-    const fetchSites = async () => {
-      try {
-        const response = await schedulerApi.getSites();
-        setSites(response.data.data || []);
-      } catch (err) {
-        console.error('Failed to fetch sites:', err);
-      }
-    };
-
-    const fetchEmployees = async () => {
-      try {
-        const response = await employeeApi.getAll();
-        setEmployees(response.data.data || []);
-      } catch (err) {
-        console.error('Failed to fetch employees:', err);
-      }
-    };
-
-    fetchSites();
-    fetchEmployees();
-  }, []);
 
   // Fetch records function as useCallback for stable reference
   const fetchRecords = useCallback(async () => {
