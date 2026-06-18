@@ -248,7 +248,12 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
       let response;
       if (site) {
         // Update existing site
-        response = await siteApi.update(site.id, payload);
+        // Handle both _id (MongoDB) and id (virtual) properties
+        const siteId = site._id || site.id;
+        if (!siteId) {
+          throw new Error('Site ID is missing');
+        }
+        response = await siteApi.update(siteId, payload);
       } else {
         // Create new site
         response = await siteApi.create(payload);
@@ -256,7 +261,8 @@ export default function AddSiteModal({ onClose, onSuccess, site = null }) {
 
       // If access code data exists, add it (only for new sites or if fields are filled)
       if (!site && accessCodeData.codeName && accessCodeData.accessCode) {
-        await siteApi.addAccessCode(response.data.data.id, {
+        const newSiteId = response.data.data._id || response.data.data.id;
+        await siteApi.addAccessCode(newSiteId, {
           ...accessCodeData,
           visibleOnMobile: accessCodeData.visibleOnMobile === "yes",
           whenRostered: accessCodeData.whenRostered === "yes",

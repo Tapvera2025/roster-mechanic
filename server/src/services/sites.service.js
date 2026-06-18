@@ -69,6 +69,7 @@ class SitesService {
 
     const sites = sitesRaw.map(site => ({
       ...site,
+      id: site._id.toString(), // Add id field for frontend compatibility
       latitude: site.location?.coordinates?.[1] ?? null,
       longitude: site.location?.coordinates?.[0] ?? null,
     }));
@@ -110,6 +111,7 @@ class SitesService {
       throw error;
     }
 
+    site.id = site._id.toString(); // Add id field for frontend compatibility
     site.latitude = site.location?.coordinates?.[1] ?? null;
     site.longitude = site.location?.coordinates?.[0] ?? null;
 
